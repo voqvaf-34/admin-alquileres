@@ -1,4 +1,4 @@
-// Configuracion de la marca: nombre, color y logo se aplican, se guardan y siguen al reabrir.
+// Configuracion: marca (nombre, color y logo) y plantillas de mensajes.
 const test   = require('node:test');
 const assert = require('node:assert/strict');
 const path   = require('path');
@@ -57,6 +57,43 @@ test('configuracion: nombre, color y logo de la inmobiliaria', { timeout: 90000 
     assert.equal(await cssVar(page, '--m-header'), '#0F766E');
     await page.waitForSelector('#hdr-logo img[data-marca-logo]:not([hidden])');
     assert.equal(await page.title(), 'Inmobiliaria del Sur · Alquileres');
+    assert.deepEqual(errors, []);
+  } finally { await app.close(); }
+});
+
+test('configuracion: plantillas de mensajes', { timeout: 60000 }, async () => {
+  const { app, page, errors } = await launch(tmpDir());
+  try {
+    await empezarVacia(page);
+    await page.click('#btn-menu');
+    await page.click('#btn-config');
+    await page.waitForSelector('#modal-config.open');
+    await page.fill('#cfg-nombre', 'Inmobiliaria del Sur');
+    await page.click('[data-msg="renovacion"] summary');
+    const ta = '[data-msg="renovacion"] textarea';
+    assert.match(await page.inputValue(ta), /^Hola! Te escribo desde \{inmobiliaria\}/);
+    // Restaurar no aparece mientras el texto es el original.
+    assert.equal(await page.isDisabled('[data-msg="renovacion"] .cfg-restaurar'), true);
+    await page.fill(ta, 'Hola ');
+    await page.click('[data-msg="renovacion"] .cfg-var[data-var="inquilino"]');
+    await page.type(ta, ', vence el {vencimiento}. {nada}');
+    assert.equal(await page.inputValue(ta), 'Hola {inquilino}, vence el {vencimiento}. {nada}');
+    assert.match(await page.textContent('[data-msg="renovacion"] .cfg-ejemplo'), /Hola Beto Gomez, vence el 01\/11\/2026\. \{nada\}/);
+    assert.match(await page.textContent('[data-msg="renovacion"] .cfg-aviso'), /\{nada\}/);
+    await shot(page, '12-mensajes');
+    await page.click('#cfg-guardar');
+    await page.waitForSelector('#modal-config', { state: 'hidden' });
+    assert.equal(await page.evaluate(() => app.estado.appSettings.msgRenovacion), 'Hola {inquilino}, vence el {vencimiento}. {nada}');
+
+    // Al reabrir se ve el texto guardado; restaurar el original lo guarda vacio (= original).
+    await page.click('#btn-menu');
+    await page.click('#btn-config');
+    await page.click('[data-msg="renovacion"] summary');
+    assert.equal(await page.inputValue(ta), 'Hola {inquilino}, vence el {vencimiento}. {nada}');
+    await page.click('[data-msg="renovacion"] .cfg-restaurar');
+    await page.click('#cfg-guardar');
+    await page.waitForSelector('#modal-config', { state: 'hidden' });
+    assert.equal(await page.evaluate(() => app.estado.appSettings.msgRenovacion), '');
     assert.deepEqual(errors, []);
   } finally { await app.close(); }
 });

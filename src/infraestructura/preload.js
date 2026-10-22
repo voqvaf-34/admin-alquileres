@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('api', {
   deleteAdmin:     (id)      => call('admin:delete', id),
   saveMarks:       (m)       => call('marks:save', m),
   setSetting:      (k, v)    => call('setting:set', k, v),
-  saveBrand:       (m)       => call('brand:save', m),
+  saveConfig:      (c)       => call('config:save', c),
   setTitleBarColor: (c, ink) => call('window:titleBarColor', c, ink),
   fetchIPC:        ()        => call('ipc:fetch'),
   openDataFolder:  ()        => call('data:openFolder'),

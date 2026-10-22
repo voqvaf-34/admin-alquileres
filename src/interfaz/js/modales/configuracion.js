@@ -1,5 +1,6 @@
-// Ventana de Configuracion: nombre, color y logo de la inmobiliaria (con vista previa).
-import { COLORES_SUGERIDOS, esColor, leerMarca } from '../../../dominios/index.js';
+// Ventana de Configuracion: marca de la inmobiliaria (nombre, color y logo, con vista previa) y
+// plantillas de los mensajes para inquilinos y propietarios.
+import { COLORES_SUGERIDOS, PLANTILLAS, esColor, leerMarca, rellenar, textoPlantilla, variablesDesconocidas } from '../../../dominios/index.js';
 import { aplicarMarca, pintarVariables } from '../componentes/marca.js';
 import { call } from '../nucleo/api.js';
 import { esc, showToast } from '../nucleo/dom.js';
@@ -10,6 +11,10 @@ const $ = id => document.getElementById(id);
 
 // Lo que se esta editando (se guarda recien con Guardar).
 let borrador = { nombre: '', color: '', logo: '' };
+
+// Datos inventados para el ejemplo de cada mensaje.
+const EJEMPLO = { vencimiento: '01/11/2026', direccion: 'Torre Ceibo - Av. Italia 875 U403', inquilino: 'Beto Gomez',
+  propietario: 'Ana Perez', porcentaje: '3,16%', nuevo_importe: '$ 25.790' };
 
 const LOGO_MAX_ALTO = 160, LOGO_MAX_ANCHO = 640, LOGO_MAX_BYTES = 400 * 1024;
 
@@ -25,16 +30,63 @@ function pintarBorrador() {
   }
   $('cfg-logo-vacio').hidden = !!marca.logo;
   $('cfg-logo-quitar').disabled = !marca.logo;
+  for (const id of Object.keys(PLANTILLAS)) pintarEjemplo(id);
   $('cfg-color').value = marca.color.toLowerCase();
   if (document.activeElement !== $('cfg-color-hex')) $('cfg-color-hex').value = marca.color;
   $('cfg-color-hex').classList.remove('invalido');
   document.querySelectorAll('.cfg-swatch').forEach(b => b.classList.toggle('on', b.dataset.color === marca.color));
 }
 
+// ── Mensajes ──
+const msgArea = id => document.querySelector(`[data-msg="${id}"] textarea`);
+
+function pintarEjemplo(id) {
+  const box = document.querySelector(`[data-msg="${id}"]`);
+  const texto = msgArea(id).value;
+  const nombre = leerMarca({ marcaNombre: borrador.nombre }).nombre;
+  const datos = Object.fromEntries(Object.entries({ inmobiliaria: nombre, ...EJEMPLO }).map(([k, v]) => [k, `<b>${esc(v)}</b>`]));
+  box.querySelector('.cfg-ejemplo').innerHTML = 'Ejemplo: ' + rellenar(esc(texto), datos);
+  const malas = variablesDesconocidas(id, texto);
+  box.querySelector('.cfg-aviso').textContent = malas.length ? `Este mensaje no conoce: ${malas.map(v => `{${v}}`).join(', ')}` : '';
+  box.querySelector('.cfg-restaurar').disabled = texto.trim() === PLANTILLAS[id].texto;
+}
+
+function armarMensajes() {
+  $('cfg-mensajes').innerHTML = Object.entries(PLANTILLAS).map(([id, p]) => `
+    <details class="m-disclosure cfg-msg" data-msg="${id}">
+      <summary>${esc(p.titulo)}</summary>
+      <textarea spellcheck="true"></textarea>
+      <div class="cfg-vars">
+        ${p.variables.map(v => `<button type="button" class="cfg-var" data-var="${v}" title="Insertar">{${v}}</button>`).join('')}
+        <button type="button" class="cfg-restaurar">Restaurar texto original</button>
+      </div>
+      <div class="cfg-aviso"></div>
+      <div class="cfg-ejemplo"></div>
+    </details>`).join('');
+  $('cfg-mensajes').addEventListener('input', e => { const b = e.target.closest('[data-msg]'); if (b) pintarEjemplo(b.dataset.msg); });
+  $('cfg-mensajes').addEventListener('click', e => {
+    const box = e.target.closest('[data-msg]'); if (!box) return;
+    const ta = box.querySelector('textarea'), id = box.dataset.msg;
+    const v = e.target.closest('.cfg-var');
+    if (v) {
+      const ins = `{${v.dataset.var}}`, a = ta.selectionStart, z = ta.selectionEnd;
+      ta.value = ta.value.slice(0, a) + ins + ta.value.slice(z);
+      ta.focus(); ta.selectionStart = ta.selectionEnd = a + ins.length;
+      pintarEjemplo(id);
+    } else if (e.target.closest('.cfg-restaurar')) {
+      ta.value = PLANTILLAS[id].texto; pintarEjemplo(id);
+    }
+  });
+}
+
 export function abrirConfiguracion() {
   const actual = leerMarca(estado.appSettings);
   borrador = { nombre: estado.appSettings.marcaNombre || '', color: actual.color, logo: actual.logo };
   $('cfg-nombre').value = borrador.nombre;
+  for (const id of Object.keys(PLANTILLAS)) {
+    msgArea(id).value = textoPlantilla(estado.appSettings, id);
+    document.querySelector(`[data-msg="${id}"]`).open = false;
+  }
   pintarBorrador();
   openModal('modal-config');
   setTimeout(() => $('cfg-nombre').focus(), 80);
@@ -70,7 +122,8 @@ function leerLogo(file) {
 async function guardar() {
   const nombre = $('cfg-nombre').value.trim();
   try {
-    const st = await call('saveBrand', { nombre, color: borrador.color, logo: borrador.logo });
+    const mensajes = Object.fromEntries(Object.keys(PLANTILLAS).map(id => [id, msgArea(id).value]));
+    const st = await call('saveConfig', { marca: { nombre, color: borrador.color, logo: borrador.logo }, mensajes });
     estado.appSettings = st.settings;
     aplicarMarca(estado.appSettings);
     closeModal('modal-config');
@@ -80,6 +133,7 @@ async function guardar() {
 
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
+  armarMensajes();
   $('cfg-sugeridos').innerHTML = COLORES_SUGERIDOS.map(c =>
     `<button type="button" class="cfg-swatch" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('');
   $('cfg-sugeridos').addEventListener('click', e => {

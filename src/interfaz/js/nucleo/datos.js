@@ -73,7 +73,7 @@ export const isAumentoResuelto = (e, m, y) => D.isAumentoResuelto(e, m, y, estad
 
 export const isVencResuelto    = e => D.isVencResuelto(e, estado.marks);
 
-export const vencRenewalMsg = e => D.renewalMessage(getVencDate(e));
+export const vencRenewalMsg = e => D.renewalMessage(getVencDate(e), { settings: estado.appSettings, contrato: e });
 
 // Amarillo si faltan mas de 10 dias para el vencimiento; rojo si faltan 10 o menos (o ya vencio).
 export function vencColor(e) { return colorPorDias(getVencDate(e)); }

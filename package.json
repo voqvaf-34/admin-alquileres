@@ -1,7 +1,7 @@
 {
   "name": "admin-alquileres",
   "productName": "Admin Alquileres",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Gestion de alquileres para inmobiliarias: contratos, propietarios, aumentos por IPC y renovaciones.",
   "author": "Pablo Rodriguez",
   "private": true,

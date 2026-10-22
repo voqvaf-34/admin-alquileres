@@ -586,3 +586,17 @@ body.viewer [data-aum-undo] { display:none !important; }
 .cfg-prev-tab { color:var(--m-ink); border-bottom:2px solid var(--m-accent); padding-bottom:6px; font-size:12px; }
 :root[data-theme="dark"] .cfg-prev-tab { color:var(--m-ink-dk); border-color:var(--m-accent-dk); }
 .cfg-prev-btn { background:var(--m-accent); color:var(--m-header-ink); border:none; border-radius:8px; padding:7px 14px; font-family:inherit; font-weight:500; pointer-events:none; }
+/* Configuracion: plantillas de mensajes */
+.cfg-msg { margin-bottom:4px; }
+.cfg-msg textarea { width:100%; min-height:110px; resize:vertical; font-family:inherit; font-size:12px; line-height:1.5; padding:8px 10px;
+  border:1px solid rgba(var(--fg),0.12); border-radius:8px; background:var(--surface); color:var(--text); }
+.cfg-msg textarea:focus { outline:none; border-color:var(--accent); }
+.cfg-vars { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:6px 0; }
+.cfg-var { font-family:ui-monospace,Consolas,monospace; font-size:11px; padding:2px 8px; border-radius:10px; cursor:pointer;
+  border:1px solid rgba(var(--accent-rgb),0.3); background:rgba(var(--accent-rgb),0.08); color:var(--accent-ink); }
+.cfg-var:hover { background:rgba(var(--accent-rgb),0.16); }
+.cfg-restaurar { margin-left:auto; font-size:11px; background:none; border:none; color:var(--dim); cursor:pointer; text-decoration:underline; font-family:inherit; }
+.cfg-restaurar:disabled { visibility:hidden; }
+.cfg-aviso { font-size:11px; color:var(--red); margin-top:4px; }
+.cfg-ejemplo { font-size:11px; line-height:1.5; color:var(--dim); background:rgba(var(--fg),0.03); border-radius:6px; padding:6px 10px; margin-top:6px; white-space:pre-wrap; }
+.cfg-ejemplo b { font-weight:500; color:var(--text); }

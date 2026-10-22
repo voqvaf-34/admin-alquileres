@@ -113,7 +113,7 @@ test('parseIPCFromHtml reconoce los formatos del INE', () => {
   assert.equal(D.parseIPCFromHtml('<html>sin datos</html>'), null);
 });
 
-test('renewalMessage incluye la fecha y no la direccion', () => {
+test('renewalMessage (texto original) incluye la fecha y no la direccion', () => {
   const msg = D.renewalMessage(new Date(2026, 10, 1));
   assert.match(msg, /vence el 01\/11\/2026/);
   assert.match(msg, /^Hola! Te escribo desde Mi Inmobiliaria/);

@@ -2,6 +2,18 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
+## [0.3.0] - 2026-10-21
+
+### Agregado
+- **Plantillas de mensajes** en Configuración: aviso de renovación, aumento al inquilino y aumento al propietario.
+  Variables entre llaves (`{inmobiliaria}`, `{vencimiento}`, `{porcentaje}`, `{nuevo_importe}`, `{direccion}`,
+  `{inquilino}`, `{propietario}`) que se insertan con un clic, ejemplo en vivo con datos inventados y aviso si
+  se usa una variable que el mensaje no conoce.
+- "Restaurar texto original": un mensaje sin cambios se guarda vacío, así le llegan las mejoras futuras del texto por defecto.
+
+### Cambiado
+- Los mensajes usan el nombre de la inmobiliaria configurado (antes, texto fijo).
+
 ## [0.2.0] - 2026-10-21
 
 ### Agregado

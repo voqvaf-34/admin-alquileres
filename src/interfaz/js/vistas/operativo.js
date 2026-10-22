@@ -102,8 +102,7 @@ export function footerAumento(e, m, y, ipcVal) {
     </div>`;
   }
 
-  const msgInq  = `Hola! Te escribo desde Mi Inmobiliaria. Este mes corresponde segun el contrato aumento por IPC en el importe de alquiler. El aumento correspondiente es de ${ipcStr} quedando en ${nuevoStr} (En caso de ya haber abonado se envia la diferencia directamente a la cuenta donde se paga el alquiler). Cualquier consulta quedo a las ordenes!`;
-  const msgProp = `Hola! Te escribo desde Mi Inmobiliaria. Este mes corresponde aumento por IPC en el importe de alquiler de ${e.direccion}. El aumento correspondiente es de ${ipcStr} quedando en ${nuevoStr} (En caso de que ya hayan abonado el importe deberan depositar la diferencia). El inquilino ya quedo avisado, cualquier consulta quedo a las ordenes!`;
+  const { inquilino: msgInq, propietario: msgProp } = D.increaseMessages({ settings: estado.appSettings, contrato: e, porcentaje: ipcStr, nuevoImporte: nuevoStr });
 
   const copyBtns = `
     <button class="copy-btn" data-copy="${esc(msgInq)}"  title="Copiar mensaje inquilino">&#8663; Inq</button>
