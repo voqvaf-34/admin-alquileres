@@ -1,0 +1,47 @@
+{
+  "name": "admin-alquileres",
+  "productName": "Admin Alquileres",
+  "version": "0.1.0",
+  "description": "Gestion de alquileres para inmobiliarias: contratos, propietarios, aumentos por IPC y renovaciones.",
+  "author": "Pablo Rodriguez",
+  "private": true,
+  "main": "src/infraestructura/principal.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"test/unit/*.test.js\"",
+    "test:e2e": "node --test --test-concurrency=1 \"test/e2e/*.test.js\"",
+    "dist": "electron-builder --win nsis",
+    "dist:visor": "electron-builder --win nsis -c.productName=\"Admin Alquileres Visor\" -c.appId=com.adminalquileres.visor -c.win.icon=build/icon-visor.ico -c.nsis.shortcutName=\"Admin Alquileres Visor\" -c.directories.output=dist-visor -c.extraMetadata.adminMode=viewer -c.extraMetadata.name=admin-alquileres-visor -c.extraMetadata.productName=\"Admin Alquileres Visor\""
+  },
+  "build": {
+    "appId": "com.adminalquileres.app",
+    "productName": "Admin Alquileres",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Admin Alquileres"
+    }
+  },
+  "dependencies": {
+    "sql.js": "^1.15.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@fontsource/rubik": "^5.3.0",
+    "electron": "^44.8.0",
+    "electron-builder": "^26.15.3",
+    "playwright-core": "^1.64.1"
+  }
+}

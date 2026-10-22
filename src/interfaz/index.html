@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Alquileres</title>
+<script src="tema.js"></script>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<!-- Barra de titulo para las pantallas de inicio (en la app la cumple la cabecera) -->
+<div class="win-drag"><span class="logo-text">Mi Inmobiliaria</span></div>
+<div id="root">
+
+  <!-- Pantalla de carga -->
+  <div id="autoload-screen">
+    <div class="autoload-inner">
+      <div class="logo-big">Admin Alquileres</div>
+      <div class="autoload-spinner"></div>
+      <div id="autoload-status">Abriendo base de datos...</div>
+    </div>
+  </div>
+
+  <!-- Importacion inicial desde Excel -->
+  <div id="upload-screen">
+    <div class="upload-inner">
+      <div class="logo-big">Admin Alquileres</div>
+      <div style="font-size:13px;opacity:0.7;margin-bottom:20px;line-height:1.6">
+        ¿Cómo querés empezar?
+      </div>
+      <div class="start-options">
+        <button class="btn-autoload" id="btn-copy-live" hidden>Copiar los datos de la app instalada</button>
+        <button class="btn-autoload" id="btn-start-empty">Empezar con una base vacía</button>
+        <button class="btn-start-alt" id="btn-autoload">Importar desde Excel</button>
+      </div>
+      <div id="dropzone">
+        <div class="drop-arrow">&#8593;</div>
+        <div class="drop-label" id="drop-label">o soltá el Excel acá</div>
+      </div>
+      <div class="upload-note">
+        Copiar desde la app instalada incluye las marcas (enviados, renovados...).<br>
+        Los propietarios se unifican automaticamente. Nada se modifica en el origen.
+      </div>
+    </div>
+  </div>
+
+  <!-- Visor: elegir carpeta compartida -->
+  <div id="viewer-setup-screen" hidden>
+    <div class="upload-inner">
+      <div class="logo-big">Alquileres &middot; Visor</div>
+      <div style="font-size:13px;opacity:0.75;margin-bottom:18px;line-height:1.7">
+        No se encontró la base compartida.<br>
+        Elegí la carpeta <strong>Base Admin Alquileres</strong> que publica la app principal.
+      </div>
+      <div class="field-hint" id="viewer-setup-error" style="margin-bottom:14px"></div>
+      <div class="start-options">
+        <button class="btn-autoload" id="btn-viewer-pick">Elegir carpeta compartida</button>
+        <button class="btn-start-alt" id="btn-viewer-retry">Reintentar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App principal -->
+  <div id="app-screen">
+    <div class="header">
+      <div class="header-left">
+        <span class="logo-small" role="img" aria-label="Mi Inmobiliaria">
+          <span class="logo-text">Mi Inmobiliaria</span>
+        </span>
+        <span style="font-weight:500;letter-spacing:0.5px">Alquileres</span>
+        <span class="viewer-only viewer-badge">VISOR</span>
+        <span class="file-info" id="file-info" hidden></span>
+      </div>
+      <div class="header-right">
+        <span class="viewer-only file-info" id="viewer-updated"></span>
+        <button class="hdr-icon editor-only" id="btn-undo" disabled title="Deshacer (Ctrl+Z)" aria-label="Deshacer">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+        </button>
+        <button class="hdr-icon editor-only" id="btn-redo" disabled title="Rehacer (Ctrl+Y)" aria-label="Rehacer">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>
+        </button>
+        <span class="hdr-sep editor-only"></span>
+        <button class="hdr-icon editor-only" id="btn-share" title="Compartir con el Visor" aria-label="Compartir">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+          <span class="share-dot" id="share-dot"></span>
+        </button>
+        <span class="hdr-icon save-ind editor-only" id="save-ind" title="Guardado automático">&#10003;</span>
+        <button class="hdr-icon" id="btn-theme" title="Cambiar modo de color" aria-label="Modo de color"></button>
+        <div class="menu-wrap">
+          <button class="hdr-icon" id="btn-menu" title="Más opciones" aria-label="Menú" aria-haspopup="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="hdr-menu" id="hdr-menu" hidden>
+            <button class="menu-item" id="btn-export-csv">Exportar CSV</button>
+            <button class="menu-item editor-only" id="btn-menu-share">Compartir con el Visor…</button>
+            <button class="menu-item editor-only" id="btn-import-marks">Importar marcas</button>
+            <button class="menu-item editor-only" id="btn-data-folder">Carpeta de datos y copias</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="basedatos"       id="tab-basedatos">Base de Datos</button>
+      <button class="tab-btn"        data-tab="propietarios"    id="tab-propietarios">Propietarios</button>
+      <button class="tab-btn editor-only" data-tab="aumentos"        id="tab-aumentos">Aumentos</button>
+      <button class="tab-btn editor-only" data-tab="vencimientos"    id="tab-vencimientos">Renovaciones</button>
+      <button class="tab-btn"        data-tab="administraciones" id="tab-administraciones">Administraciones</button>
+    </div>
+
+    <div class="controls" id="op-controls">
+      <div class="ctrl-group">
+        <label class="ctrl-label">Mes</label>
+        <select class="ctrl-select" id="sel-month"></select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-label">Año</label>
+        <select class="ctrl-select" id="sel-year"></select>
+      </div>
+      <div class="ctrl-group" id="ipc-group">   <!-- solo en Aumentos -->
+        <label class="ctrl-label">IPC %</label>
+        <input type="number" step="0.01" class="ctrl-input" id="inp-ipc" value="3.16">
+        <button id="btn-ipc-fetch" class="btn-ipc-fetch" title="Obtener IPC del INE">&#8635;</button>
+        <span id="ipc-period" style="font-size:10px;opacity:0.4;"></span>
+      </div>
+      <div class="ctrl-group" style="border-left:1px solid rgba(var(--fg),0.08);padding-left:12px;margin-left:4px;">
+        <label class="db-chk-label"><input type="checkbox" id="op-show-sinresolver"> Sin resolver</label>
+        <label class="db-chk-label"><input type="checkbox" id="op-show-resuelto"> Resueltos</label>
+      </div>
+    </div>
+
+    <!-- Panel operativo (aumentos / renovaciones) -->
+    <div class="content" id="content"></div>
+
+    <!-- Panel Base de Datos -->
+    <div id="db-panel">
+      <div class="db-controls">
+        <div class="search-wrap">
+          <input type="text" id="db-search" class="db-search" placeholder="Buscar direccion, propietario, inquilino, telefono...">
+          <button class="search-clear" id="db-search-clear" title="Limpiar busqueda">&times;</button>
+        </div>
+        <div class="ctrl-group">
+          <label class="ctrl-label">Año</label>
+          <select id="db-year" class="ctrl-select"><option value="0">Todos</option></select>
+        </div>
+        <div class="ctrl-group">
+          <label class="ctrl-label">Mes inicio</label>
+          <select id="db-month" class="ctrl-select">
+            <option value="0">Todos</option>
+            <option value="1">Enero</option><option value="2">Febrero</option>
+            <option value="3">Marzo</option><option value="4">Abril</option>
+            <option value="5">Mayo</option><option value="6">Junio</option>
+            <option value="7">Julio</option><option value="8">Agosto</option>
+            <option value="9">Septiembre</option><option value="10">Octubre</option>
+            <option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+        <label class="db-chk-label"><input type="checkbox" id="db-show-active" checked> Activos</label>
+        <label class="db-chk-label"><input type="checkbox" id="db-show-inactive"> Inactivos</label>
+        <span class="db-count" id="db-count"></span>
+        <button class="btn-add-entry" id="btn-add-entry">&#65291; Agregar</button>
+      </div>
+      <div class="db-wrap">
+        <table class="db-table">
+          <thead>
+            <tr>
+              <th style="min-width:190px">Direccion / Edificio</th>
+              <th style="min-width:140px">Propietario</th>
+              <th style="min-width:140px">Inquilino</th>
+              <th style="min-width:90px">F. Inicio</th>
+              <th style="width:32px"></th>
+            </tr>
+          </thead>
+          <tbody id="db-tbody">
+            <tr><td colspan="5" class="empty">Sin datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Panel Administraciones -->
+    <div id="admin-panel">
+      <div class="db-controls">
+        <div class="search-wrap">
+          <input type="text" id="admin-search" class="db-search" placeholder="Buscar administracion, edificio, telefono, mail...">
+          <button class="search-clear" id="admin-search-clear" title="Limpiar busqueda">&times;</button>
+        </div>
+        <span class="db-count" id="admin-count"></span>
+        <button class="btn-add-entry" id="btn-add-admin">&#65291; Agregar</button>
+      </div>
+      <div class="db-wrap">
+        <table class="db-table">
+          <thead>
+            <tr>
+              <th style="min-width:200px">Administracion</th>
+              <th style="min-width:220px">Edificios</th>
+              <th style="min-width:170px">Telefono</th>
+              <th style="min-width:170px">Mail</th>
+              <th style="width:60px"></th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody">
+            <tr><td colspan="5" class="empty">Sin datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Panel Propietarios -->
+    <div id="owners-panel">
+      <div class="db-controls">
+        <div class="search-wrap">
+          <input type="text" id="owners-search" class="db-search" placeholder="Buscar nombre, cedula, telefono, mail, apto...">
+          <button class="search-clear" id="owners-search-clear" title="Limpiar busqueda">&times;</button>
+        </div>
+        <label class="db-chk-label"><input type="checkbox" id="owners-only-active"> Solo con aptos activos</label>
+        <span class="db-count" id="owners-count"></span>
+        <button class="btn-add-entry" id="btn-add-owner">&#65291; Agregar</button>
+      </div>
+      <div class="db-wrap">
+        <table class="db-table" id="owners-table">
+          <thead>
+            <tr>
+              <th style="min-width:260px">Propietario</th>
+              <th style="min-width:140px">Celular</th>
+              <th style="min-width:180px">Mail</th>
+              <th style="min-width:80px">Aptos</th>
+              <th style="width:32px"></th>
+            </tr>
+          </thead>
+          <tbody id="owners-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /app-screen -->
+
+  <!-- Modal: propietario (ficha para contratos) -->
+  <div id="modal-owner" class="modal" data-form>
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="modal-title" id="modal-owner-title">Nuevo Propietario</span>
+        <button class="unmark-btn modal-x" data-close-modal="modal-owner">&times;</button>
+      </div>
+      <div class="modal-section">Datos para contratos</div>
+      <div class="modal-grid">
+        <div class="mfield mfull"><label>Nombre completo <span class="m-req">*</span></label><input type="text" id="m-own-nombre" autocomplete="off"></div>
+        <div class="mfield"><label>Numero de cedula</label><input type="text" id="m-own-cedula" placeholder="Ej: 1.234.567-8" autocomplete="off"></div>
+        <div class="mfield"><label>Estado civil</label>
+          <input type="text" id="m-own-estado" list="estado-civil-opts" placeholder="Soltero/a, Casado/a..." autocomplete="off">
+          <datalist id="estado-civil-opts">
+            <option value="Soltero/a"></option><option value="Casado/a"></option><option value="Divorciado/a"></option>
+            <option value="Viudo/a"></option><option value="Union concubinaria"></option>
+          </datalist>
+        </div>
+        <div class="mfield mfull"><label>Domicilio personal</label><input type="text" id="m-own-domicilio" autocomplete="off"></div>
+        <div class="mfield"><label>Numero de celular</label><input type="text" id="m-own-tel" autocomplete="off"></div>
+        <div class="mfield"><label>Correo electronico</label><input type="text" id="m-own-mail" autocomplete="off"></div>
+        <div class="mfield mfull"><label>Cuenta o metodo de cobro (general)</label>
+          <input type="text" id="m-own-cuenta" placeholder="Ej: BROU caja de ahorro 001234567-00001" autocomplete="off">
+          <span class="field-hint">Si algun apto cobra en otra cuenta, se carga en la ficha del propietario, por apto.</span>
+        </div>
+      </div>
+      <details class="m-disclosure" id="own-opt-contacto">
+      <summary>Contacto <span class="m-sum-hint">si se habla con otra persona: administrador, referente, familiar...</span></summary>
+      <div class="modal-grid">
+        <div class="mfield mfull"><select id="m-own-contact"></select></div>
+        <div class="mfield" data-contact-field><label>Nombre</label><input type="text" id="m-con-nombre" autocomplete="off"></div>
+        <div class="mfield" data-contact-field><label>Rol</label><input type="text" id="m-con-rol" list="rol-opts" placeholder="Administrador, Referente..." autocomplete="off">
+          <datalist id="rol-opts"><option value="Administrador"></option><option value="Referente"></option><option value="Familiar"></option><option value="Apoderado"></option></datalist>
+        </div>
+        <div class="mfield" data-contact-field><label>Telefono</label><input type="text" id="m-con-tel" autocomplete="off"></div>
+        <div class="mfield" data-contact-field><label>Mail</label><input type="text" id="m-con-mail" autocomplete="off"></div>
+        <div class="mfield mfull field-hint" id="m-con-shared" data-contact-field></div>
+      </div>
+      </details>
+      <details class="m-disclosure" id="own-opt-notas">
+      <summary>Notas</summary>
+      <div class="modal-grid"><div class="mfield mfull"><textarea id="m-own-notas" rows="3"></textarea></div></div>
+      </details>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" data-close-modal="modal-owner">Cancelar</button>
+        <button class="btn-modal-submit" id="modal-owner-submit">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visor de documento -->
+  <div id="modal-doc" class="modal">
+    <div class="modal-box" style="width:min(900px,95vw);text-align:center">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span class="modal-title" id="modal-doc-title">Documento</span>
+        <button class="unmark-btn modal-x" data-close-modal="modal-doc">&times;</button>
+      </div>
+      <img id="modal-doc-img" alt="" style="max-width:100%;max-height:72vh;border-radius:6px">
+    </div>
+  </div>
+
+  <!-- Linea de tiempo de un alquiler -->
+  <div id="modal-timeline" class="modal">
+    <div class="modal-box" style="width:min(720px,95vw)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span class="modal-title">Línea de tiempo</span>
+        <button class="unmark-btn modal-x" data-close-modal="modal-timeline">&times;</button>
+      </div>
+      <div class="tl-dir" id="tl-dir"></div>
+      <div class="tl" id="tl-list"></div>
+    </div>
+  </div>
+
+  <!-- Modal: compartir con el Visor -->
+  <div id="modal-share" class="modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="modal-title">Compartir con el Visor</span>
+        <button class="unmark-btn modal-x" data-close-modal="modal-share">&times;</button>
+      </div>
+      <div style="font-size:12px;line-height:1.7;opacity:0.85">
+        Tu base principal sigue en esta PC. Después de cada cambio se publica una copia en la carpeta compartida,
+        que es la que lee la app <strong>Admin Alquileres Visor</strong> (y sirve de respaldo extra).
+      </div>
+      <div class="modal-section">Carpeta</div>
+      <div id="share-dir" style="font-size:12px;word-break:break-all"></div>
+      <div id="share-state" style="font-size:12px;margin-top:8px"></div>
+      <div class="modal-footer" style="justify-content:space-between">
+        <button class="btn-modal-cancel" id="btn-share-disable">Dejar de compartir</button>
+        <div style="display:flex;gap:10px">
+          <button class="btn-modal-cancel" id="btn-share-pick">Elegir otra carpeta</button>
+          <button class="btn-modal-submit" id="btn-share-publish">Publicar ahora</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: unificar propietarios -->
+  <div id="modal-merge" class="modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="modal-title">Unificar propietarios</span>
+        <button class="unmark-btn modal-x" data-close-modal="modal-merge">&times;</button>
+      </div>
+      <div style="font-size:12px;opacity:0.75;line-height:1.6;margin-bottom:12px">
+        Se mantiene <strong id="merge-keep-name"></strong>. Elegí el propietario duplicado: sus aptos pasan a este,
+        se completan los datos vacíos y el duplicado se elimina.
+      </div>
+      <div class="modal-section">Propietario duplicado</div>
+      <div class="mfield">
+        <input type="text" id="m-merge-search" placeholder="Buscar..." autocomplete="off">
+      </div>
+      <div id="merge-results" class="merge-results"></div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" data-close-modal="modal-merge">Cancelar</button>
+        <button class="btn-modal-submit" id="modal-merge-submit" disabled>Unificar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: agregar alquiler -->
+  <div id="modal-add" data-form>
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="modal-title" id="modal-add-title">Nuevo Alquiler</span>
+        <button class="unmark-btn modal-x" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-section">Dirección</div>
+      <div class="modal-grid">
+        <div class="mfield">
+          <label>Edificio <span class="field-hint">(si tiene)</span></label>
+          <input type="text" id="m-edificio" placeholder="Ej: Torre Ceibo" autocomplete="off">
+        </div>
+        <div class="mfield">
+          <label>Calle y numero <span class="m-req">*</span></label>
+          <input type="text" id="m-calle" placeholder="Ej: Av. Italia 1500" autocomplete="off">
+        </div>
+        <div class="mfield">
+          <label>Unidad</label>
+          <input type="text" id="m-unidad" placeholder="Ej: 601" autocomplete="off">
+        </div>
+        <div class="mfield">
+          <label>Se guarda como</label>
+          <div class="addr-preview" id="m-dir-preview">&mdash;</div>
+        </div>
+      </div>
+      <div class="modal-section">Propietario</div>
+      <div class="modal-grid">
+        <div class="mfield mfull">
+          <label>Nombre</label>
+          <input type="text" id="m-prop" placeholder="Nombre completo" autocomplete="off">
+        </div>
+        <div class="mfield">
+          <label>Teléfono</label>
+          <input type="text" id="m-tel-prop" placeholder="09X XXX XXX" autocomplete="off">
+        </div>
+        <div class="mfield">
+          <label>Mail</label>
+          <input type="email" id="m-mail-prop" placeholder="prop@ejemplo.com" autocomplete="off">
+        </div>
+      </div>
+      <div class="modal-section">Inquilino</div>
+      <div class="modal-grid">
+        <div class="mfield mfull">
+          <label>Nombre</label>
+          <input type="text" id="m-inq" placeholder="Nombre completo" autocomplete="off">
+        </div>
+        <div class="mfield">
+          <label>Teléfono</label>
+          <input type="text" id="m-tel-inq" placeholder="09X XXX XXX" autocomplete="off">
+        </div>
+        <div class="mfield">
+          <label>Mail</label>
+          <input type="email" id="m-mail-inq" placeholder="inq@ejemplo.com" autocomplete="off">
+        </div>
+      </div>
+      <div class="modal-section">Contrato</div>
+      <div class="modal-grid">
+        <div class="mfield">
+          <label>Alquiler <span class="m-req">*</span></label>
+          <div class="importe-row">
+            <input type="number" id="m-importe" placeholder="25000" min="1" step="1">
+            <div class="seg moneda-seg" id="m-moneda-seg" role="radiogroup" aria-label="Moneda">
+              <button type="button" class="seg-btn active" data-moneda="UYU">$ Pesos</button><button type="button" class="seg-btn" data-moneda="USD">US$ Dólares</button>
+            </div>
+            <input type="hidden" id="m-moneda" value="UYU">
+          </div>
+        </div>
+        <div class="mfield">
+          <label>Duracion contrato</label>
+          <select id="m-duracion">
+            <option value="">Sin especificar</option>
+            <option value="1 año">1 año</option>
+            <option value="2 años">2 años</option>
+            <option value="3 años">3 años</option>
+          </select>
+        </div>
+        <div class="mfield">
+          <label>Fecha inicio</label>
+          <input type="date" id="m-fecha">
+        </div>
+        <div class="mfield mfull">
+          <label>Garantía</label>
+          <select id="m-garantia"></select>
+        </div>
+        <details class="m-disclosure mfull" id="m-opt-rem">
+          <summary>Quién hace los aumentos <span class="m-sum-hint">si no los hace la inmobiliaria</span></summary>
+          <div class="mfield">
+            <input type="text" id="m-remitente" list="dl-remitentes" placeholder="Vacío = la inmobiliaria, o quien los gestiona" autocomplete="off">
+            <datalist id="dl-remitentes"></datalist>
+            <div class="m-hint" id="m-gestion-hint"></div>
+          </div>
+        </details>
+        <details class="m-disclosure mfull" id="m-opt-notas">
+          <summary>Comentarios</summary>
+          <div class="mfield">
+            <input type="text" id="m-notas">
+          </div>
+        </details>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" id="modal-cancel">Cancelar</button>
+        <button class="btn-modal-submit" id="modal-submit">Guardar alquiler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: agregar/editar administracion -->
+  <div id="modal-admin" data-form>
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="modal-title" id="modal-admin-title">Nueva Administracion</span>
+        <button class="unmark-btn modal-x" id="modal-admin-close">&times;</button>
+      </div>
+      <div class="modal-section">Datos de la administración</div>
+      <div class="modal-grid">
+        <div class="mfield mfull">
+          <label>Administracion <span class="m-req">*</span></label>
+          <input type="text" id="m-adm-nombre" placeholder="Ej: Administración Sur (Laura Gómez)" autocomplete="off">
+        </div>
+        <div class="mfield mfull">
+          <label>Edificios administrados</label>
+          <input type="text" id="m-adm-edificios">
+        </div>
+        <div class="mfield mfull">
+          <label>Telefonos</label>
+          <input type="text" id="m-adm-telefono">
+        </div>
+        <div class="mfield mfull">
+          <label>Mails</label>
+          <input type="text" id="m-adm-mail">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" id="modal-admin-cancel">Cancelar</button>
+        <button class="btn-modal-submit" id="modal-admin-submit">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: importar marcas de la app anterior -->
+  <div id="modal-marks" data-form>
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="modal-title">Importar marcas</span>
+        <button class="unmark-btn modal-x" id="modal-marks-close">&times;</button>
+      </div>
+      <div class="modal-section">Pasos</div>
+      <ol class="marks-steps">
+        <li>Abrí la app anterior en el navegador (con el launcher).</li>
+        <li>Apretá <kbd>F12</kbd> y andá a la pestaña <strong>Console</strong>.</li>
+        <li>Pegá esto y apretá Enter:<br>
+          <code id="marks-snippet">copy(localStorage.getItem('admin_alquileres_marks'))</code>
+          <button class="copy-btn" id="btn-copy-snippet" type="button">&#8663; Copiar</button>
+        </li>
+        <li>Volvé acá y pegá el resultado abajo.</li>
+      </ol>
+      <div class="modal-section">Marcas</div>
+      <textarea id="m-marks-json" class="marks-textarea" placeholder='{"a|DIRECCION|3|2026":{"date":"..."}}'></textarea>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" id="modal-marks-cancel">Cancelar</button>
+        <button class="btn-modal-submit" id="modal-marks-submit">Importar</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /root -->
+
+<!-- Toast global -->
+<div id="toast"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

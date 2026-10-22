@@ -1,0 +1,5 @@
+{
+  "_descripcion": "Edificios conocidos (nombre, calle y variantes de escritura) y correcciones puntuales de direcciones. Vacio por defecto.",
+  "buildings": [],
+  "overrides": {}
+}

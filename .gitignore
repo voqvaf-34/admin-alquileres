@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-visor/
+*.sqlite
+*.sqlite-*
+*.xlsm
+*.xlsx
+respaldo*/
+.DS_Store
+Thumbs.db
