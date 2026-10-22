@@ -93,6 +93,7 @@ importar) y el Visor (el editor publica y el Visor se actualiza solo, en solo le
 ```bash
 npm run dist         # editor  -> dist/
 npm run dist:visor   # Visor   -> dist-visor/
+npm run smoke        # abre los dos empaquetados y verifica que arranquen
 npm run capturas     # regenera las capturas de este README
 ```
 
