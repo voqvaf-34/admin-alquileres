@@ -1,0 +1,30 @@
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pruebas:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # npm puede no correr el script de instalacion de Electron: se descarga el binario explicitamente.
+      - run: node node_modules/electron/install.js
+      - name: Pruebas unitarias
+        run: npm test
+      - name: Pruebas de punta a punta
+        run: npm run test:e2e
+        env:
+          E2E_SCREENSHOTS: ${{ runner.temp }}/capturas-e2e
+      - name: Capturas de las pruebas (si fallan)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-e2e
+          path: ${{ runner.temp }}/capturas-e2e
