@@ -4,6 +4,7 @@ import * as alquiler from './modales/alquiler.js';
 import * as baseDatos from './vistas/base-datos.js';
 import * as cabecera from './componentes/cabecera.js';
 import * as compartir from './componentes/compartir.js';
+import * as configuracion from './modales/configuracion.js';
 import * as D from '../../dominios/index.js';
 import * as deshacer from './componentes/deshacer.js';
 import * as importarMarcas from './modales/importar-marcas.js';
@@ -13,6 +14,7 @@ import * as propietarios from './vistas/propietarios.js';
 import { Splitters } from '../../dominios/index.js';
 import { bindAutocomplete } from './componentes/autocompletado.js';
 import { pintarAviso } from './componentes/avisos.js';
+import { aplicarMarca } from './componentes/marca.js';
 import { marcarVisto, pintarNovedades } from './componentes/novedades.js';
 import { paintSave, paintShare, paintViewer, viewerUseState } from './componentes/compartir.js';
 import { paintUndo } from './componentes/deshacer.js';
@@ -33,6 +35,7 @@ export function applyState(st) {
   estado.marks    = st.marks || {};
   estado.liveDbAvailable = !!st.liveDbAvailable;
   estado.appSettings = st.settings || {};
+  aplicarMarca(estado.appSettings);
   applyOwners(st);
   paintUndo(st.undo);
   if (st.share) paintShare(st.share);
@@ -185,7 +188,6 @@ export async function loadState() {
     const st = await call('getState');
     if (st.mode === 'viewer') {
       document.body.classList.add('viewer');
-      document.title = 'Admin Alquileres · Visor';
       await viewerUseState(st);
       if (!st.needsShared) fetchIPC();
       return;
@@ -295,7 +297,7 @@ export function iniciar() {
 // los datos.
 
 for (const parte of [modales, compartir, operativo, propietarios, { iniciar }, deshacer, cabecera, importarMarcas,
-                     baseDatos, administraciones, alquiler]) parte.iniciar();
+                     baseDatos, administraciones, alquiler, configuracion]) parte.iniciar();
 bindAutocomplete();
 loadState();
 

@@ -11,7 +11,7 @@
 </head>
 <body>
 <!-- Barra de titulo para las pantallas de inicio (en la app la cumple la cabecera) -->
-<div class="win-drag"><span class="logo-text">Mi Inmobiliaria</span></div>
+<div class="win-drag"><img class="logo-img" data-marca-logo alt="" hidden><span class="logo-text" data-marca-nombre>Mi Inmobiliaria</span></div>
 <div id="root">
 
   <!-- Pantalla de carga -->
@@ -66,8 +66,9 @@
   <div id="app-screen">
     <div class="header">
       <div class="header-left">
-        <span class="logo-small" role="img" aria-label="Mi Inmobiliaria">
-          <span class="logo-text">Mi Inmobiliaria</span>
+        <span class="logo-small" role="img" aria-label="Mi Inmobiliaria" id="hdr-logo">
+          <img class="logo-img" data-marca-logo alt="" hidden>
+          <span class="logo-text" data-marca-nombre>Mi Inmobiliaria</span>
         </span>
         <span style="font-weight:500;letter-spacing:0.5px">Alquileres</span>
         <span class="viewer-only viewer-badge">VISOR</span>
@@ -97,6 +98,7 @@
             <button class="menu-item editor-only" id="btn-menu-share">Compartir con el Visor…</button>
             <button class="menu-item editor-only" id="btn-import-marks">Importar marcas</button>
             <button class="menu-item editor-only" id="btn-data-folder">Carpeta de datos y copias</button>
+            <button class="menu-item editor-only" id="btn-config">Configuración…</button>
           </div>
         </div>
       </div>
@@ -491,6 +493,51 @@
       <div class="modal-footer">
         <button class="btn-modal-cancel" id="modal-admin-cancel">Cancelar</button>
         <button class="btn-modal-submit" id="modal-admin-submit">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: configuracion (marca de la inmobiliaria) -->
+  <div id="modal-config" class="modal" data-form>
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="modal-title">Configuración</span>
+        <button class="unmark-btn modal-x" data-close-modal="modal-config">&times;</button>
+      </div>
+      <div class="modal-section">Marca de la inmobiliaria</div>
+      <div class="modal-grid">
+        <div class="mfield mfull">
+          <label>Nombre de la inmobiliaria</label>
+          <input type="text" id="cfg-nombre" placeholder="Mi Inmobiliaria" autocomplete="off" maxlength="60">
+          <span class="field-hint">Se muestra arriba (si no hay logo) y en los mensajes para inquilinos y propietarios.</span>
+        </div>
+        <div class="mfield mfull">
+          <label>Color principal</label>
+          <div class="cfg-colores">
+            <div class="cfg-sugeridos" id="cfg-sugeridos"></div>
+            <input type="color" id="cfg-color" title="Elegir otro color">
+            <input type="text" id="cfg-color-hex" maxlength="7" spellcheck="false" autocomplete="off">
+          </div>
+        </div>
+        <div class="mfield mfull">
+          <label>Logo</label>
+          <div class="cfg-logo">
+            <div class="cfg-logo-preview" id="cfg-logo-preview"><img id="cfg-logo-img" alt="" hidden><span id="cfg-logo-vacio">Sin logo</span></div>
+            <button class="btn-modal-cancel" type="button" id="cfg-logo-elegir">Elegir imagen…</button>
+            <button class="btn-modal-cancel" type="button" id="cfg-logo-quitar">Quitar</button>
+            <input type="file" id="cfg-logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+          </div>
+          <span class="field-hint">Ideal: horizontal, con fondo transparente o del mismo color que la barra. Se ajusta solo a la altura de la barra.</span>
+        </div>
+      </div>
+      <div class="modal-section">Vista previa</div>
+      <div class="cfg-preview" id="cfg-preview">
+        <div class="cfg-preview-bar"><img class="logo-img" id="cfg-prev-logo" alt="" hidden><span class="logo-text" id="cfg-prev-nombre"></span><span class="cfg-prev-sub">Alquileres</span></div>
+        <div class="cfg-preview-body"><span class="cfg-prev-tab">Base de Datos</span><button type="button" class="cfg-prev-btn" tabindex="-1">+ Agregar</button></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" data-close-modal="modal-config">Cancelar</button>
+        <button class="btn-modal-submit" id="cfg-guardar">Guardar</button>
       </div>
     </div>
   </div>

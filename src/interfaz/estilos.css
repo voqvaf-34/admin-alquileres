@@ -7,19 +7,26 @@
 @font-face { font-family:'Rubik'; font-weight:500; font-display:swap; src:url('recursos/fonts/rubik-latin-ext-500-normal.woff2') format('woff2'); unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
 @font-face { font-family:'Rubik'; font-weight:700; font-display:swap; src:url('recursos/fonts/rubik-latin-ext-700-normal.woff2') format('woff2'); unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
 
+/* ── Colores de la marca: valores por defecto; la app los reemplaza con los de la configuracion
+   (ver dominios/marca.js -> paleta) ── */
+:root {
+  --m-header: #2563EB; --m-header-ink: #FFFFFF; --m-header-fg: 255,255,255;
+  --m-accent: #2563EB; --m-accent-rgb: 37,99,235; --m-ink: #2563EB;
+  --m-accent-dk: #366FED; --m-accent-dk-rgb: 54,111,237; --m-ink-dk: #467AEE;
+}
 /* ── Tema claro (por defecto) ── */
 :root {
   color-scheme: light;
   --fg: 26,26,26;
   --bg: #f7f7f7; --text: #1a1a1a; --surface: #ffffff; --panel: #ffffff;
   --border: rgba(var(--fg),0.10); --dim: rgba(var(--fg),0.55);
-  --accent: #ff4516; --accent-rgb: 255,69,22; --accent-ink: #e03a0e;
+  --accent: var(--m-accent); --accent-rgb: var(--m-accent-rgb); --accent-ink: var(--m-ink); --on-accent: var(--m-header-ink);
   --green: #2e7d32;  --green-rgb: 46,125,50;
   --red: #d32f2f;    --red-rgb: 211,47,47;
   --amber: #b35c00;  --amber-rgb: 179,92,0;
   --orange: #b35c00; --orange-rgb: 230,120,0;
   --tel: #444444; --mail: #555555;
-  --header-bg: #FD4108;   /* mismo naranja que el logo, en los dos temas */
+  --header-bg: var(--m-header);   /* el color de la marca, en los dos temas */
   --picker-filter: none;
   --shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
@@ -28,13 +35,13 @@
   color-scheme: dark;
   --fg: 255,255,255;
   --bg: #0d0d0d; --text: #e4e4e4; --surface: rgba(255,255,255,0.03); --panel: #161616;
-  --accent: #ff5a2b; --accent-rgb: 255,90,43; --accent-ink: #ff7a52;
+  --accent: var(--m-accent-dk); --accent-rgb: var(--m-accent-dk-rgb); --accent-ink: var(--m-ink-dk); --on-accent: var(--m-header-ink);
   --green: #81c784;  --green-rgb: 129,199,132;
   --red: #ef5350;    --red-rgb: 239,83,80;
   --amber: #ffa726;  --amber-rgb: 255,167,38;
   --orange: #ffa040; --orange-rgb: 255,152,0;
   --tel: #b0bec5; --mail: #90a4ae;
-  --header-bg: #FD4108;
+  --header-bg: var(--m-header);
   --picker-filter: invert(0.6);
   --shadow: none;
 }
@@ -49,7 +56,7 @@ body { background:var(--bg); color:var(--text); font-family:'Rubik','Segoe UI',R
 /* ── autoload screen ── */
 #autoload-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; }
 .autoload-inner { text-align:center; max-width:520px; padding:32px; }
-.logo-big { display:inline-block; font-size:18px; font-weight:700; letter-spacing:4px; text-transform:uppercase; background:var(--accent); color:#fff; padding:10px 22px; border-radius:2px; margin-bottom:24px; }
+.logo-big { display:inline-block; font-size:18px; font-weight:700; letter-spacing:4px; text-transform:uppercase; background:var(--accent); color:var(--on-accent); padding:10px 22px; border-radius:2px; margin-bottom:24px; }
 
 .btn-autoload { background:rgba(var(--accent-rgb),0.1); border:1px solid rgba(var(--accent-rgb),0.3); color:var(--accent); padding:10px 28px; border-radius:6px; cursor:pointer; font-size:13px; font-family:inherit; transition:all 0.2s; }
 .btn-autoload:hover { background:rgba(var(--accent-rgb),0.18); border-color:rgba(var(--accent-rgb),0.55); }
@@ -70,12 +77,12 @@ body { background:var(--bg); color:var(--text); font-family:'Rubik','Segoe UI',R
 
 /* ── app ── */
 #app-screen { display:none; }
-.header { --fg:255,255,255; --text:#ffffff; --green:#81c784; --green-rgb:129,199,132; background:var(--header-bg); color:var(--text); padding:7px 20px; border-bottom:1px solid rgba(0,0,0,0.18); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.header { --fg:var(--m-header-fg); --text:var(--m-header-ink); --green:#81c784; --green-rgb:129,199,132; background:var(--header-bg); color:var(--text); padding:7px 20px; border-bottom:1px solid rgba(0,0,0,0.18); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
 .header-left { display:flex; align-items:center; gap:16px; }
 .header-right { display:flex; align-items:center; gap:8px; }
 .logo-small { display:inline-flex; align-items:center; background:var(--accent); line-height:0; border-radius:6px; overflow:hidden; }
 /* Logo de texto (nombre de la empresa) */
-.logo-text { display:inline-block; font-size:17px; font-weight:700; letter-spacing:0.5px; color:#fff; line-height:42px; white-space:nowrap; }
+.logo-text { display:inline-block; font-size:17px; font-weight:700; letter-spacing:0.5px; color:var(--m-header-ink); line-height:42px; white-space:nowrap; }
 .file-info { font-size:12px; opacity:0.75; }
 
 
@@ -325,7 +332,7 @@ a.wa:hover { color:#25D366; border-bottom-color:#25D366; }
 
 /* ── Botones principales en el color de acento ── */
 .btn-autoload, .btn-modal-submit, .btn-add-entry {
-  background:var(--accent); border:1px solid var(--accent); color:#fff; font-weight:500;
+  background:var(--accent); border:1px solid var(--accent); color:var(--on-accent); font-weight:500;
 }
 .btn-autoload:hover, .btn-modal-submit:hover, .btn-add-entry:hover {
   background:var(--accent-ink); border-color:var(--accent-ink); filter:brightness(1.05);
@@ -340,7 +347,7 @@ a.wa:hover { color:#25D366; border-bottom-color:#25D366; }
 .seg { display:inline-flex; border:1px solid rgba(var(--fg),0.15); border-radius:6px; overflow:hidden; }
 .seg-btn { background:none; border:none; color:var(--dim); padding:6px 14px; font-size:12px; font-family:inherit; cursor:pointer; }
 .seg-btn + .seg-btn { border-left:1px solid rgba(var(--fg),0.15); }
-.seg-btn.active { background:var(--accent); color:#fff; }
+.seg-btn.active { background:var(--accent); color:var(--on-accent); }
 .contact-tag { display:inline-block; font-size:11px; padding:1px 8px; border-radius:10px; background:rgba(var(--accent-rgb),0.10); color:var(--accent-ink); white-space:nowrap; }
 
 .owner-apt { font-size:11px; padding:3px 9px; border-radius:4px; border:1px solid rgba(var(--fg),0.12); background:var(--surface); }
@@ -387,18 +394,18 @@ body.viewer [data-un-ren], body.viewer [data-un-ren-r],
 body.viewer .chk-wrap:not(.done) { display:none !important; }
 body.viewer .chk-wrap .chk { pointer-events:none; }
 body.viewer .nota-textarea, body.viewer [data-acct-owner] { pointer-events:none; background:transparent; border-color:transparent; resize:none; }
-.viewer-badge { font-size:10px; letter-spacing:1px; padding:3px 8px; border-radius:3px; background:rgba(255,255,255,0.12); color:#fff; font-weight:500; }
+.viewer-badge { font-size:10px; letter-spacing:1px; padding:3px 8px; border-radius:3px; background:rgba(var(--fg),0.12); color:var(--text); font-weight:500; }
 #viewer-setup-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; text-align:center; }
-.share-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.3); margin-right:2px; vertical-align:middle; }
+.share-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:rgba(var(--fg),0.3); margin-right:2px; vertical-align:middle; }
 .share-dot.ok { background:#81c784; }
 .share-dot.pending { background:#ffa726; }
-.share-dot.off { background:rgba(255,255,255,0.25); }
+.share-dot.off { background:rgba(var(--fg),0.25); }
 /* ── Cabecera compacta con menu ── */
 .header-right { gap:4px; }
 .hdr-icon { position:relative; background:none; border:1px solid transparent; color:var(--text); width:32px; height:30px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-family:inherit; font-size:14px; opacity:0.85; transition:background 0.15s, opacity 0.15s; }
-.hdr-icon:hover:not(:disabled) { background:rgba(255,255,255,0.12); opacity:1; }
+.hdr-icon:hover:not(:disabled) { background:rgba(var(--fg),0.12); opacity:1; }
 .hdr-icon:disabled { opacity:0.25; cursor:default; }
-.hdr-sep { width:1px; height:18px; background:rgba(255,255,255,0.2); margin:0 4px; }
+.hdr-sep { width:1px; height:18px; background:rgba(var(--fg),0.2); margin:0 4px; }
 #btn-share .share-dot { position:absolute; right:3px; bottom:4px; width:8px; height:8px; border:1.5px solid var(--header-bg); margin:0; }
 .save-ind { cursor:default; font-weight:700; color:#81c784; font-size:15px; }
 .save-ind.err { color:#ff5a4f; background:rgba(255,90,79,0.15); }
@@ -436,7 +443,7 @@ select option:disabled { color: rgba(var(--fg),0.45); }
 .msep { opacity:0.3; margin:0 2px; }
 .picker .chip.pick { cursor:pointer; padding:4px 12px; background:none; border-color:rgba(var(--fg),0.18); color:var(--text); opacity:0.75; }
 .picker .chip.pick:hover { opacity:1; border-color:rgba(var(--accent-rgb),0.5); }
-.picker .chip.pick.on { opacity:1; background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+.picker .chip.pick.on { opacity:1; background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:600; }
 .picker { cursor:default; }
 body.viewer .chip-add, body.viewer .chip-x { display:none !important; }
 /* ── Comentarios como viñetas ── */
@@ -468,22 +475,22 @@ body.viewer .nota-txt { cursor:default; }
 .tl-futuro { opacity:0.7; }
 .tl-hoy .tl-dot { background:var(--text); width:8px; height:8px; margin-top:5px; }
 .tl-inicio .tl-title { color:var(--accent-ink); }
-/* Barra naranja: el logo queda integrado (sin recuadro) y los indicadores en blanco */
+/* Barra de color: el logo queda integrado (sin recuadro) y los indicadores en blanco */
 .logo-small { background:none; border-radius:0; }
 .header .hdr-icon { opacity:0.95; }
 .header .hdr-icon:disabled { opacity:0.4; }
 .header .hdr-icon:hover:not(:disabled) { background:rgba(0,0,0,0.14); }
-.header .hdr-sep { background:rgba(255,255,255,0.35); }
-.header .save-ind { color:#fff; }
+.header .hdr-sep { background:rgba(var(--fg),0.35); }
+.header .save-ind { color:var(--text); }
 .header .save-ind.err { color:#fff; background:#b3261e; }
-.header #btn-share .share-dot { border-color:#fff; }
+.header #btn-share .share-dot { border-color:var(--text); }
 .header .viewer-badge { background:rgba(0,0,0,0.18); }
-/* ── Ventana sin barra de Windows: la cabecera naranja es la barra de titulo ── */
+/* ── Ventana sin barra de Windows: la cabecera de color es la barra de titulo ── */
 .header { height:56px; box-sizing:border-box; flex-wrap:nowrap; -webkit-app-region:drag; user-select:none;
   /* lugar para los botones minimizar/maximizar/cerrar que dibuja Windows a la derecha */
   padding-right:calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) + 14px); }
 .header button, .header a, .header input, .header select, .header .hdr-menu, .header .save-ind { -webkit-app-region:no-drag; }
-.win-drag { position:fixed; top:0; left:0; right:0; height:56px; z-index:50; background:#FD4108; -webkit-app-region:drag;
+.win-drag { position:fixed; top:0; left:0; right:0; height:56px; z-index:50; background:var(--header-bg); -webkit-app-region:drag;
   display:flex; align-items:center; padding:0 20px; }
 .win-drag .logo-text { line-height:42px; }
 body.in-app .win-drag { display:none; }
@@ -498,7 +505,7 @@ body:not(.in-app) #root { padding-top:56px; }
 /* Con una ventana (modal) abierta la barra no arrastra: si no, los clics arriba del modal moverian la ventana */
 body:has(.modal.open, [data-form].open, #modal-add.open, #modal-admin.open, #modal-marks.open) .header,
 body:has(.modal.open, [data-form].open, #modal-add.open, #modal-admin.open, #modal-marks.open) .win-drag { -webkit-app-region:no-drag; }
-/* La barra naranja y las pestañas quedan fijas arriba al bajar (la ventana no tiene barra de Windows) */
+/* La barra de color y las pestañas quedan fijas arriba al bajar (la ventana no tiene barra de Windows) */
 .header { position:sticky; top:0; z-index:100; }
 .tabs { position:sticky; top:56px; z-index:99; background:var(--bg); }
 .tabs { height:42px; box-sizing:border-box; }
@@ -508,7 +515,7 @@ html { scroll-padding-top:140px; }   /* al saltar a una fila, que no quede debaj
 .importe-row input[type=number] { flex:1; min-width:0; }
 .moneda-seg { flex-shrink:0; border-radius:8px; }
 .moneda-seg .seg-btn { padding:6px 12px; }
-/* Ventanas secundarias: todas con la misma estructura (titulos de seccion naranjas, mismo ancho).
+/* Ventanas secundarias: todas con la misma estructura (titulos de seccion en el color de la marca, mismo ancho).
    Las secciones opcionales se despliegan desde un titulo igual a los de seccion, con ▸. */
 #modal-add .modal-box, #modal-admin .modal-box, #modal-owner .modal-box, #modal-marks .modal-box,
 #modal-merge .modal-box, #modal-share .modal-box { width:min(760px,95vw); }
@@ -548,9 +555,34 @@ body.viewer [data-aum-undo] { display:none !important; }
    de la pestaña para que aparecer o desaparecer no mueva las demas */
 .tab-btn { position:relative; }
 .tab-aviso { position:absolute; top:4px; right:-5px; min-width:17px; height:17px; padding:0 5px; box-sizing:border-box;
-  border-radius:9px; background:#FD4108; color:#fff; font-size:10px; font-weight:600; line-height:17px; text-align:center;
+  border-radius:9px; background:var(--accent); color:var(--on-accent); font-size:10px; font-weight:600; line-height:17px; text-align:center;
   letter-spacing:0; text-shadow:none; pointer-events:none; }
-/* Visor: punto naranja en lo nuevo (va arriba de todo mientras se esta en la pestaña) */
-.punto-nuevo { display:inline-block; width:9px; height:9px; border-radius:50%; background:#FD4108; margin-right:8px; vertical-align:middle;
-  box-shadow:0 0 0 3px rgba(253,65,8,0.18); }
+/* Visor: punto de color en lo nuevo (va arriba de todo mientras se esta en la pestaña) */
+.punto-nuevo { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--accent); margin-right:8px; vertical-align:middle;
+  box-shadow:0 0 0 3px rgba(var(--accent-rgb),0.18); }
 .db-chevron { white-space:nowrap; }   /* punto de "nuevo" y flecha en la misma linea */
+/* ── Marca: logo en la barra y ventana de Configuracion ── */
+.logo-img { height:40px; max-width:260px; width:auto; object-fit:contain; display:block; }
+.win-drag .logo-img { height:40px; }
+#modal-config .modal-box { width:min(760px,95vw); }
+.cfg-colores { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.cfg-sugeridos { display:flex; gap:6px; flex-wrap:wrap; }
+.cfg-swatch { width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.15); }
+.cfg-swatch.on { border-color:var(--text); }
+#cfg-color { width:34px; height:30px; padding:0; border:1px solid rgba(var(--fg),0.15); border-radius:6px; background:none; cursor:pointer; }
+#cfg-color-hex { width:92px; font-family:ui-monospace,Consolas,monospace; text-transform:uppercase; }
+#cfg-color-hex.invalido { border-color:var(--red); }
+.cfg-logo { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.cfg-logo-preview { height:56px; min-width:120px; max-width:300px; padding:6px 12px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  background:var(--m-header); color:var(--m-header-ink); font-size:11px; }
+.cfg-logo-preview img { max-height:44px; max-width:276px; object-fit:contain; }
+.cfg-logo-preview span { opacity:0.7; }
+.cfg-preview { border:1px solid rgba(var(--fg),0.1); border-radius:10px; overflow:hidden; }
+.cfg-preview-bar { background:var(--m-header); color:var(--m-header-ink); height:56px; display:flex; align-items:center; gap:16px; padding:0 20px; }
+.cfg-preview-bar .logo-text { color:var(--m-header-ink); }
+.cfg-prev-sub { font-weight:500; letter-spacing:0.5px; }
+.cfg-preview-body { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:var(--bg); }
+.cfg-prev-tab { color:var(--m-ink); border-bottom:2px solid var(--m-accent); padding-bottom:6px; font-size:12px; }
+:root[data-theme="dark"] .cfg-prev-tab { color:var(--m-ink-dk); border-color:var(--m-accent-dk); }
+.cfg-prev-btn { background:var(--m-accent); color:var(--m-header-ink); border:none; border-radius:8px; padding:7px 14px; font-family:inherit; font-weight:500; pointer-events:none; }

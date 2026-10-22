@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { fetchLatestIPC } = require('./ine-ipc');
 const D = require('../dominios/index.js');
-const { nameKey } = D;
+const { nameKey, marcaASettings: brandSettings } = D;
 const { ctx } = require('./contexto');
 const { ADDRESS_VERSION, CLEANUP_VERSION, DEFAULT_SHARED_DIR, GARANTIA_VERSION, MONEDA_VERSION, OWNERS_VERSION, defaultExcelPaths } = require('./config');
 const { exportCsv } = require('./csv');
@@ -13,6 +13,7 @@ const estadoApp = require('./estado-app');
 const { cleanContract } = require('./migraciones');
 const publicacion = require('./publicacion');
 const visor = require('./visor');
+const ventana = require('./ventana');
 
 // Cambios que se pueden deshacer (con el texto que se muestra en "Deshacer: ...").
 const UNDO_LABELS = {
@@ -21,7 +22,7 @@ const UNDO_LABELS = {
   'marks:save': 'Cambiar marca', 'owner:save': 'Guardar propietario', 'owner:delete': 'Eliminar propietario',
   'owner:merge': 'Unificar propietarios', 'owner:account': 'Cuenta de cobro', 'owner:addDocs': 'Agregar documento',
   'owner:deleteDoc': 'Eliminar documento', 'contract:setOwners': 'Cambiar propietarios', 'import:liveDb': 'Copiar datos',
-  'import:pick': 'Importar Excel', 'import:fromPath': 'Importar Excel',
+  'import:pick': 'Importar Excel', 'import:fromPath': 'Importar Excel', 'brand:save': 'Cambiar configuración',
 };
 
 function notifyUndo() {
@@ -99,6 +100,8 @@ function registerHandlers() {
 
   handle('marks:save',   (m)      => { ctx.store.replaceMarks(m); return true; });
   handle('setting:set',  (k, v)   => { ctx.store.setSetting(k, v); return true; });
+  handle('brand:save',   (m)      => { ctx.store.setSettings(brandSettings(m)); return { settings: ctx.store.getSettings() }; });
+  handle('window:titleBarColor', (c, ink) => ventana.setTitleBarColor(c, ink));
   handle('ipc:fetch',    ()       => fetchLatestIPC());
 
   const ownersState = () => ({
@@ -155,6 +158,7 @@ function registerViewerHandlers() {
   handle('owner:openDoc',    (id) => shell.openPath(docFile(id).p));
   handle('data:exportCsv',   () => exportCsv());
   handle('setting:set',      () => true);
+  handle('window:titleBarColor', (c, ink) => ventana.setTitleBarColor(c, ink));
   handle('undo:status',      () => ctx.store ? ctx.store.undoStatus() : {});
 }
 

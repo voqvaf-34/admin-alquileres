@@ -461,9 +461,15 @@ class Store {
     return out;
   }
   setSetting(key, value) {
-    this.transaction(() => this.db.run(
-      'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
-      [key, value == null ? null : String(value)]));
+    this.setSettings({ [key]: value });
+  }
+  // Varias claves en una sola transaccion (un solo guardado y una sola publicacion).
+  setSettings(values) {
+    this.transaction(() => {
+      for (const [key, value] of Object.entries(values)) this.db.run(
+        'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+        [key, value == null ? null : String(value)]);
+    });
   }
 
   // ── importacion desde Excel (reemplaza contratos y administraciones) ─────
