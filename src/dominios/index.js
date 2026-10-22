@@ -16,3 +16,4 @@ export * from './nombres.js';
 export * from './direcciones.js';
 export * from './propietarios.js';
 export * from './marca.js';
+export * from './demo.js';

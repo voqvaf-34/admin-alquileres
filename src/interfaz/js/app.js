@@ -285,6 +285,7 @@ export function iniciar() {
   });
 
   document.getElementById('btn-copy-live').addEventListener('click', () => runImport(call('importLiveDb')));
+  document.getElementById('btn-start-demo').addEventListener('click', () => runImport(call('loadDemo')));
 
   document.getElementById('btn-start-empty').addEventListener('click', async () => {
     try { applyState(await call('startEmpty')); showApp(); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }

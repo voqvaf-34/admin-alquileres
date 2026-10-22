@@ -2,6 +2,16 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
+## [0.4.0] - 2026-10-21
+
+### Agregado
+- **Datos de ejemplo**: en la pantalla de inicio, "Probar con datos de ejemplo" carga una inmobiliaria inventada
+  (21 alquileres, 12 propietarios, 3 administraciones). Las fechas se calculan desde hoy, así siempre hay aumentos
+  del mes, renovaciones próximas, un vencido sin resolver, garantías que gestionan solas, un apto ya renovado
+  (con línea de tiempo), alquileres en dólares e inactivos. Pasan por las mismas normalizaciones que una importación
+  y se pueden deshacer.
+- Pruebas unitarias de los datos de ejemplo con distintas fechas y prueba E2E que recorre todas las pestañas.
+
 ## [0.3.0] - 2026-10-21
 
 ### Agregado

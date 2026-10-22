@@ -22,7 +22,7 @@ const UNDO_LABELS = {
   'marks:save': 'Cambiar marca', 'owner:save': 'Guardar propietario', 'owner:delete': 'Eliminar propietario',
   'owner:merge': 'Unificar propietarios', 'owner:account': 'Cuenta de cobro', 'owner:addDocs': 'Agregar documento',
   'owner:deleteDoc': 'Eliminar documento', 'contract:setOwners': 'Cambiar propietarios', 'import:liveDb': 'Copiar datos',
-  'import:pick': 'Importar Excel', 'import:fromPath': 'Importar Excel', 'config:save': 'Cambiar configuración',
+  'import:demo': 'Cargar datos de ejemplo', 'import:pick': 'Importar Excel', 'import:fromPath': 'Importar Excel', 'config:save': 'Cambiar configuración',
 };
 
 function notifyUndo() {
@@ -71,6 +71,7 @@ function registerHandlers() {
   });
 
   handle('import:liveDb', () => estadoApp.importLiveDb());
+  handle('import:demo',   () => estadoApp.loadDemo());
   handle('start:empty', () => {
     ctx.store.setSetting('initialized', '1');
     ctx.store.setSetting('ownersVersion', OWNERS_VERSION);

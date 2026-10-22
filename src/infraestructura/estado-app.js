@@ -1,5 +1,6 @@
 // Estado que se manda a la pantalla; abrir la base e importar datos.
 const fs = require('fs');
+const D = require('../dominios/index.js');
 const { Store } = require('./base-datos');
 const { readWorkbookFile } = require('./importador-excel');
 const share = require('./compartir');
@@ -45,6 +46,20 @@ function importFrom(filePath) {
   return counts;
 }
 
+// Datos de ejemplo inventados (ver dominios/demo.js): pasan por las mismas normalizaciones que
+// una importacion.
+function loadDemo() {
+  const { contracts, admins, marks } = D.datosDemo(new Date());
+  ctx.store.backup('pre-ejemplo');
+  const counts = ctx.store.importData({ contracts, admins });
+  ensureData(true);
+  ctx.store.replaceMarks(marks);
+  ctx.store.setSetting('initialized', '1');
+  ctx.store.setSetting('importedFrom', 'datos de ejemplo');
+  ctx.store.setSetting('importedAt', new Date().toISOString());
+  return { counts, state: state() };
+}
+
 async function openStore() {
   ctx.store = await Store.open(dbPath());
   ensureData(false);
@@ -65,4 +80,4 @@ async function importLiveDb() {
   return { counts: { contracts: ctx.store.listContracts().length, admins: ctx.store.listAdmins().length }, state: state() };
 }
 
-Object.assign(module.exports, { state, importFrom, openStore, importLiveDb });
+Object.assign(module.exports, { state, importFrom, loadDemo, openStore, importLiveDb });
