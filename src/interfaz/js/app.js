@@ -172,7 +172,7 @@ export function showAutoLoad(msg) {
 }
 
 export function showImportScreen() {
-  document.getElementById("drop-label").textContent        = "o soltá el Excel acá";
+  document.getElementById("drop-label").textContent        = "o soltá la planilla acá";
   document.getElementById("autoload-screen").style.display = "none";
   document.getElementById("upload-screen").style.display   = "flex";
   document.getElementById("app-screen").style.display      = "none";

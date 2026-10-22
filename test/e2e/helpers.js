@@ -37,4 +37,13 @@ async function empezarVacia(page) {
   await page.waitForSelector('#app-screen', { state: 'visible' });
 }
 
-module.exports = { ROOT, SHOTS, launch, tmpDir, shot, empezarVacia };
+// Abre Configuracion y espera a que la ventana enfoque el primer campo (lo hace a los 80 ms):
+// si se escribe antes, el foco salta en medio y el texto termina en otro campo.
+async function abrirConfiguracion(page) {
+  await page.click('#btn-menu');
+  await page.click('#btn-config');
+  await page.waitForSelector('#modal-config.open');
+  await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'cfg-nombre');
+}
+
+module.exports = { ROOT, SHOTS, launch, tmpDir, shot, empezarVacia, abrirConfiguracion };

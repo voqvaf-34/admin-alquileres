@@ -2,7 +2,7 @@
 const test   = require('node:test');
 const assert = require('node:assert/strict');
 const path   = require('path');
-const { ROOT, launch, tmpDir, shot, empezarVacia } = require('./helpers');
+const { ROOT, launch, tmpDir, shot, empezarVacia, abrirConfiguracion } = require('./helpers');
 
 const LOGO = path.join(ROOT, 'src', 'interfaz', 'recursos', 'icon.png');
 const cssVar = (page, name) => page.evaluate(n => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), name);
@@ -16,10 +16,7 @@ test('configuracion: nombre, color y logo de la inmobiliaria', { timeout: 90000 
     assert.equal(await page.textContent('#hdr-logo [data-marca-nombre]'), 'Mi Inmobiliaria');
     assert.equal(await cssVar(page, '--m-header'), '#2563EB');
 
-    await page.click('#btn-menu');
-    await page.click('#btn-config');
-    await page.waitForSelector('#modal-config.open');
-    await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'cfg-nombre');
+    await abrirConfiguracion(page);
     await page.fill('#cfg-nombre', 'Inmobiliaria del Sur');
     await page.click('.cfg-swatch[data-color="#0F766E"]');
     // La vista previa cambia antes de guardar; la app todavia no.
@@ -33,8 +30,7 @@ test('configuracion: nombre, color y logo de la inmobiliaria', { timeout: 90000 
     assert.equal(await page.title(), 'Inmobiliaria del Sur · Alquileres');
 
     // Logo: reemplaza al nombre en la barra.
-    await page.click('#btn-menu');
-    await page.click('#btn-config');
+    await abrirConfiguracion(page);
     await page.setInputFiles('#cfg-logo-file', LOGO);
     await page.waitForSelector('#cfg-logo-img:not([hidden])');
     await page.click('#cfg-guardar');
@@ -65,9 +61,7 @@ test('configuracion: plantillas de mensajes', { timeout: 60000 }, async () => {
   const { app, page, errors } = await launch(tmpDir());
   try {
     await empezarVacia(page);
-    await page.click('#btn-menu');
-    await page.click('#btn-config');
-    await page.waitForSelector('#modal-config.open');
+    await abrirConfiguracion(page);
     await page.fill('#cfg-nombre', 'Inmobiliaria del Sur');
     await page.click('[data-msg="renovacion"] summary');
     const ta = '[data-msg="renovacion"] textarea';
@@ -86,8 +80,7 @@ test('configuracion: plantillas de mensajes', { timeout: 60000 }, async () => {
     assert.equal(await page.evaluate(() => app.estado.appSettings.msgRenovacion), 'Hola {inquilino}, vence el {vencimiento}. {nada}');
 
     // Al reabrir se ve el texto guardado; restaurar el original lo guarda vacio (= original).
-    await page.click('#btn-menu');
-    await page.click('#btn-config');
+    await abrirConfiguracion(page);
     await page.click('[data-msg="renovacion"] summary');
     assert.equal(await page.inputValue(ta), 'Hola {inquilino}, vence el {vencimiento}. {nada}');
     await page.click('[data-msg="renovacion"] .cfg-restaurar');

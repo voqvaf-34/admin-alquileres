@@ -6,6 +6,7 @@ const fs     = require('fs');
 const os     = require('os');
 const path   = require('path');
 const { _electron } = require('playwright-core');
+const { abrirConfiguracion } = require('./helpers');
 
 const ROOT      = path.join(__dirname, '..', '..');
 const SHOTS     = process.env.E2E_SCREENSHOTS || path.join(os.tmpdir(), 'alq-e2e-shots');
@@ -30,8 +31,7 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     // El editor arranca con los datos de ejemplo y una marca propia.
     await editor.page.click('#btn-start-demo');
     await editor.page.waitForSelector('#app-screen', { state: 'visible' });
-    await editor.page.click('#btn-menu');
-    await editor.page.click('#btn-config');
+    await abrirConfiguracion(editor.page);
     await editor.page.fill('#cfg-nombre', 'Inmobiliaria del Sur');
     await editor.page.click('.cfg-swatch[data-color="#7C3AED"]');
     await editor.page.click('#cfg-guardar');
