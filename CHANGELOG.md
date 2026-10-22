@@ -2,6 +2,20 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
+## [0.6.0] - 2026-10-21
+
+### Agregado
+- **Importar planilla con encabezados** (Excel o CSV): las columnas se reconocen por su nombre, en cualquier orden y
+  con varios nombres posibles ("Dirección", "Domicilio", "Inmueble"...). Obligatorias: Dirección y Alquiler actual.
+  Fechas en dd/mm/aaaa, aaaa-mm-dd, mm/aaaa o formato fecha de Excel; moneda UYU/USD; Estado Activo/Inactivo.
+- **Planilla modelo** para descargar (pantalla de inicio y menú ☰): encabezados, dos filas de ejemplo, hoja de
+  administraciones e instrucciones.
+- Los CSV se leen bien con tildes tanto en UTF-8 como en ANSI (los que guarda Excel en Windows).
+
+### Cambiado
+- La planilla con columnas por posición de la app original sigue funcionando ("formato clásico"). Solo con ese formato
+  se aplican sus ajustes automáticos (dólares si el importe tiene hasta 4 cifras, borrar inactivos sin contacto).
+
 ## [0.5.0] - 2026-10-21
 
 ### Quitado

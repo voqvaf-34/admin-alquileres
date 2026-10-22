@@ -59,12 +59,14 @@ function ensureMoneda(force) {
   ctx.store.setSetting('monedaVersion', MONEDA_VERSION);
 }
 
-function ensureData(force) {
+// heuristicas: ajustes pensados para la planilla clasica (sin columna de moneda, con contratos
+// viejos sin datos). Con la planilla modelo o los datos de ejemplo no hacen falta.
+function ensureData(force, { heuristicas = true } = {}) {
   ensureAddresses(force);
   ensureOwners(force);
-  ensureCleanup(force);
+  if (heuristicas) ensureCleanup(force); else ctx.store.setSetting('cleanupVersion', CLEANUP_VERSION);
   ensureGarantias(force);
-  ensureMoneda(force);
+  if (heuristicas) ensureMoneda(force); else ctx.store.setSetting('monedaVersion', MONEDA_VERSION);
 }
 
 // Normaliza lo que llega del modal de alquiler.

@@ -10,6 +10,7 @@ const { ADDRESS_VERSION, CLEANUP_VERSION, DEFAULT_SHARED_DIR, GARANTIA_VERSION, 
 const { exportCsv } = require('./csv');
 const { docFile, docPreview, pickOwnerDocs } = require('./documentos');
 const estadoApp = require('./estado-app');
+const { writeTemplate } = require('./importador-excel');
 const { cleanContract } = require('./migraciones');
 const publicacion = require('./publicacion');
 const visor = require('./visor');
@@ -56,9 +57,9 @@ function registerHandlers() {
   handle('import:pick', async () => {
     const defaultPath = defaultExcelPaths().find(p => { try { return fs.existsSync(p); } catch (_) { return false; } });
     const res = await dialog.showOpenDialog(ctx.win, {
-      title: 'Seleccionar planilla de Excel',
+      title: 'Seleccionar planilla de alquileres',
       defaultPath,
-      filters: [{ name: 'Excel', extensions: ['xlsm', 'xlsx', 'xls'] }],
+      filters: [{ name: 'Planillas', extensions: ['xlsx', 'xlsm', 'xls', 'csv'] }],
       properties: ['openFile'],
     });
     if (res.canceled || !res.filePaths[0]) return null;
@@ -66,11 +67,21 @@ function registerHandlers() {
   });
 
   handle('import:fromPath', (filePath) => {
-    if (typeof filePath !== 'string' || !/\.(xlsm|xlsx|xls)$/i.test(filePath)) throw new Error('Archivo no valido.');
+    if (typeof filePath !== 'string' || !/\.(xlsm|xlsx|xls|csv)$/i.test(filePath)) throw new Error('Archivo no valido.');
     return { counts: estadoApp.importFrom(filePath), state: estadoApp.state() };
   });
 
   handle('import:demo',   () => estadoApp.loadDemo());
+  handle('import:template', async () => {
+    const res = await dialog.showSaveDialog(ctx.win, {
+      title: 'Guardar planilla modelo', defaultPath: path.join(app.getPath('documents'), 'planilla-alquileres.xlsx'),
+      filters: [{ name: 'Excel', extensions: ['xlsx'] }],
+    });
+    if (res.canceled || !res.filePath) return null;
+    writeTemplate(res.filePath);
+    shell.showItemInFolder(res.filePath);
+    return res.filePath;
+  });
   handle('start:empty', () => {
     ctx.store.setSetting('initialized', '1');
     ctx.store.setSetting('ownersVersion', OWNERS_VERSION);

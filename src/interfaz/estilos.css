@@ -596,3 +596,6 @@ body.viewer [data-aum-undo] { display:none !important; }
 .cfg-aviso { font-size:11px; color:var(--red); margin-top:4px; }
 .cfg-ejemplo { font-size:11px; line-height:1.5; color:var(--dim); background:rgba(var(--fg),0.03); border-radius:6px; padding:6px 10px; margin-top:6px; white-space:pre-wrap; }
 .cfg-ejemplo b { font-weight:500; color:var(--text); }
+/* Boton con aspecto de enlace (pantalla de inicio) */
+.link-btn { background:none; border:none; color:var(--accent-ink); font-family:inherit; font-size:12px; cursor:pointer; text-decoration:underline; padding:2px; }
+.link-btn:hover { opacity:0.8; }

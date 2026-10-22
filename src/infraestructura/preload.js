@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('api', {
   backupNow:       ()        => call('data:backup'),
   exportCsv:       ()        => call('data:exportCsv'),
   loadDemo:        ()        => call('import:demo'),
+  downloadTemplate: ()       => call('import:template'),
   startEmpty:      ()        => call('start:empty'),
   saveOwner:       (o)       => call('owner:save', o),
   deleteOwner:     (id)      => call('owner:delete', id),

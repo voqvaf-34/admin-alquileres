@@ -210,7 +210,7 @@ export async function runImport(promise) {
     return true;
   } catch (err) {
     showToast('Error al importar: ' + esc(err.message), 'err');
-    document.getElementById("drop-label").textContent = "Soltar el Excel acá";
+    document.getElementById("drop-label").textContent = "Soltá la planilla acá";
     return false;
   }
 }
@@ -282,6 +282,12 @@ export function iniciar() {
   });
 
   document.getElementById('btn-start-demo').addEventListener('click', () => runImport(call('loadDemo')));
+  const descargarPlanilla = async () => {
+    try { if (await call('downloadTemplate')) showToast('&#10003; Planilla modelo guardada', 'ok'); }
+    catch (err) { showToast('Error al guardar la planilla: ' + esc(err.message), 'err'); }
+  };
+  document.getElementById('btn-template').addEventListener('click', descargarPlanilla);
+  document.getElementById('btn-menu-template').addEventListener('click', descargarPlanilla);
 
   document.getElementById('btn-start-empty').addEventListener('click', async () => {
     try { applyState(await call('startEmpty')); showApp(); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }

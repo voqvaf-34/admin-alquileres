@@ -35,10 +35,10 @@ function state() {
 
 function importFrom(filePath) {
   const data = readWorkbookFile(filePath);
-  if (!data.contracts.length) throw new Error('No se encontraron alquileres en la hoja ALQUILADOS.');
+  if (!data.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
   ctx.store.backup('pre-import');
   const counts = ctx.store.importData(data);
-  ensureData(true);
+  ensureData(true, { heuristicas: data.formato === 'clasico' });
   ctx.store.setSetting('initialized', '1');
   ctx.store.setSetting('importedFrom', filePath);
   ctx.store.setSetting('importedAt', new Date().toISOString());
@@ -51,7 +51,7 @@ function loadDemo() {
   const { contracts, admins, marks } = D.datosDemo(new Date());
   ctx.store.backup('pre-ejemplo');
   const counts = ctx.store.importData({ contracts, admins });
-  ensureData(true);
+  ensureData(true, { heuristicas: false });
   ctx.store.replaceMarks(marks);
   ctx.store.setSetting('initialized', '1');
   ctx.store.setSetting('importedFrom', 'datos de ejemplo');

@@ -47,5 +47,5 @@ test('datos de ejemplo: direcciones ya normalizadas, montos en pesos y en dolare
     assert.match(c.mailProp, /@example\.com$/);
     assert.match(c.telProp, /^091 000 \d{3}$/);
   }
-  assert.equal(contracts.filter(c => c.importe < 10000).length, 2, 'dos en dolares');
+  assert.deepEqual(contracts.filter(c => c.moneda === 'USD').map(c => c.importe), [850, 1100], 'dos en dolares');
 });

@@ -30,7 +30,7 @@ export function datosDemo(hoy = new Date()) {
     const inquilino = INQ[n % INQ.length]; n++;
     return {
       sourceRow: n, direccion, propietario: P[prop], telProp: telDe[prop], mailProp: mail(P[prop].split(' / ')[0]),
-      importeBase: importe, importe, ultimoAumento: null, remitente: '', contratoStr,
+      importeBase: importe, importe, moneda: importe < 10000 ? 'USD' : 'UYU', ultimoAumento: null, remitente: '', contratoStr,
       fechaInicio: toISODate(fechaInicio), inquilino, telInq: tel(200 + n), mailInq: mail(inquilino), notas: '', inactive: false,
       ...extra,
     };
