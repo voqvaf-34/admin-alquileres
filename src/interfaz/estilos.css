@@ -90,10 +90,6 @@ body { background:var(--bg); color:var(--text); font-family:'Rubik','Segoe UI',R
 .btn-ipc-fetch:disabled { opacity:0.5; cursor:wait; }
 
 /* ── modal importar marcas ── */
-.marks-steps { margin:0 0 14px 18px; font-size:12px; line-height:1.9; opacity:0.75; }
-.marks-steps code { background:rgba(var(--fg),0.06); border:1px solid rgba(var(--fg),0.1); border-radius:4px; padding:2px 6px; font-size:11px; user-select:all; }
-.marks-steps kbd { border:1px solid rgba(var(--fg),0.25); border-radius:3px; padding:0 4px; font-size:11px; }
-.marks-textarea { width:100%; min-height:120px; background:rgba(var(--fg),0.04); border:1px solid rgba(var(--fg),0.12); border-radius:6px; color:var(--text); font-family:inherit; font-size:11px; padding:10px; resize:vertical; }
 
 /* ── controls ── */
 .controls { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
@@ -253,8 +249,8 @@ a.wa:hover { color:#25D366; border-bottom-color:#25D366; }
 /* ── write-save tag in card footer ── */
 
 /* ── Modal agregar alquiler ── */
-#modal-add, #modal-admin, #modal-marks { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
-#modal-add.open, #modal-admin.open, #modal-marks.open { display:flex; }
+#modal-add, #modal-admin { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
+#modal-add.open, #modal-admin.open { display:flex; }
 .modal-box { background:var(--panel); border:1px solid rgba(var(--fg),0.1); border-radius:12px; padding:28px 32px; width:min(680px,95vw); max-height:90vh; overflow-y:auto; }
 .modal-title { font-size:11px; letter-spacing:2px; text-transform:uppercase; opacity:0.45; }
 .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; margin-top:4px; }
@@ -503,8 +499,8 @@ body:not(.in-app) #root { padding-top:56px; }
 .hdr-menu { border-radius:12px; }
 #toast { border-radius:10px; }
 /* Con una ventana (modal) abierta la barra no arrastra: si no, los clics arriba del modal moverian la ventana */
-body:has(.modal.open, [data-form].open, #modal-add.open, #modal-admin.open, #modal-marks.open) .header,
-body:has(.modal.open, [data-form].open, #modal-add.open, #modal-admin.open, #modal-marks.open) .win-drag { -webkit-app-region:no-drag; }
+body:has(.modal.open, [data-form].open, #modal-add.open, #modal-admin.open) .header,
+body:has(.modal.open, [data-form].open, #modal-add.open, #modal-admin.open) .win-drag { -webkit-app-region:no-drag; }
 /* La barra de color y las pestañas quedan fijas arriba al bajar (la ventana no tiene barra de Windows) */
 .header { position:sticky; top:0; z-index:100; }
 .tabs { position:sticky; top:56px; z-index:99; background:var(--bg); }
@@ -517,7 +513,7 @@ html { scroll-padding-top:140px; }   /* al saltar a una fila, que no quede debaj
 .moneda-seg .seg-btn { padding:6px 12px; }
 /* Ventanas secundarias: todas con la misma estructura (titulos de seccion en el color de la marca, mismo ancho).
    Las secciones opcionales se despliegan desde un titulo igual a los de seccion, con ▸. */
-#modal-add .modal-box, #modal-admin .modal-box, #modal-owner .modal-box, #modal-marks .modal-box,
+#modal-add .modal-box, #modal-admin .modal-box, #modal-owner .modal-box,
 #modal-merge .modal-box, #modal-share .modal-box { width:min(760px,95vw); }
 .m-disclosure { grid-column:1 / -1; margin-top:4px; }
 .m-disclosure > summary { list-style:none; cursor:pointer; display:flex; align-items:baseline; gap:6px; user-select:none;

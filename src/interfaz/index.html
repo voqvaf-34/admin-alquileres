@@ -31,7 +31,6 @@
         ¿Cómo querés empezar?
       </div>
       <div class="start-options">
-        <button class="btn-autoload" id="btn-copy-live" hidden>Copiar los datos de la app instalada</button>
         <button class="btn-autoload" id="btn-start-empty">Empezar con una base vacía</button>
         <button class="btn-start-alt" id="btn-start-demo">Probar con datos de ejemplo</button>
         <button class="btn-start-alt" id="btn-autoload">Importar desde Excel</button>
@@ -41,8 +40,8 @@
         <div class="drop-label" id="drop-label">o soltá el Excel acá</div>
       </div>
       <div class="upload-note">
-        Copiar desde la app instalada incluye las marcas (enviados, renovados...).<br>
-        Los propietarios se unifican automaticamente. Nada se modifica en el origen.
+        Los datos de ejemplo son inventados: sirven para probar la app.<br>
+        Al importar un Excel los propietarios se unifican automáticamente. El archivo no se modifica.
       </div>
     </div>
   </div>
@@ -97,7 +96,6 @@
           <div class="hdr-menu" id="hdr-menu" hidden>
             <button class="menu-item" id="btn-export-csv">Exportar CSV</button>
             <button class="menu-item editor-only" id="btn-menu-share">Compartir con el Visor…</button>
-            <button class="menu-item editor-only" id="btn-import-marks">Importar marcas</button>
             <button class="menu-item editor-only" id="btn-data-folder">Carpeta de datos y copias</button>
             <button class="menu-item editor-only" id="btn-config">Configuración…</button>
           </div>
@@ -541,32 +539,6 @@
       <div class="modal-footer">
         <button class="btn-modal-cancel" data-close-modal="modal-config">Cancelar</button>
         <button class="btn-modal-submit" id="cfg-guardar">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: importar marcas de la app anterior -->
-  <div id="modal-marks" data-form>
-    <div class="modal-box">
-      <div class="modal-head">
-        <span class="modal-title">Importar marcas</span>
-        <button class="unmark-btn modal-x" id="modal-marks-close">&times;</button>
-      </div>
-      <div class="modal-section">Pasos</div>
-      <ol class="marks-steps">
-        <li>Abrí la app anterior en el navegador (con el launcher).</li>
-        <li>Apretá <kbd>F12</kbd> y andá a la pestaña <strong>Console</strong>.</li>
-        <li>Pegá esto y apretá Enter:<br>
-          <code id="marks-snippet">copy(localStorage.getItem('admin_alquileres_marks'))</code>
-          <button class="copy-btn" id="btn-copy-snippet" type="button">&#8663; Copiar</button>
-        </li>
-        <li>Volvé acá y pegá el resultado abajo.</li>
-      </ol>
-      <div class="modal-section">Marcas</div>
-      <textarea id="m-marks-json" class="marks-textarea" placeholder='{"a|DIRECCION|3|2026":{"date":"..."}}'></textarea>
-      <div class="modal-footer">
-        <button class="btn-modal-cancel" id="modal-marks-cancel">Cancelar</button>
-        <button class="btn-modal-submit" id="modal-marks-submit">Importar</button>
       </div>
     </div>
   </div>

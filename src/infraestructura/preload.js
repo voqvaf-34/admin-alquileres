@@ -20,7 +20,6 @@ contextBridge.exposeInMainWorld('api', {
   openDataFolder:  ()        => call('data:openFolder'),
   backupNow:       ()        => call('data:backup'),
   exportCsv:       ()        => call('data:exportCsv'),
-  importLiveDb:    ()        => call('import:liveDb'),
   loadDemo:        ()        => call('import:demo'),
   startEmpty:      ()        => call('start:empty'),
   saveOwner:       (o)       => call('owner:save', o),

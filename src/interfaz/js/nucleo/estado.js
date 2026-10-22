@@ -7,7 +7,6 @@ export const estado = {
   owners: [], contacts: [], contractOwners: [], ownerDocs: [], ownerAccounts: [],
   marks: {},                // aumento enviado, renovado, no renueva... (por direccion)
   appSettings: {},
-  liveDbAvailable: false,
   ipc: 3.16,
   selMonth: new Date().getMonth() + 1,
   selYear: new Date().getFullYear(),

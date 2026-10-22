@@ -1,7 +1,7 @@
 // Editor: publica una copia de la base en la carpeta compartida para el Visor.
 const share = require('./compartir');
 const { ctx } = require('./contexto');
-const { DEFAULT_SHARED_DIR, PKG } = require('./config');
+const { DEFAULT_SHARED_DIR } = require('./config');
 const { dbPath, docsDir } = require('./rutas');
 
 // La base principal sigue siendo la local; la compartida es una copia para el Visor
@@ -14,8 +14,6 @@ function sharedDir() {
   if (process.env.ADMIN_ALQ_SHARED_DIR) return process.env.ADMIN_ALQ_SHARED_DIR;
   const s = ctx.store.getSettings();
   if (s.sharedDir === '-') return null;                     // desactivado a mano
-  // La copia de prueba solo comparte si se eligio una carpeta a mano.
-  if (!s.sharedDir && /PRUEBA/i.test(PKG.productName)) return null;
   return s.sharedDir || DEFAULT_SHARED_DIR;
 }
 

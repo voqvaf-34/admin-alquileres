@@ -8,7 +8,7 @@ const { ctx } = require('./contexto');
 const { IS_VIEWER, MODE } = require('./config');
 const { ensureData } = require('./migraciones');
 const publicacion = require('./publicacion');
-const { dbPath, liveDbAvailable, liveDbPath } = require('./rutas');
+const { dbPath } = require('./rutas');
 const visor = require('./visor');
 
 function state() {
@@ -29,7 +29,6 @@ function state() {
     settings:  ctx.store.getSettings(),
     undo:      ctx.store.undoStatus(),
     needsImport: !IS_VIEWER && ctx.store.isEmpty() && ctx.store.getSettings().initialized !== '1',
-    liveDbAvailable: !IS_VIEWER && liveDbAvailable(),
     dbPath:    dbPath(),
   };
 }
@@ -66,18 +65,4 @@ async function openStore() {
   publicacion.attachSharing();
 }
 
-// Copia la base de la version estable (incluye marcas) y la migra.
-async function importLiveDb() {
-  if (!liveDbAvailable()) throw new Error('No se encontro la base de la app instalada.');
-  ctx.store.backup('pre-copia');
-  ctx.store.close();
-  fs.copyFileSync(liveDbPath(), dbPath());
-  ctx.store = await Store.open(dbPath());
-  publicacion.attachSharing();
-  ensureData(true);
-  ctx.store.setSetting('initialized', '1');
-  ctx.store.setSetting('importedFrom', liveDbPath());
-  return { counts: { contracts: ctx.store.listContracts().length, admins: ctx.store.listAdmins().length }, state: state() };
-}
-
-Object.assign(module.exports, { state, importFrom, loadDemo, openStore, importLiveDb });
+Object.assign(module.exports, { state, importFrom, loadDemo, openStore });

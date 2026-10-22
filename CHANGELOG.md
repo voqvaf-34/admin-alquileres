@@ -2,6 +2,16 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
+## [0.5.0] - 2026-10-21
+
+### Quitado
+- Funciones que solo servían para la migración interna de la inmobiliaria original: "Importar marcas"
+  (desde la herramienta HTML anterior), "Copiar los datos de la app instalada" y el modo especial de la copia de prueba.
+
+### Agregado
+- Vuelve la prueba E2E del Visor (antes dependía de datos reales): el editor carga los datos de ejemplo, configura
+  una marca y publica; el Visor muestra los mismos datos y la misma marca, en solo lectura, y se actualiza solo.
+
 ## [0.4.0] - 2026-10-21
 
 ### Agregado

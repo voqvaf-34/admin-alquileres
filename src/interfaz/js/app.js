@@ -7,7 +7,6 @@ import * as compartir from './componentes/compartir.js';
 import * as configuracion from './modales/configuracion.js';
 import * as D from '../../dominios/index.js';
 import * as deshacer from './componentes/deshacer.js';
-import * as importarMarcas from './modales/importar-marcas.js';
 import * as modales from './nucleo/modales.js';
 import * as operativo from './vistas/operativo.js';
 import * as propietarios from './vistas/propietarios.js';
@@ -33,7 +32,6 @@ export function applyState(st) {
   estado.entries  = st.contracts.map(D.hydrateContract);
   estado.admins   = st.admins;
   estado.marks    = st.marks || {};
-  estado.liveDbAvailable = !!st.liveDbAvailable;
   estado.appSettings = st.settings || {};
   aplicarMarca(estado.appSettings);
   applyOwners(st);
@@ -175,7 +173,6 @@ export function showAutoLoad(msg) {
 
 export function showImportScreen() {
   document.getElementById("drop-label").textContent        = "o soltá el Excel acá";
-  document.getElementById("btn-copy-live").hidden          = !estado.liveDbAvailable;
   document.getElementById("autoload-screen").style.display = "none";
   document.getElementById("upload-screen").style.display   = "flex";
   document.getElementById("app-screen").style.display      = "none";
@@ -284,7 +281,6 @@ export function iniciar() {
     } catch (err) { showToast('Error al exportar: ' + esc(err.message), 'err'); }
   });
 
-  document.getElementById('btn-copy-live').addEventListener('click', () => runImport(call('importLiveDb')));
   document.getElementById('btn-start-demo').addEventListener('click', () => runImport(call('loadDemo')));
 
   document.getElementById('btn-start-empty').addEventListener('click', async () => {
@@ -297,7 +293,7 @@ export function iniciar() {
 // parte de la pantalla (las viñetas del formulario antes que el autocompletado) y se cargan
 // los datos.
 
-for (const parte of [modales, compartir, operativo, propietarios, { iniciar }, deshacer, cabecera, importarMarcas,
+for (const parte of [modales, compartir, operativo, propietarios, { iniciar }, deshacer, cabecera,
                      baseDatos, administraciones, alquiler, configuracion]) parte.iniciar();
 bindAutocomplete();
 loadState();
