@@ -9,8 +9,8 @@ export function titleCase(s) {
   const str = String(s || '').replace(/\s+/g, ' ').trim();
   if (!str) return '';
   let first = true;
-  return str.split(/(\s+|[\/\-(),.]+)/).map(tok => {
-    if (!tok || /^[\s\/\-(),.]+$/.test(tok)) return tok;
+  return str.split(/(\s+|[/\-(),.]+)/).map(tok => {
+    if (!tok || /^[\s/\-(),.]+$/.test(tok)) return tok;
     const low = tok.toLocaleLowerCase('es');
     let out;
     if (/\d/.test(tok)) out = tok.toUpperCase();
@@ -57,7 +57,7 @@ export function parseAddress(raw) {
   }
 
   // Separador entre edificio y calle: " - " o ",".
-  let parts = s.split(/\s+-\s+|\s*,\s*/).map(x => x.trim()).filter(Boolean);
+  const parts = s.split(/\s+-\s+|\s*,\s*/).map(x => x.trim()).filter(Boolean);
   let edificio = '', calle = '';
   const isStreet = p => /[A-Za-zÁÉÍÓÚáéíóúñÑ.]\s*\d{2,5}\b/.test(p) && !/^\d{1,4}$/.test(p);
   if (parts.length >= 2) {

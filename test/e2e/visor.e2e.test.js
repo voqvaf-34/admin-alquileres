@@ -98,7 +98,7 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     assert.equal(await novedad('basedatos'), 0, 'lo visto se recuerda al volver a abrir');
 
     // El visor no puede escribir: no hay canales de modificacion.
-    const r = await vp.evaluate(() => window.api.addContract({ direccion: 'X', importeBase: 1 }).catch(e => 'rechazado'));
+    const r = await vp.evaluate(() => window.api.addContract({ direccion: 'X', importeBase: 1 }).catch(() => 'rechazado'));
     assert.ok(r === 'rechazado' || (r && r.ok === false), 'escritura rechazada');
     assert.deepEqual(viewer.errors, []);
     assert.deepEqual(editor.errors, []);

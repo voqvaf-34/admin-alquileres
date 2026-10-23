@@ -8,7 +8,6 @@ import { call } from '../nucleo/api.js';
 import { esc, showToast } from '../nucleo/dom.js';
 import { applyOwners, estado, replaceEntry } from '../nucleo/estado.js';
 import { populateDBYears } from '../vistas/base-datos.js';
-import { val } from '../vistas/propietarios.js';
 
 // Base de datos
 export let editingEntry    = null;   // entry que se esta editando (null = alta nueva)

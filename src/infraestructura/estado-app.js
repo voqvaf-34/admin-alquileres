@@ -1,9 +1,7 @@
 // Estado que se manda a la pantalla; abrir la base e importar datos.
-const fs = require('fs');
 const D = require('../dominios/index.js');
 const { Store } = require('./base-datos');
 const { readWorkbookFile } = require('./importador-excel');
-const share = require('./compartir');
 const { ctx } = require('./contexto');
 const { IS_VIEWER, MODE } = require('./config');
 const { ensureData, prepararImportado } = require('./migraciones');

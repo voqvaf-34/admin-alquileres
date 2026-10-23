@@ -2,7 +2,6 @@
 // app con datos de ejemplo, en modo claro y oscuro, y devuelve lo que no cumple.
 // La usan la prueba accesibilidad.e2e.test.js y el diagnostico: node test/e2e/accesibilidad.js
 const fs   = require('fs');
-const path = require('path');
 const { launch, tmpDir } = require('./helpers');
 
 const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');

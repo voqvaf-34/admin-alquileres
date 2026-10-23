@@ -7,7 +7,6 @@ const share = require('./compartir');
 const { ctx } = require('./contexto');
 const { DEFAULT_SHARED_DIR, POLL_MS } = require('./config');
 const estadoApp = require('./estado-app');
-const publicacion = require('./publicacion');
 
 
 function viewerConfigFile() { return path.join(app.getPath('userData'), 'visor.json'); }

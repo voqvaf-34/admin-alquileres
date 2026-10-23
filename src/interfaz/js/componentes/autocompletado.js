@@ -3,7 +3,6 @@ import * as D from '../../../dominios/index.js';
 import { Splitters, norm } from '../../../dominios/index.js';
 import { chipFields, setMoneda } from '../modales/alquiler.js';
 import { estado } from '../nucleo/estado.js';
-import { val } from '../vistas/propietarios.js';
 
 export const AC_FIELD_MAP = {
   'm-edificio':  e => e.edificio,

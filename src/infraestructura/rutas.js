@@ -1,7 +1,6 @@
 // Donde estan la base y los documentos.
 const { app } = require('electron');
 const path = require('path');
-const fs = require('fs');
 const share = require('./compartir');
 const { IS_VIEWER } = require('./config');
 const { ctx } = require('./contexto');
