@@ -5,21 +5,13 @@ const assert = require('node:assert/strict');
 const fs     = require('fs');
 const os     = require('os');
 const path   = require('path');
-const { _electron } = require('playwright-core');
-const { abrirConfiguracion, elegirColor } = require('./helpers');
+const { SHOTS, abrirConfiguracion, elegirColor, launch: abrirApp, tmpDir } = require('./helpers');
 
-const ROOT      = path.join(__dirname, '..', '..');
-const SHOTS     = process.env.E2E_SCREENSHOTS || path.join(os.tmpdir(), 'alq-e2e-shots');
-
+// Editor o Visor, cada uno con su carpeta de datos (env.ADMIN_ALQ_DATA_DIR); los confirm() se aceptan.
 async function launch(env) {
-  const app = await _electron.launch({ executablePath: require('electron'), args: [ROOT], cwd: ROOT, env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ADMIN_ALQ_FUERA_DE_PANTALLA: '1', ...env } });
-  const page = await app.firstWindow();
-  page.setDefaultTimeout(20000);
-  await page.emulateMedia({ colorScheme: 'light' });
-  const errors = [];
-  page.on('pageerror', e => errors.push(String(e)));
-  await page.evaluate(() => { window.confirm = () => true; });
-  return { app, page, errors };
+  const r = await abrirApp(env.ADMIN_ALQ_DATA_DIR, env);
+  await r.page.evaluate(() => { window.confirm = () => true; });
+  return r;
 }
 
 test('editor publica y el visor muestra en solo lectura, actualizandose solo', { timeout: 120000 }, async () => {
@@ -119,12 +111,8 @@ test('visor sin carpeta compartida pide elegirla', { timeout: 60000 }, async () 
 });
 
 test('visor recien instalado (sin carpeta elegida) pide elegirla', { timeout: 60000 }, async () => {
-  const env = { ...process.env };
-  delete env.ADMIN_ALQ_SHARED_DIR;
-  const app = await _electron.launch({ executablePath: require('electron'), args: [ROOT], cwd: ROOT,
-    env: { ...env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_FUERA_DE_PANTALLA: '1', ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')) } });
+  const { app, page } = await abrirApp(tmpDir('alq-vi-'), { ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: undefined });
   try {
-    const page = await app.firstWindow();
     await page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
     assert.match(await page.textContent('#viewer-setup-error'), /Todavía no se eligió la carpeta compartida/);
   } finally { await app.close(); }

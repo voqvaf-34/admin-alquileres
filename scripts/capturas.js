@@ -1,24 +1,14 @@
 // Genera las capturas del README (docs/capturas) con los datos de ejemplo.
 // Uso: npm run capturas
 const fs   = require('fs');
-const os   = require('os');
 const path = require('path');
-const { _electron } = require('playwright-core');
+const { ROOT, launch, tmpDir } = require('../test/e2e/helpers');
 
-const ROOT = path.join(__dirname, '..');
-const OUT  = path.join(ROOT, 'docs', 'capturas');
+const OUT = path.join(ROOT, 'docs', 'capturas');
 
 async function main() {
   fs.mkdirSync(OUT, { recursive: true });
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alq-capturas-'));
-  const app = await _electron.launch({
-    executablePath: require('electron'), args: [ROOT], cwd: ROOT,
-    env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ADMIN_ALQ_FUERA_DE_PANTALLA: '1', ADMIN_ALQ_DATA_DIR: dataDir, ADMIN_ALQ_SHARED_DIR: path.join(dataDir, 'compartida') },
-  });
-  const page = await app.firstWindow();
-  page.setDefaultTimeout(20000);
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await page.emulateMedia({ colorScheme: 'light' });
+  const { app, page } = await launch(tmpDir('alq-capturas-'), {}, { tamano: { width: 1280, height: 800 } });
   const shot = async name => { await page.waitForTimeout(250); await page.screenshot({ path: path.join(OUT, name + '.png') }); console.log('  ' + name); };
   const sinToast = () => page.evaluate(() => { document.getElementById('toast').className = ''; });
 

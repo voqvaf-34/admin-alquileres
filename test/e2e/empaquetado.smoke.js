@@ -3,9 +3,8 @@
 // Uso: node test/e2e/empaquetado.smoke.js [editor|visor]
 const assert = require('node:assert/strict');
 const fs     = require('fs');
-const os     = require('os');
 const path   = require('path');
-const { _electron } = require('playwright-core');
+const { launch, tmpDir } = require('./helpers');
 
 const visor = process.argv[2] === 'visor';
 const exe = visor
@@ -14,12 +13,8 @@ const exe = visor
 
 (async () => {
   assert.ok(fs.existsSync(exe), `no existe ${exe} (correr antes npm run ${visor ? 'dist:visor' : 'dist'})`);
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alq-smoke-'));
-  const env = { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ADMIN_ALQ_FUERA_DE_PANTALLA: '1', ADMIN_ALQ_DATA_DIR: dataDir, ADMIN_ALQ_SHARED_DIR: path.join(dataDir, 'compartida') };
-  const app = await _electron.launch({ executablePath: exe, env });
+  const { app, page } = await launch(tmpDir('alq-smoke-'), {}, { ejecutable: exe });
   try {
-    const page = await app.firstWindow();
-    page.setDefaultTimeout(20000);
     if (visor) {
       await page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
       assert.ok(await page.isVisible('#btn-viewer-pick'));
