@@ -87,7 +87,7 @@ export function cardVencCompact(e) {
 }
 
 export function footerAumento(e, m, y, ipcVal) {
-  const nuevo    = Math.floor(e.importe * (1 + ipcVal/100));
+  const nuevo    = D.nuevoImporte(e.importe, ipcVal);
   const key      = aumKey(e, m, y);
   const naKy     = naKey(e, m, y);
   const mk       = estado.marks[key];
@@ -263,8 +263,7 @@ export function footerVenc(e) {
 }
 
 export function cardAumento(e, m, y, ipcVal) {
-  const mult   = 1 + ipcVal/100;
-  const nuevo  = Math.floor(e.importe * mult);
+  const nuevo  = D.nuevoImporte(e.importe, ipcVal);
   const diff   = nuevo - e.importe;
   const years  = y - e.fechaInicio.getFullYear();
   const cardKey = aumKey(e, m, y);
