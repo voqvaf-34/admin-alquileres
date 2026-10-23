@@ -1,5 +1,8 @@
-// Contratos: duracion, garantias, quien gestiona aumentos y armado del registro.
+// Contratos: duracion, garantias, quien gestiona aumentos, armado del registro y normalizacion
+// de lo que se carga a mano o se importa.
+import { normalizeAddress } from './direcciones.js';
 import { parseISO } from './fechas.js';
+import { formatAddress, titleCase } from './nombres.js';
 
 // Garantias que se encargan ellas mismas de aumentos y renovaciones.
 export const GARANTIAS_GESTIONAN = ['CGN', 'ANDA'];
@@ -80,4 +83,29 @@ export function attachOwners(entries, owners, contacts, links) {
     e.contacts = [...cs.values()];
   }
   return entries;
+}
+
+// Unidad: los numeros en mayusculas ("4B"), los nombres con mayusculas iniciales ("Local Frente").
+const formatoUnidad = u => (/^\d/.test(String(u || '').trim()) ? String(u).trim().toUpperCase() : titleCase(u));
+
+// Alquiler cargado a mano: direccion armada con "Edificio - Calle 1234 U601", nombres con mayusculas
+// iniciales y copropietarios separados por " / ". propietario null = no se toca (edicion parcial).
+export function normalizarContrato(c) {
+  const edificio = titleCase(c.edificio), calle = titleCase(c.calle), unidad = formatoUnidad(c.unidad);
+  const direccion = formatAddress({ edificio, calle, unidad }) || titleCase(c.direccion);
+  const propietario = c.propietario == null ? null
+    : String(c.propietario).split(/\s*\/{1,}\s*/).filter(Boolean).map(titleCase).join(' / ');
+  return { ...c, edificio, calle, unidad, direccion, inquilino: titleCase(c.inquilino), propietario };
+}
+
+// Una fila importada para sumar a lo que ya hay: mismo formato que un alquiler cargado a mano
+// (direccion normalizada con las reglas de direcciones) y garantias CGN/ANDA en su campo.
+// En la planilla clasica (sin moneda) los importes de hasta 4 cifras son dolares.
+export function prepararImportado(c, { reglasDirecciones, clasico = false } = {}) {
+  const a = normalizeAddress(c.direccion, reglasDirecciones);
+  const x = normalizarContrato({ ...c, edificio: a.edificio, calle: a.calle, unidad: a.unidad, direccionOriginal: c.direccion });
+  let garantia = String(c.garantia || '').trim(), remitente = String(c.remitente || '').trim();
+  if (!garantia && GARANTIAS_GESTIONAN.includes(remitente.toUpperCase())) { garantia = remitente.toUpperCase(); remitente = ''; }
+  const moneda = c.moneda || (clasico && c.importe > 0 && c.importe < 10000 ? 'USD' : 'UYU');
+  return { ...x, garantia, remitente: titleCase(remitente), moneda };
 }

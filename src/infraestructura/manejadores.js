@@ -11,7 +11,6 @@ const { exportCsv } = require('./csv');
 const { docFile, docPreview, pickOwnerDocs } = require('./documentos');
 const estadoApp = require('./estado-app');
 const { writeTemplate } = require('./importador-excel');
-const { cleanContract } = require('./migraciones');
 const publicacion = require('./publicacion');
 const visor = require('./visor');
 const ventana = require('./ventana');
@@ -121,8 +120,8 @@ function registerHandlers() {
     if (c.propietario != null) ctx.store.linkOwnersFromText(saved.id, c.propietario, c.telProp, c.mailProp, nameKey);
     return { contract: saved, owners: ctx.store.listOwners(), contractOwners: ctx.store.listContractOwners() };
   };
-  handle('contract:add',        (c)         => { const x = cleanContract(c); return saveWithOwners(ctx.store.addContract(x), x); });
-  handle('contract:update',     (id, c)     => { const x = cleanContract(c); return saveWithOwners(ctx.store.updateContract(id, x), x); });
+  handle('contract:add',        (c)         => { const x = D.normalizarContrato(c); return saveWithOwners(ctx.store.addContract(x), x); });
+  handle('contract:update',     (id, c)     => { const x = D.normalizarContrato(c); return saveWithOwners(ctx.store.updateContract(id, x), x); });
   handle('contract:patch',      (id, f)     => ctx.store.patchContract(id, f));
   handle('contract:inactivate', (id)        => ctx.store.setInactive(id));
 

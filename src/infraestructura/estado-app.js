@@ -3,8 +3,8 @@ const D = require('../dominios/index.js');
 const { Store } = require('./base-datos');
 const { readWorkbookFile } = require('./importador-excel');
 const { ctx } = require('./contexto');
-const { IS_VIEWER, MODE } = require('./config');
-const { ensureData, prepararImportado } = require('./migraciones');
+const { ADDRESS_RULES, IS_VIEWER, MODE } = require('./config');
+const { ensureData } = require('./migraciones');
 const publicacion = require('./publicacion');
 const { dbPath } = require('./rutas');
 const visor = require('./visor');
@@ -51,7 +51,7 @@ function addFrom(filePath) {
   if (!data.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
   const clasico = data.formato === 'clasico';
   ctx.store.backup('pre-agregar');
-  const res = ctx.store.addImported({ contracts: data.contracts.map(c => prepararImportado(c, { clasico })), admins: data.admins }, D.nameKey);
+  const res = ctx.store.addImported({ contracts: data.contracts.map(c => D.prepararImportado(c, { reglasDirecciones: ADDRESS_RULES, clasico })), admins: data.admins }, D.nameKey);
   ctx.store.setSetting('initialized', '1');
   return res;
 }

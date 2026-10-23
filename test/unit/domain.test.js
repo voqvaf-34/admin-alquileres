@@ -193,3 +193,22 @@ test('vencimientos: dias que faltan y urgencia (10 dias o menos, o ya vencido)',
   assert.equal(D.urgenciaVencimiento(null, hoy), 'proximo');
   assert.equal(D.diasHasta(new Date(2026, 11, 31), new Date(2026, 11, 30, 23, 59)), 1, 'cruce de año');
 });
+
+test('normalizarContrato: direccion armada, nombres con mayusculas iniciales y copropietarios', () => {
+  const c = D.normalizarContrato({ edificio: 'TORRE CEIBO', calle: 'av. italia 2875', unidad: '403b', propietario: 'ANA PEREZ //JUAN PEREZ', inquilino: 'beto gomez', importeBase: 1 });
+  assert.equal(c.direccion, 'Torre Ceibo - Av. Italia 2875 U403B');
+  assert.equal(c.propietario, 'Ana Perez / Juan Perez');
+  assert.equal(c.inquilino, 'Beto Gomez');
+  assert.equal(D.normalizarContrato({ direccion: 'CANELONES 1234', propietario: null }).propietario, null, 'null = no se toca');
+  assert.equal(D.normalizarContrato({ calle: 'Canelones 1234', unidad: 'local frente' }).direccion, 'Canelones 1234 Local Frente', 'unidad con nombre, sin la U');
+});
+
+test('prepararImportado: CGN/ANDA pasan a garantia y la planilla clasica marca dolares por importe', () => {
+  const reglas = { buildings: [], overrides: {} };
+  const a = D.prepararImportado({ direccion: 'CANELONES 1234 U502', remitente: 'anda', importe: 25000, importeBase: 25000 }, { reglasDirecciones: reglas });
+  assert.deepEqual([a.direccion, a.garantia, a.remitente, a.moneda, a.direccionOriginal], ['Canelones 1234 U502', 'ANDA', '', 'UYU', 'CANELONES 1234 U502']);
+  const b = D.prepararImportado({ direccion: 'Guayabo 1850 U3', remitente: 'gestora norte', importe: 850 }, { reglasDirecciones: reglas, clasico: true });
+  assert.deepEqual([b.garantia, b.remitente, b.moneda], ['', 'Gestora Norte', 'USD']);
+  const c = D.prepararImportado({ direccion: 'Guayabo 1850 U3', importe: 850, moneda: 'UYU' }, { reglasDirecciones: reglas, clasico: true });
+  assert.equal(c.moneda, 'UYU', 'la moneda de la planilla manda');
+});
