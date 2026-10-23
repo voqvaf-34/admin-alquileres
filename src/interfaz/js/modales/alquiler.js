@@ -10,7 +10,7 @@ import { applyOwners, estado, replaceEntry } from '../nucleo/estado.js';
 import { populateDBYears } from '../vistas/base-datos.js';
 
 // Base de datos
-export let editingEntry    = null;   // entry que se esta editando (null = alta nueva)
+let editingEntry    = null;   // entry que se esta editando (null = alta nueva)
 
 export const chipFields = {};
 
@@ -23,12 +23,12 @@ export function setMoneda(v) {
 
 // "Quien hace los aumentos" y "Comentarios" van plegados (linea que se despliega); se abren
 // solos si ya tienen datos.
-export function setOptFields(rem, notas) {
+function setOptFields(rem, notas) {
   document.getElementById('m-opt-rem').open = rem;
   document.getElementById('m-opt-notas').open = notas;
 }
 
-export function showAddModal() {
+function showAddModal() {
   editingEntry = null;
   ['m-edificio','m-calle','m-unidad','m-prop','m-inq','m-tel-prop','m-tel-inq','m-mail-prop','m-mail-inq','m-importe','m-notas'].forEach(id => {
     const el = document.getElementById(id);
@@ -82,7 +82,7 @@ export function showEditModal(entry) {
 
 // Duracion: viñetas fijas (1, 2, 3 años). Si el contrato tiene otra (o se agrega con "+"),
 // queda como viñeta extra solo para ese contrato.
-export function setDuracionOption(value) {
+function setDuracionOption(value) {
   const sel = document.getElementById('m-duracion');
   sel.querySelectorAll('option[data-custom]').forEach(o => o.remove());
   const same = [...sel.options].find(o => o.value && o.value.toLowerCase() === String(value || '').trim().toLowerCase());
@@ -96,7 +96,7 @@ export function setDuracionOption(value) {
 }
 
 // Opciones = las de fabrica + las que se agregaron desde la app + las que ya usa algun contrato.
-export function garantiaOptions() {
+function garantiaOptions() {
   let extra = [];
   try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
   const all = [...D.GARANTIAS_DEFAULT, ...extra, ...estado.entries.map(e => e.garantia)].filter(Boolean);
@@ -104,7 +104,7 @@ export function garantiaOptions() {
   return all.filter(g => { const k = g.toUpperCase(); if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
-export function setGarantiaOptions(value) {
+function setGarantiaOptions(value) {
   const sel = document.getElementById('m-garantia');
   const opts = garantiaOptions();
   const match = opts.find(g => g.toUpperCase() === String(value || '').toUpperCase());
@@ -117,7 +117,7 @@ export function setGarantiaOptions(value) {
   updateGestionHint();
 }
 
-export function updateGestionHint() {
+function updateGestionHint() {
   const g = document.getElementById('m-garantia').value;
   const who = D.gestionadoPor({ garantia: g, remitente: document.getElementById('m-remitente').value.trim() });
   document.getElementById('m-gestion-hint').textContent = who
@@ -126,7 +126,7 @@ export function updateGestionHint() {
 }
 
 // Garantia nueva (viñeta "+"): queda elegida y guardada como opcion para los proximos.
-export function addGarantiaOption(name) {
+function addGarantiaOption(name) {
   const exists = garantiaOptions().find(g => g.toUpperCase() === name.toUpperCase());
   if (!exists) {
     let extra = [];
@@ -138,7 +138,7 @@ export function addGarantiaOption(name) {
   setGarantiaOptions(exists || name);
 }
 
-export function hideAddModal() {
+function hideAddModal() {
   document.getElementById('modal-add').classList.remove('open');
   editingEntry = null;
 }
@@ -155,7 +155,7 @@ export async function deleteEntry(id, dir) {
   }
 }
 
-export async function submitAddEntry() {
+async function submitAddEntry() {
   const edificio = document.getElementById('m-edificio').value.trim();
   const calle    = document.getElementById('m-calle').value.trim();
   const unidad   = document.getElementById('m-unidad').value.trim();

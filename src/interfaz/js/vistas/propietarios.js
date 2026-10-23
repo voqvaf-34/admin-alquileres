@@ -11,23 +11,23 @@ import { closeModal, openModal } from '../nucleo/modales.js';
 
 // Usa el estado global de app.js (entries, owners, contacts, contractOwners, ownerDocs,
 // ownerAccounts) y sus helpers (call, esc, norm, telLink, showToast, render, applyOwners).
-export let ownersSearch     = '';
+let ownersSearch     = '';
 
-export let ownersOnlyActive = false;
+let ownersOnlyActive = false;
 
-export const ownersExpanded = new Set();
+const ownersExpanded = new Set();
 
-export const docThumbs      = new Map();   // id de documento -> dataURL (cache)
+const docThumbs      = new Map();   // id de documento -> dataURL (cache)
 
-export let ownerEditId = null;
+let ownerEditId = null;
 
-export let mergeKeepId = null;
+let mergeKeepId = null;
 
-export let mergeDropId = null;
+let mergeDropId = null;
 
-export const contactById = id => estado.contacts.find(c => c.id === id);
+const contactById = id => estado.contacts.find(c => c.id === id);
 
-export function contactBadge(c) {
+function contactBadge(c) {
   if (!c) return '';
   return `<span class="contact-tag" title="${esc([c.rol, c.telefono, c.mail].filter(Boolean).join(' · '))}">${esc(c.rol || 'Contacto')}: ${esc(c.nombre)}</span>`;
 }
@@ -49,7 +49,7 @@ export function contractsByOwner() {
 }
 
 // Aptos distintos de un propietario (un apto puede tener varios contratos en el tiempo).
-export function ownerUnits(apts) {
+function ownerUnits(apts) {
   const m = new Map();
   for (const e of apts) {
     const u = m.get(e.direccion) || { direccion: e.direccion, activo: false, ids: [] };
@@ -59,7 +59,7 @@ export function ownerUnits(apts) {
   return [...m.values()].sort((a, b) => (b.activo - a.activo) || a.direccion.localeCompare(b.direccion, 'es'));
 }
 
-export function missingContractData(o) {
+function missingContractData(o) {
   const faltan = [];
   if (!o.cedula) faltan.push('cedula');
   if (!estado.ownerDocs.some(d => d.ownerId === o.id)) faltan.push('foto de cedula');
@@ -105,7 +105,7 @@ export function renderOwnersPanel() {
   list.filter(o => ownersExpanded.has(o.id)).forEach(loadDocThumbs);
 }
 
-export function ownerDetail(o, units, c) {
+function ownerDetail(o, units, c) {
   const faltan = missingContractData(o);
   const docs = estado.ownerDocs.filter(d => d.ownerId === o.id);
   const acct = d => (estado.ownerAccounts.find(a => a.ownerId === o.id && a.direccion === d) || {}).cuenta || '';
@@ -147,7 +147,7 @@ export function ownerDetail(o, units, c) {
   </div>`;
 }
 
-export async function loadDocThumbs(o) {
+async function loadDocThumbs(o) {
   for (const d of estado.ownerDocs.filter(x => x.ownerId === o.id)) {
     const el = document.querySelector(`[data-doc-thumb="${d.id}"]`);
     if (!el || /\.pdf$/i.test(d.archivo)) continue;
@@ -162,9 +162,9 @@ export async function loadDocThumbs(o) {
 
 export const val = id => document.getElementById(id).value.trim();
 
-export const setVal = (id, v) => { document.getElementById(id).value = v || ''; };
+const setVal = (id, v) => { document.getElementById(id).value = v || ''; };
 
-export function fillContactFields() {
+function fillContactFields() {
   const sel = document.getElementById('m-own-contact').value;
   const show = sel !== '';
   document.querySelectorAll('[data-contact-field]').forEach(el => { el.hidden = !show; });
@@ -177,12 +177,12 @@ export function fillContactFields() {
 }
 
 // Contacto y notas: linea que se despliega; abierta solo si ya tiene datos.
-export function setOwnOpt(contacto, notas) {
+function setOwnOpt(contacto, notas) {
   document.getElementById('own-opt-contacto').open = contacto;
   document.getElementById('own-opt-notas').open = notas;
 }
 
-export function showOwnerModal(o) {
+function showOwnerModal(o) {
   ownerEditId = o ? o.id : null;
   document.getElementById('modal-owner-title').textContent = o ? 'Ficha del Propietario' : 'Nuevo Propietario';
   setVal('m-own-nombre', o && o.nombre); setVal('m-own-cedula', o && o.cedula); setVal('m-own-estado', o && o.estadoCivil);
@@ -200,7 +200,7 @@ export function showOwnerModal(o) {
   setTimeout(() => document.getElementById('m-own-nombre').focus(), 60);
 }
 
-export async function submitOwner() {
+async function submitOwner() {
   const sel = document.getElementById('m-own-contact').value;
   const payload = {
     id: ownerEditId, nombre: val('m-own-nombre'), cedula: val('m-own-cedula'), estadoCivil: val('m-own-estado'),
@@ -222,7 +222,7 @@ export async function submitOwner() {
   } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
 }
 
-export function showMergeModal(keepId) {
+function showMergeModal(keepId) {
   mergeKeepId = keepId; mergeDropId = null;
   document.getElementById('merge-keep-name').textContent = estado.owners.find(o => o.id === keepId).nombre;
   setVal('m-merge-search', '');
@@ -232,7 +232,7 @@ export function showMergeModal(keepId) {
   setTimeout(() => document.getElementById('m-merge-search').focus(), 60);
 }
 
-export function renderMergeResults() {
+function renderMergeResults() {
   const q = norm(val('m-merge-search'));
   const byOwner = contractsByOwner();
   const list = estado.owners.filter(o => o.id !== mergeKeepId && (!q || norm(o.nombre).includes(q))).slice(0, 40);
@@ -241,7 +241,7 @@ export function renderMergeResults() {
   ).join('') || '<div class="merge-item" style="color:var(--dim);cursor:default">Sin resultados</div>';
 }
 
-export async function submitMerge() {
+async function submitMerge() {
   const drop = estado.owners.find(o => o.id === mergeDropId), keep = estado.owners.find(o => o.id === mergeKeepId);
   if (!drop || !keep) return;
   if (!confirm(`Unificar "${drop.nombre}" dentro de "${keep.nombre}"?\n\nLos aptos y datos de "${drop.nombre}" pasan a "${keep.nombre}". Se puede deshacer con Ctrl+Z.`)) return;
@@ -263,7 +263,7 @@ export async function deleteOwner(id) {
 
 // Desde un apto: ir a la Base de Datos con ese contrato abierto (sin cambiar el filtro
 // salvo que el contrato este inactivo).
-export function gotoContract(id) {
+function gotoContract(id) {
   const e = estado.entries.find(x => x.id === id);
   if (!e) return;
   estado.activeTab = 'basedatos';

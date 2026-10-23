@@ -15,7 +15,7 @@ export function paintUndo(st) {
   r.title = st.canRedo ? `Rehacer: ${st.redoLabel} (Ctrl+Y)` : 'Nada para rehacer';
 }
 
-export async function doUndo(redo) {
+async function doUndo(redo) {
   try {
     await _marksSaving;
     const r = await call(redo ? 'redo' : 'undo');

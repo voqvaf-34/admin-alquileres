@@ -24,11 +24,11 @@ const enlaceWhatsApp = (numero, html) => `<a class="wa" href="https://wa.me/${nu
 
 // Varios valores en un mismo dato (co-propietarios, telefonos, mails, edificios) se muestran
 // separados por un punto tenue, igual en todas las pantallas.
-export const SEP  = ' <span class="msep">&middot;</span> ';
+const SEP  = ' <span class="msep">&middot;</span> ';
 
-export const NADA = '<span style="color:var(--dim)">-</span>';
+const NADA = '<span style="color:var(--dim)">-</span>';
 
-export const isNada = t => !t || /^[-xX\s]*$/.test(t);
+const isNada = t => !t || /^[-xX\s]*$/.test(t);
 
 export function telLink(raw) {
   if (isNada(raw)) return NADA;

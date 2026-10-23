@@ -3,7 +3,7 @@ import { parseISO, parseDMY } from './fechas.js';
 import { gestionadoPor, realDuration } from './contratos.js';
 import { vncKey, vncKeyR, nrKey } from './marcas.js';
 
-export const VENC_ADVANCE_DAYS = 45;
+const VENC_ADVANCE_DAYS = 45;
 
 export function baseVencDate(e, marks) {
   const mk = marks[vncKey(e)];
@@ -71,7 +71,7 @@ export function isVencResuelto(e, marks) {
 }
 
 // Un vencimiento es urgente si faltan 10 dias o menos (o ya paso).
-export const DIAS_URGENTE = 10;
+const DIAS_URGENTE = 10;
 
 // Dias desde hoy hasta la fecha: 0 = hoy, 1 = mañana, negativo = ya paso.
 export function diasHasta(fecha, hoy = new Date()) {

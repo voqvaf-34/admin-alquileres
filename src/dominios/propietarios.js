@@ -3,7 +3,7 @@
 // base aplica despues.
 import { key as nameKey } from './texto.js';
 export { nameKey };
-export const digitsOf = s => String(s || '').replace(/\D/g, '').replace(/^598/, '').replace(/^0/, '');
+const digitsOf = s => String(s || '').replace(/\D/g, '').replace(/^598/, '').replace(/^0/, '');
 const PLACEHOLDER = /^[-xX\s.]*$/;
 const SPLIT = /\s*\/{1,}\s*/;
 const CAMBIO = /\/{2,}\s*CAMBIO\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\s*-+>\s*/i;

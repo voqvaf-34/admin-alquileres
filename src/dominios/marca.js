@@ -10,7 +10,7 @@ export const MARCA_DEFAULT = {
 };
 
 // Claves en la tabla settings.
-export const MARCA_KEYS = {
+const MARCA_KEYS = {
   nombre: 'marcaNombre', color: 'marcaColor', color2: 'marcaColor2', logo: 'marcaLogo',
   tema: 'marcaTema', fuente: 'marcaFuente',
   iconoTipo: 'marcaIconoTipo', iconoDiseno: 'marcaIconoDiseno', iconoColor: 'marcaIconoColor', iconoImagen: 'marcaIconoImagen',
@@ -20,7 +20,7 @@ export const MARCA_KEYS = {
 export const ICONOS_APP = {
   edificio: 'Edificio', edificios: 'Edificios', casa: 'Casa', llave: 'Llave', ubicacion: 'Ubicación', inicial: 'Inicial',
 };
-export const ICONO_TIPOS = ['app', 'logo', 'imagen'];
+const ICONO_TIPOS = ['app', 'logo', 'imagen'];
 
 // Colores sugeridos en la configuracion.
 export const COLORES_SUGERIDOS = ['#2563EB', '#0F766E', '#15803D', '#7C3AED', '#BE123C', '#EA580C', '#FD4108', '#334155'];
@@ -119,7 +119,7 @@ export function contraste(a, b) {
 }
 
 // Texto sobre un fondo de color: blanco si se lee bien (4.5), si no el que mas contraste tenga.
-export const tintaSobre = c => (contraste(c, '#FFFFFF') >= 4.5 || contraste(c, '#FFFFFF') >= contraste(c, '#1A1A1A') ? '#FFFFFF' : '#1A1A1A');
+const tintaSobre = c => (contraste(c, '#FFFFFF') >= 4.5 || contraste(c, '#FFFFFF') >= contraste(c, '#1A1A1A') ? '#FFFFFF' : '#1A1A1A');
 
 // Si ni blanco ni oscuro llegan a 4.5 sobre el color, la configuracion lo avisa.
 export const colorConPocoContraste = c => contraste(c, tintaSobre(c)) < 4.5;

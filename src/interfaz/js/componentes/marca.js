@@ -6,7 +6,7 @@ import { claveIcono, dibujarIcono } from './iconos.js';
 const CACHE = 'alq-marca';   // tema.js la aplica antes del primer pintado (evita el destello de otro color)
 
 // Variables CSS (--m-*) que usa estilos.css a partir de la paleta.
-export function variablesCss(p, fuente) {
+function variablesCss(p, fuente) {
   return {
     '--m-header': p.header, '--m-header-ink': p.headerInk, '--m-header-fg': p.headerFg,
     '--m-accent': p.accent, '--m-accent-rgb': p.accentRgb, '--m-ink': p.accentInk,
@@ -25,7 +25,7 @@ export function pintarApariencia(el, marca) {
 }
 
 // Barra superior (y la de las pantallas de inicio): logo si hay, si no el nombre.
-export function pintarNombreYLogo({ nombre, logo }) {
+function pintarNombreYLogo({ nombre, logo }) {
   document.querySelectorAll('[data-marca-nombre]').forEach(el => { el.textContent = nombre; el.hidden = !!logo; });
   document.querySelectorAll('[data-marca-logo]').forEach(el => {
     if (logo) el.src = logo; else el.removeAttribute('src');

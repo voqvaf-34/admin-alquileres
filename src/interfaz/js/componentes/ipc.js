@@ -4,7 +4,7 @@ import { render } from '../app.js';
 import { call } from '../nucleo/api.js';
 import { estado } from '../nucleo/estado.js';
 
-export function setIPC(value) {
+function setIPC(value) {
   estado.ipc = value;
   document.getElementById('inp-ipc').value = estado.ipc;
   call('setSetting', 'ipc', estado.ipc).catch(() => {});

@@ -7,11 +7,11 @@ import { esc, showToast } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
 import { fmtEdificios, linkMailsInText, linkPhonesInText } from '../nucleo/formato.js';
 
-export let adminSearchText  = '';
+let adminSearchText  = '';
 
-export let adminEditRow     = null;  // id de la administracion en edicion (null = alta nueva)
+let adminEditRow     = null;  // id de la administracion en edicion (null = alta nueva)
 
-export function getAdminFiltered() {
+function getAdminFiltered() {
   if (!estado.admins) return [];
   if (!adminSearchText.trim()) return estado.admins;
   const q = norm(adminSearchText);
@@ -50,7 +50,7 @@ export function renderAdminTable() {
     </tr>`).join('');
 }
 
-export function showAdminModal(entry) {
+function showAdminModal(entry) {
   adminEditRow = entry ? entry.id : null;
   document.getElementById('modal-admin-title').textContent = entry ? 'Editar Administracion' : 'Nueva Administracion';
   document.getElementById('m-adm-nombre').value    = entry ? entry.nombre    : '';
@@ -64,11 +64,11 @@ export function showAdminModal(entry) {
   setTimeout(() => document.getElementById('m-adm-nombre').focus(), 80);
 }
 
-export function hideAdminModal() {
+function hideAdminModal() {
   document.getElementById('modal-admin').classList.remove('open');
 }
 
-export async function submitAdminEntry() {
+async function submitAdminEntry() {
   const nombre = (document.getElementById('m-adm-nombre').value || '').trim();
   if (!nombre) { showToast('El nombre de la administracion es obligatorio.', 'err'); return; }
 
@@ -95,7 +95,7 @@ export async function submitAdminEntry() {
   }
 }
 
-export async function deleteAdminEntry(id, nombre) {
+async function deleteAdminEntry(id, nombre) {
   if (!confirm(`Eliminar "${nombre}"?`)) return;
   try {
     estado.admins = await call('deleteAdmin', id);

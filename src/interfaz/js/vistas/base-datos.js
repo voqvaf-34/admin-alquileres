@@ -10,7 +10,7 @@ import { estado } from '../nucleo/estado.js';
 import { MONTH_NAMES, fmtMails, fmtMoney, fmtNames, garantiaBadge, telLink } from '../nucleo/formato.js';
 import { contactRow } from './propietarios.js';
 
-export function getDBFiltered() {
+function getDBFiltered() {
   if (!estado.entries) return [];
   // ninguno seleccionado = mostrar todos; uno seleccionado = filtrar
   let list = (!estado.dbShowActive && !estado.dbShowInactive)
@@ -38,7 +38,7 @@ export function getDBFiltered() {
 }
 
 // Genera la fila separadora de grupo
-export function dbSepRow(label, count) {
+function dbSepRow(label, count) {
   return `<tr class="db-sep-row">
     <td colspan="5">
       <div class="db-sep-inner">
@@ -167,7 +167,7 @@ function insigniaRenovacion(e, dir) {
 }
 
 // Detalle de un alquiler (se muestra al abrir su fila).
-export function filaDetalle(e, porDireccion) {
+function filaDetalle(e, porDireccion) {
   const dir = esc(e.direccion);
   return `<tr class="db-detail-row" data-detail-id="${e.id}">
       <td colspan="5">

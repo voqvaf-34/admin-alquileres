@@ -5,7 +5,7 @@ import { esc, showToast } from '../nucleo/dom.js';
 import { fmtHora } from '../nucleo/formato.js';
 import { populateDBYears } from '../vistas/base-datos.js';
 
-export let shareInfo = null;
+let shareInfo = null;
 
 export function paintShare(st) {
   if (!st) return;
@@ -27,7 +27,7 @@ export function paintViewer(v) {
   el.title = v.dir ? `Carpeta: ${v.dir}` : '';
 }
 
-export function showViewerSetup(v) {
+function showViewerSetup(v) {
   document.getElementById('autoload-screen').style.display = 'none';
   document.getElementById('upload-screen').style.display = 'none';
   document.getElementById('app-screen').style.display = 'none';

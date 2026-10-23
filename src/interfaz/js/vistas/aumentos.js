@@ -13,7 +13,7 @@ import { datosPersonas, filtroResueltos, mesSiguiente, pendientes } from './tarj
 // el detalle con la opcion de deshacer (asi un clic de mas no deshace nada).
 const aumAbiertos = new Set();   // claves de marca de las tarjetas resueltas desplegadas
 
-export function cardAumentoCompact(e, m, y) {
+function cardAumentoCompact(e, m, y) {
   const key  = aumKey(e, m, y);
   const mk   = estado.marks[key];
   const naKy = naKey(e, m, y);
@@ -50,7 +50,7 @@ export function cardAumentoCompact(e, m, y) {
     </div>`;
 }
 
-export function footerAumento(e, m, y, ipcVal) {
+function footerAumento(e, m, y, ipcVal) {
   const nuevo    = D.nuevoImporte(e.importe, ipcVal);
   const key      = aumKey(e, m, y);
   const naKy     = naKey(e, m, y);
@@ -112,7 +112,7 @@ export function footerAumento(e, m, y, ipcVal) {
   </div>`;
 }
 
-export function cardAumento(e, m, y, ipcVal) {
+function cardAumento(e, m, y, ipcVal) {
   const nuevo  = D.nuevoImporte(e.importe, ipcVal);
   const diff   = nuevo - e.importe;
   const years  = y - e.fechaInicio.getFullYear();

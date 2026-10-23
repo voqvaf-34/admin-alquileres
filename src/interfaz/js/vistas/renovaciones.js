@@ -9,7 +9,7 @@ import { estado, replaceEntry } from '../nucleo/estado.js';
 import { MONTH_NAMES, diasFaltan, fmtMoney, fmtNotas, monthsAgo } from '../nucleo/formato.js';
 import { datosPersonas, filtroResueltos, mesSiguiente, pendientes } from './tarjetas.js';
 
-export function cardVencCompact(e) {
+function cardVencCompact(e) {
   const mk = estado.marks[vncKey(e)];
   const isRenCycle = !!(mk && mk.nuevaInicio && mk.renewYears);
   const activeMk = isRenCycle ? estado.marks[vncKeyR(e)] : mk;
@@ -37,7 +37,7 @@ export function cardVencCompact(e) {
 }
 
 // Genera el bloque de inputs de fecha + plazo para una renovacion pendiente
-export function _vencInputs(defaultYears, confirmAttr, dirEsc) {
+function _vencInputs(defaultYears, confirmAttr, dirEsc) {
   return `<div class="card-footer" style="flex-wrap:wrap;gap:8px">
     <span style="font-size:11px;color:var(--dim)">Inicio:</span>
     <input type="date" id="inp-venc-date" class="date-inp">
@@ -54,7 +54,7 @@ export function _vencInputs(defaultYears, confirmAttr, dirEsc) {
   </div>`;
 }
 
-export function footerVenc(e) {
+function footerVenc(e) {
   const mk          = estado.marks[vncKey(e)];
   const isRenCycle  = !!(mk && mk.nuevaInicio && mk.renewYears); // ya fue renovado -> ciclo post-renovacion
   const mkR         = estado.marks[vncKeyR(e)];                          // mark del ciclo post-renovacion
@@ -150,7 +150,7 @@ export function footerVenc(e) {
   </div>`;
 }
 
-export function cardVenc(e, color, overdue) {
+function cardVenc(e, color, overdue) {
   color = color || vencColor(e);
   const mk          = estado.marks[vncKey(e)];
   const mkR         = estado.marks[vncKeyR(e)];
@@ -180,7 +180,7 @@ export function cardVenc(e, color, overdue) {
 }
 
 // Helper para leer los inputs de fecha/plazo del footer de vencimiento
-export function _readVencInputs(defaultYears) {
+function _readVencInputs(defaultYears) {
   const inp     = document.getElementById('inp-venc-date');
   const yearsEl = document.getElementById('inp-venc-years');
   const descEl  = document.getElementById('inp-venc-desc');

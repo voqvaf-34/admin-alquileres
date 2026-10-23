@@ -101,7 +101,7 @@ export function showApp() {
   render();
 }
 
-export function showAutoLoad(msg) {
+function showAutoLoad(msg) {
   document.getElementById('autoload-status').textContent   = msg || 'Abriendo base de datos...';
   document.getElementById('autoload-screen').style.display = 'flex';
   document.getElementById('upload-screen').style.display   = 'none';
@@ -109,7 +109,7 @@ export function showAutoLoad(msg) {
   document.body.classList.remove('in-app');
 }
 
-export function showImportScreen() {
+function showImportScreen() {
   document.getElementById('drop-label').textContent        = 'o soltá la planilla acá';
   document.getElementById('autoload-screen').style.display = 'none';
   document.getElementById('upload-screen').style.display   = 'flex';
@@ -117,7 +117,7 @@ export function showImportScreen() {
   document.body.classList.remove('in-app');
 }
 
-export async function loadState() {
+async function loadState() {
   showAutoLoad();
   try {
     const st = await call('getState');
@@ -140,7 +140,7 @@ export async function loadState() {
   }
 }
 
-export async function runImport(promise) {
+async function runImport(promise) {
   try {
     const res = await promise;
     if (!res) return false;                         // dialogo cancelado

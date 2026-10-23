@@ -4,7 +4,7 @@ import { Splitters, norm } from '../../../dominios/index.js';
 import { chipFields, setMoneda } from '../modales/alquiler.js';
 import { estado } from '../nucleo/estado.js';
 
-export const AC_FIELD_MAP = {
+const AC_FIELD_MAP = {
   'm-edificio':  e => e.edificio,
   'm-calle':     e => e.calle,
   'm-prop-entry': e => e.propietario,
@@ -19,13 +19,13 @@ export let _acIdx       = -1;
 
 export let _acItems     = [];
 
-export let _acInput     = null;
+let _acInput     = null;
 
-export let _acHideTimer = null;
+let _acHideTimer = null;
 
-export function _acEl() { return document.getElementById('ac-dropdown'); }
+function _acEl() { return document.getElementById('ac-dropdown'); }
 
-export function acShow(inputEl, suggestions) {
+function acShow(inputEl, suggestions) {
   const el = _acEl();
   if (!suggestions.length) { acHide(); return; }
   _acInput = inputEl;
@@ -49,20 +49,20 @@ export function acShow(inputEl, suggestions) {
   el.style.display = 'block';
 }
 
-export function acHide() {
+function acHide() {
   const el = _acEl();
   if (el) { el.style.display = 'none'; el.innerHTML = ''; }
   _acIdx = -1; _acItems = []; _acInput = null;
 }
 
-export function acSetActive(idx) {
+function acSetActive(idx) {
   const items = _acEl().querySelectorAll('.ac-item');
   items.forEach((el, i) => el.classList.toggle('ac-active', i === idx));
   if (idx >= 0 && items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
   _acIdx = idx;
 }
 
-export function acSelect(value) {
+function acSelect(value) {
   const inputId = _acInput ? _acInput.id : null;
   if (inputId && inputId.endsWith('-entry') && chipFields[inputId.replace('-entry', '')]) {
     const base = inputId.replace('-entry', '');
@@ -81,7 +81,7 @@ export function acSelect(value) {
 
 // En el campo Edificio se puede elegir un apto existente (completa todo) o solo un edificio
 // (completa la calle).
-export function acPickAddress(value) {
+function acPickAddress(value) {
   const set = (id, val) => { document.getElementById(id).value = val || ''; };
   const apt = estado.entries.filter(e => e.direccion === value).sort((a, b) => b.id - a.id)[0];
   if (apt) {
@@ -107,7 +107,7 @@ export function updateAddrPreview() {
   document.getElementById('m-dir-preview').textContent = txt || '—';
 }
 
-export function acFillFromDir(dir) {
+function acFillFromDir(dir) {
   if (!estado.entries) return;
   // si hay varios (misma dirección alquilada varias veces), tomar el más reciente
   const matches = estado.entries.filter(e => e.direccion === dir);
@@ -123,7 +123,7 @@ export function acFillFromDir(dir) {
   acFlash(['m-prop','m-tel-prop','m-mail-prop','m-importe']);
 }
 
-export function acFillFromProp(prop) {
+function acFillFromProp(prop) {
   const o = estado.owners.find(x => x.nombre === prop);
   if (!o) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
@@ -132,7 +132,7 @@ export function acFillFromProp(prop) {
   acFlash(['m-tel-prop','m-mail-prop']);
 }
 
-export function acFillFromInq(inq) {
+function acFillFromInq(inq) {
   if (!estado.entries) return;
   const matches = estado.entries.filter(e => e.inquilino === inq || Splitters.personas(e.inquilino).includes(inq));
   if (!matches.length) return;
@@ -143,7 +143,7 @@ export function acFillFromInq(inq) {
   acFlash(['m-tel-inq','m-mail-inq']);
 }
 
-export function acFlash(ids) {
+function acFlash(ids) {
   ids.forEach(id => {
     const el = document.getElementById(id + '-chips') || document.getElementById(id);
     if (el && document.getElementById(id).value) {

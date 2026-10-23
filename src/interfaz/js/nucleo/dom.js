@@ -1,6 +1,6 @@
 // Utilidades de pantalla: avisos (toast), escape de HTML, portapapeles, archivos e imagenes.
 
-export let _toastTimer = null;
+let _toastTimer = null;
 
 export function showToast(msg, type) {
   const el = document.getElementById('toast');
@@ -20,7 +20,7 @@ export function copyToClipboard(text) {
   } else { fallbackCopy(text); }
 }
 
-export function fallbackCopy(text) {
+function fallbackCopy(text) {
   const ta = document.createElement('textarea');
   ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
   document.body.appendChild(ta); ta.select();
