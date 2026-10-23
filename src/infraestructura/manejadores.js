@@ -60,7 +60,8 @@ function handle(channel, fn) {
 function registerCommonHandlers() {
   handle('state:get',            () => estadoApp.state());
   handle('undo:status',          () => (ctx.store ? ctx.store.undoStatus() : {}));
-  handle('ipc:fetch',            () => fetchLatestIPC());
+  // En las pruebas (ADMIN_ALQ_NO_EXTERNAL) no se consulta al INE: el resultado no depende de internet.
+  handle('ipc:fetch',            () => (process.env.ADMIN_ALQ_NO_EXTERNAL ? { ok: false, error: 'Consulta al INE desactivada en las pruebas.' } : fetchLatestIPC()));
   handle('owner:docPreview',     (id) => docPreview(id));
   handle('owner:openDoc',        (id) => shell.openPath(docFile(id).p));
   handle('data:exportCsv',       () => exportCsv());
