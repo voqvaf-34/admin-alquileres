@@ -52,6 +52,24 @@ test('cambios seguidos se agrupan y un cambio nuevo borra el rehacer', async () 
   s.close();
 });
 
+test('una importacion es siempre un paso propio: no se junta con el anterior ni con el siguiente', async () => {
+  const s = await Store.open(tmp());
+  const c = s.addContract({ ...base, direccion: 'A 1' });
+  s.checkpoint('Modificar alquiler');
+  s.patchContract(c.id, { importe: 21000 });
+  assert.equal(s.checkpoint('Agregar planilla', false), true, 'no se junta con el cambio anterior');
+  s.addContract({ ...base, direccion: 'B 1' });
+  assert.equal(s.checkpoint('Modificar alquiler'), true, 'el cambio siguiente no se junta con la importacion');
+  s.patchContract(c.id, { importe: 22000 });
+  s.undo();
+  assert.equal(s.getContract(c.id).importe, 21000, 'deshace solo el ultimo cambio');
+  assert.equal(s.listContracts().length, 2, 'la importacion sigue');
+  s.undo();
+  assert.equal(s.listContracts().length, 1, 'despues se deshace la importacion sola');
+  assert.equal(s.getContract(c.id).importe, 21000);
+  s.close();
+});
+
 test('normalizar direcciones conserva la original y mueve las marcas', async () => {
   const s = await Store.open(tmp());
   const a = s.addContract({ ...base, direccion: 'TORRE CEIBO 403' });

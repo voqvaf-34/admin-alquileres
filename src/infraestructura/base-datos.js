@@ -163,12 +163,13 @@ class Store {
   // ── deshacer / rehacer ───────────────────────────────────────────────────
   // Guarda una copia de la base antes de un cambio. Cambios seguidos (< 1,5 s) se agrupan
   // en un solo paso, ej. "marcar enviado" = importe + marca; agrupar=false para cambios grandes
-  // (importaciones) que siempre son un paso propio.
+  // (importaciones) que siempre son un paso propio: ni se juntan con el anterior ni el siguiente
+  // se junta con ellos (t = 0).
   checkpoint(label, agrupar = true) {
     const now = Date.now();
     const last = this.undoStack[this.undoStack.length - 1];
-    if (agrupar && last && now - last.t < UNDO_GROUP_MS) { last.t = now; return false; }
-    this.undoStack.push({ label, t: now, data: this.db.export() });
+    if (agrupar && last && last.t && now - last.t < UNDO_GROUP_MS) { last.t = now; return false; }
+    this.undoStack.push({ label, t: agrupar ? now : 0, data: this.db.export() });
     this.db.run('PRAGMA foreign_keys = ON;');
     if (this.undoStack.length > UNDO_LIMIT) this.undoStack.shift();
     this.redoStack = [];
