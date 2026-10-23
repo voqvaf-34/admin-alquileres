@@ -4,12 +4,12 @@ const fs   = require('fs');
 const path = require('path');
 const { ROOT, lanzar, carpetaTemporal } = require('../test/e2e/helpers');
 
-const OUT = path.join(ROOT, 'docs', 'capturas');
+const SALIDA = path.join(ROOT, 'docs', 'capturas');
 
 async function main() {
-  fs.mkdirSync(OUT, { recursive: true });
+  fs.mkdirSync(SALIDA, { recursive: true });
   const { app, page } = await lanzar(carpetaTemporal('alq-capturas-'), {}, { tamano: { width: 1280, height: 800 } });
-  const captura = async name => { await page.waitForTimeout(250); await page.screenshot({ path: path.join(OUT, name + '.png') }); console.log('  ' + name); };
+  const captura = async nombre => { await page.waitForTimeout(250); await page.screenshot({ path: path.join(SALIDA, nombre + '.png') }); console.log('  ' + nombre); };
   const sinToast = () => page.evaluate(() => { document.getElementById('toast').className = ''; });
 
   try {

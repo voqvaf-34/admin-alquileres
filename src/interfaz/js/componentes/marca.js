@@ -37,8 +37,8 @@ function pintarNombreYLogo({ nombre, logo }) {
 
 let ultimoColor = null, ultimoIcono = null;
 
-export function aplicarMarca(settings) {
-  const marca = leerMarca(settings);
+export function aplicarMarca(ajustes) {
+  const marca = leerMarca(ajustes);
   pintarApariencia(document.documentElement, marca);
   pintarNombreYLogo(marca);
   document.title = `${marca.nombre} · Alquileres${document.body.classList.contains('viewer') ? ' · Visor' : ''}`;

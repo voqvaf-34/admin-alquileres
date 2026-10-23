@@ -9,7 +9,7 @@ const EXTENSIONES_DOC = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'pdf', 'hei
 
 const MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', bmp: 'image/bmp' };
 
-async function elegirDocsPropietario(ownerId) {
+async function elegirDocsPropietario(idPropietario) {
   const res = await dialog.showOpenDialog(ctx.win, {
     title: 'Agregar foto de cedula', properties: ['openFile', 'multiSelections'],
     filters: [{ name: 'Imagen o PDF', extensions: EXTENSIONES_DOC }],
@@ -18,9 +18,9 @@ async function elegirDocsPropietario(ownerId) {
   fs.mkdirSync(carpetaDocs(), { recursive: true });
   for (const src of res.filePaths) {
     const ext = path.extname(src).toLowerCase();
-    const file = `prop${ownerId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}${ext}`;
-    fs.copyFileSync(src, path.join(carpetaDocs(), file));
-    ctx.store.agregarDocPropietario(ownerId, 'cedula', file, path.basename(src));
+    const archivo = `prop${idPropietario}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}${ext}`;
+    fs.copyFileSync(src, path.join(carpetaDocs(), archivo));
+    ctx.store.agregarDocPropietario(idPropietario, 'cedula', archivo, path.basename(src));
   }
   return true;
 }

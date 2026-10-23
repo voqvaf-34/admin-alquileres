@@ -33,25 +33,25 @@ function state() {
   };
 }
 
-function importarDesde(filePath) {
-  const data = leerArchivoLibro(filePath);
-  if (!data.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
+function importarDesde(rutaArchivo) {
+  const datos = leerArchivoLibro(rutaArchivo);
+  if (!datos.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
   ctx.store.respaldar('pre-import');
-  const counts = ctx.store.importarDatos(data);
-  asegurarDatos(true, { heuristicas: data.formato === 'clasico' });
+  const cantidades = ctx.store.importarDatos(datos);
+  asegurarDatos(true, { heuristicas: datos.formato === 'clasico' });
   ctx.store.guardarAjuste('initialized', '1');
-  ctx.store.guardarAjuste('importedFrom', filePath);
+  ctx.store.guardarAjuste('importedFrom', rutaArchivo);
   ctx.store.guardarAjuste('importedAt', new Date().toISOString());
-  return counts;
+  return cantidades;
 }
 
 // Suma una planilla a lo que ya hay (con la app en uso): no toca lo cargado y saltea repetidos.
-function agregarDesde(filePath) {
-  const data = leerArchivoLibro(filePath);
-  if (!data.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
-  const clasico = data.formato === 'clasico';
+function agregarDesde(rutaArchivo) {
+  const datos = leerArchivoLibro(rutaArchivo);
+  if (!datos.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
+  const clasico = datos.formato === 'clasico';
   ctx.store.respaldar('pre-agregar');
-  const res = ctx.store.agregarImportados({ contracts: data.contracts.map(c => D.prepararImportado(c, { reglasDirecciones: REGLAS_DIRECCIONES, clasico })), admins: data.admins }, D.claveNombre);
+  const res = ctx.store.agregarImportados({ contracts: datos.contracts.map(c => D.prepararImportado(c, { reglasDirecciones: REGLAS_DIRECCIONES, clasico })), admins: datos.admins }, D.claveNombre);
   ctx.store.guardarAjuste('initialized', '1');
   return res;
 }
@@ -59,15 +59,15 @@ function agregarDesde(filePath) {
 // Datos de ejemplo inventados (ver dominios/demo.js): pasan por las mismas normalizaciones que
 // una importacion.
 function cargarDemo() {
-  const { contracts, admins, marks } = D.datosDemo(new Date());
+  const { contracts: contratos, admins, marks } = D.datosDemo(new Date());
   ctx.store.respaldar('pre-ejemplo');
-  const counts = ctx.store.importarDatos({ contracts, admins });
+  const cantidades = ctx.store.importarDatos({ contracts: contratos, admins });
   asegurarDatos(true, { heuristicas: false });
   ctx.store.reemplazarMarcas(marks);
   ctx.store.guardarAjuste('initialized', '1');
   ctx.store.guardarAjuste('importedFrom', 'datos de ejemplo');
   ctx.store.guardarAjuste('importedAt', new Date().toISOString());
-  return { counts, state: state() };
+  return { counts: cantidades, state: state() };
 }
 
 async function abrirBase() {

@@ -57,19 +57,19 @@ export function hidratarContrato(r) {
 
 // Reemplaza los campos de texto del propietario por los datos de los propietarios
 // vinculados (si los hay) y agrega los contactos de esos propietarios.
-export function adjuntarPropietarios(entries, owners, contacts, links) {
-  const oById = new Map((owners || []).map(o => [o.id, o]));
-  const cById = new Map((contacts || []).map(c => [c.id, c]));
-  const byContract = new Map();
-  for (const l of links || []) {
-    if (!byContract.has(l.contractId)) byContract.set(l.contractId, []);
-    byContract.get(l.contractId).push(l);
+export function adjuntarPropietarios(entradas, propietarios, contactos, enlaces) {
+  const oById = new Map((propietarios || []).map(o => [o.id, o]));
+  const cById = new Map((contactos || []).map(c => [c.id, c]));
+  const porContrato = new Map();
+  for (const l of enlaces || []) {
+    if (!porContrato.has(l.contractId)) porContrato.set(l.contractId, []);
+    porContrato.get(l.contractId).push(l);
   }
-  for (const e of entries) {
+  for (const e of entradas) {
     if (e.propietarioRaw === undefined) {
       e.propietarioRaw = e.propietario; e.telPropRaw = e.telProp; e.mailPropRaw = e.mailProp;
     }
-    const ls = (byContract.get(e.id) || []).slice().sort((a, b) => a.orden - b.orden);
+    const ls = (porContrato.get(e.id) || []).slice().sort((a, b) => a.orden - b.orden);
     e.owners = ls.map(l => oById.get(l.ownerId)).filter(Boolean);
     if (e.owners.length) {
       e.propietario = e.owners.map(o => o.nombre).join(' / ');
@@ -82,7 +82,7 @@ export function adjuntarPropietarios(entries, owners, contacts, links) {
     for (const o of e.owners) if (o.contactId && cById.has(o.contactId)) cs.set(o.contactId, cById.get(o.contactId));
     e.contacts = [...cs.values()];
   }
-  return entries;
+  return entradas;
 }
 
 // Unidad: los numeros en mayusculas ("4B"), los nombres con mayusculas iniciales ("Local Frente").

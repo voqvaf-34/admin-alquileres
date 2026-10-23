@@ -14,12 +14,12 @@ import { datosPersonas, filtroResueltos, mesSiguiente, pendientes } from './tarj
 const aumAbiertos = new Set();   // claves de marca de las tarjetas resueltas desplegadas
 
 function tarjetaAumentoCompacta(e, m, y) {
-  const key  = claveAumento(e, m, y);
-  const mk   = estado.marks[key];
+  const clave  = claveAumento(e, m, y);
+  const mk   = estado.marks[clave];
   const naKy = claveNoAumenta(e, m, y);
   const naMk = estado.marks[naKy];
   if (!mk && !naMk) return '';
-  const k = mk ? key : naKy;
+  const k = mk ? clave : naKy;
   const abierto = aumAbiertos.has(k);
   const resumen = mk
     ? `&#10003; Enviado ${mk.date}${mk.importeAnterior ? ` &middot; ${formatearDinero(mk.importeAnterior, e.moneda)} &rarr; ${formatearDinero(mk.importeNuevo, e.moneda)}` : ''}`
@@ -39,7 +39,7 @@ function tarjetaAumentoCompacta(e, m, y) {
         ${datos}
       </div>
       <div class="card-footer">
-        <button class="mark-btn" ${mk ? `data-aum-undo="${esc(key)}"` : `data-un-na="${esc(naKy)}"`}>&#8617; Deshacer${mk ? ' enviado' : ''}</button>
+        <button class="mark-btn" ${mk ? `data-aum-undo="${esc(clave)}"` : `data-un-na="${esc(naKy)}"`}>&#8617; Deshacer${mk ? ' enviado' : ''}</button>
       </div>`;
   return `<div class="card card-compact${abierto ? ' abierta' : ''}" style="border-left:3px solid ${mk ? 'var(--green)' : 'rgba(150,150,150,0.3)'}">
       <div class="card-compact-row aum-toggle" data-aum-toggle="${esc(k)}" title="${abierto ? 'Cerrar' : 'Ver el detalle'}">
@@ -52,9 +52,9 @@ function tarjetaAumentoCompacta(e, m, y) {
 
 function pieAumento(e, m, y, ipcVal) {
   const nuevo    = D.nuevoImporte(e.importe, ipcVal);
-  const key      = claveAumento(e, m, y);
+  const clave      = claveAumento(e, m, y);
   const naKy     = claveNoAumenta(e, m, y);
-  const mk       = estado.marks[key];
+  const mk       = estado.marks[clave];
   const naMk     = estado.marks[naKy];
   const ipcStr   = formatearIPC(ipcVal);
   const nuevoStr = formatearDinero(nuevo, e.moneda);
@@ -68,7 +68,7 @@ function pieAumento(e, m, y, ipcVal) {
 
   const { inquilino: msgInq, propietario: msgProp } = D.mensajesAumento({ settings: estado.appSettings, contrato: e, porcentaje: ipcStr, nuevoImporte: nuevoStr });
 
-  const copyBtns = `
+  const btnsCopiar = `
     <button class="copy-btn" data-copy="${esc(msgInq)}"  title="Copiar mensaje inquilino">&#8663; Inq</button>
     <button class="copy-btn" data-copy="${esc(msgProp)}" title="Copiar mensaje propietario">&#8663; Prop</button>`;
 
@@ -76,11 +76,11 @@ function pieAumento(e, m, y, ipcVal) {
   if (mk) {
     return `<div class="card-footer">
       <label class="chk-wrap done">
-        <input type="checkbox" class="chk" data-aum="${esc(key)}" checked>
+        <input type="checkbox" class="chk" data-aum="${esc(clave)}" checked>
         Enviado ${mk.date}
       </label>
       ${mk.importeAnterior ? `<span class="change-tag">${formatearDinero(mk.importeAnterior, e.moneda)} &rarr; ${formatearDinero(mk.importeNuevo, e.moneda)}</span>` : ''}
-      ${copyBtns}
+      ${btnsCopiar}
     </div>`;
   }
 
@@ -104,36 +104,36 @@ function pieAumento(e, m, y, ipcVal) {
   // Estado normal
   return `<div class="card-footer">
     <label class="chk-wrap">
-      <input type="checkbox" class="chk" data-aum="${esc(key)}">
+      <input type="checkbox" class="chk" data-aum="${esc(clave)}">
       Marcar enviado
     </label>
     <button class="mark-btn" data-na-start="${esc(naKy)}" style="font-size:11px;border-color:rgba(var(--red-rgb),0.35);color:var(--red)">&#10005; No aumenta</button>
-    ${copyBtns}
+    ${btnsCopiar}
   </div>`;
 }
 
 function tarjetaAumento(e, m, y, ipcVal) {
   const nuevo  = D.nuevoImporte(e.importe, ipcVal);
-  const diff   = nuevo - e.importe;
-  const years  = y - e.fechaInicio.getFullYear();
-  const cardKey = claveAumento(e, m, y);
-  const mk     = estado.marks[cardKey];
+  const diferencia   = nuevo - e.importe;
+  const anios  = y - e.fechaInicio.getFullYear();
+  const claveTarjeta = claveAumento(e, m, y);
+  const mk     = estado.marks[claveTarjeta];
   const naMk   = estado.marks[claveNoAumenta(e, m, y)];
-  const isDel  = Boolean(D.gestionadoPor(e));
-  const borderColor = mk ? 'var(--green)' : naMk ? 'rgba(150,150,150,0.3)' : isDel ? 'var(--amber)' : D.comentarios(e).length ? 'var(--orange)' : 'rgba(var(--accent-rgb),0.3)';
+  const esBorrar  = Boolean(D.gestionadoPor(e));
+  const colorBorde = mk ? 'var(--green)' : naMk ? 'rgba(150,150,150,0.3)' : esBorrar ? 'var(--amber)' : D.comentarios(e).length ? 'var(--orange)' : 'rgba(var(--accent-rgb),0.3)';
   return `
-    <div class="card" data-card-key="${esc(cardKey)}" style="border-left:3px solid ${borderColor}${naMk ? ';filter:grayscale(1)' : ''}">
+    <div class="card" data-card-key="${esc(claveTarjeta)}" style="border-left:3px solid ${colorBorde}${naMk ? ';filter:grayscale(1)' : ''}">
       <div class="card-top">
         <div>
-          <span style="color:${isDel ? 'var(--amber)' : 'var(--accent-ink)'};font-weight:600">${esc(e.direccion)}</span>
-          <span style="color:var(--dim);margin-left:10px;font-size:11px">${years}a</span>
-          ${isDel ? `<span class="delegado-badge" style="margin-left:8px">&#8618; ${esc(D.gestionadoPor(e))}</span>` : ''}
+          <span style="color:${esBorrar ? 'var(--amber)' : 'var(--accent-ink)'};font-weight:600">${esc(e.direccion)}</span>
+          <span style="color:var(--dim);margin-left:10px;font-size:11px">${anios}a</span>
+          ${esBorrar ? `<span class="delegado-badge" style="margin-left:8px">&#8618; ${esc(D.gestionadoPor(e))}</span>` : ''}
         </div>
         <div style="text-align:right;white-space:nowrap">
           <span style="color:var(--dim)">${formatearDinero(e.importe, e.moneda)}</span>
           <span style="margin:0 6px;color:var(--dim)">&rarr;</span>
           <span style="color:var(--green);font-weight:600">${formatearDinero(nuevo, e.moneda)}</span>
-          <span style="font-size:11px;color:var(--dim);margin-left:6px">(+${formatearDinero(diff, e.moneda)})</span>
+          <span style="font-size:11px;color:var(--dim);margin-left:6px">(+${formatearDinero(diferencia, e.moneda)})</span>
         </div>
       </div>
       ${datosPersonas(e, { conMail: true })}
@@ -150,63 +150,63 @@ export function contarPendientesAumentos() {
 }
 
 // Lista del mes elegido y del siguiente, con el filtro de resueltos.
-export function dibujarAumentos(content) {
+export function dibujarAumentos(contenido) {
   const { m: nxM, y: nxY } = mesSiguiente(estado.selMonth, estado.selYear);
   const aumentos     = obtenerAumentos(estado.entries, estado.selMonth, estado.selYear);
   const aumentosProx = obtenerAumentos(estado.entries, nxM, nxY);
   const filtro = filtroResueltos();
-  const showPend = filtro.pendientes, showResv = filtro.resueltos;
+  const mostrarPend = filtro.pendientes, mostrarResv = filtro.resueltos;
   const aumPend  = aumentos.filter(e => !esAumentoResuelto(e, estado.selMonth, estado.selYear));
   const aumResv  = aumentos.filter(e =>  esAumentoResuelto(e, estado.selMonth, estado.selYear));
   const proxPend = aumentosProx.filter(e => !esAumentoResuelto(e, nxM, nxY));
   const proxResv = aumentosProx.filter(e =>  esAumentoResuelto(e, nxM, nxY));
 
   let h = `<div class="sec-title">${NOMBRES_MESES[estado.selMonth]} ${estado.selYear}</div>`;
-  const visibleAum  = (showPend ? aumPend  : []).concat(showResv ? aumResv  : []);
-  const visibleProx = (showPend ? proxPend : []).concat(showResv ? proxResv : []);
+  const visibleAum  = (mostrarPend ? aumPend  : []).concat(mostrarResv ? aumResv  : []);
+  const visibleProx = (mostrarPend ? proxPend : []).concat(mostrarResv ? proxResv : []);
   if (visibleAum.length === 0) {
     h += `<div class="empty">Sin aumentos ${filtro.palabra} este mes</div>`;
   } else {
-    if (showPend && aumPend.length)  h += `<div class="card-list">${aumPend.map(e=>tarjetaAumento(e,estado.selMonth,estado.selYear,estado.ipc)).join('')}</div>`;
-    if (showResv && aumResv.length)  h += `<div class="card-list">${aumResv.map(e=>tarjetaAumentoCompacta(e,estado.selMonth,estado.selYear)).join('')}</div>`;
+    if (mostrarPend && aumPend.length)  h += `<div class="card-list">${aumPend.map(e=>tarjetaAumento(e,estado.selMonth,estado.selYear,estado.ipc)).join('')}</div>`;
+    if (mostrarResv && aumResv.length)  h += `<div class="card-list">${aumResv.map(e=>tarjetaAumentoCompacta(e,estado.selMonth,estado.selYear)).join('')}</div>`;
   }
   if (visibleProx.length > 0) {
     h += `<div class="sec-title sep">Proximo: ${NOMBRES_MESES[nxM]} ${nxY} (${visibleProx.length})</div>`;
-    if (showPend && proxPend.length) h += `<div class="card-list dim">${proxPend.map(e=>tarjetaAumento(e,nxM,nxY,estado.ipc)).join('')}</div>`;
-    if (showResv && proxResv.length) h += `<div class="card-list dim">${proxResv.map(e=>tarjetaAumentoCompacta(e,nxM,nxY)).join('')}</div>`;
+    if (mostrarPend && proxPend.length) h += `<div class="card-list dim">${proxPend.map(e=>tarjetaAumento(e,nxM,nxY,estado.ipc)).join('')}</div>`;
+    if (mostrarResv && proxResv.length) h += `<div class="card-list dim">${proxResv.map(e=>tarjetaAumentoCompacta(e,nxM,nxY)).join('')}</div>`;
   }
-  content.innerHTML = h;
+  contenido.innerHTML = h;
 }
 
 // "Marcar enviado": aplica el aumento al alquiler y guarda la marca (con el importe anterior,
 // para poder deshacer).
-async function marcarAumentoEnviado(key) {
-  const entry = entradaPorDireccion(key.split('|')[1]);
-  if (!entry) return;
-  const today     = new Date();
-  const newAmount = D.nuevoImporte(entry.importe, estado.ipc);
-  const prev = { importeAnterior: entry.importe, ultimoAumentoAnterior: D.aFechaISO(entry.ultimoAumento) };
-  if (await guardarAumento(entry, newAmount, today)) {
-    estado.marks[key] = { date: formatearFecha(today), importeNuevo: newAmount, ipc: estado.ipc, ...prev };
+async function marcarAumentoEnviado(clave) {
+  const entrada = entradaPorDireccion(clave.split('|')[1]);
+  if (!entrada) return;
+  const hoy     = new Date();
+  const nuevoMonto = D.nuevoImporte(entrada.importe, estado.ipc);
+  const anterior = { importeAnterior: entrada.importe, ultimoAumentoAnterior: D.aFechaISO(entrada.ultimoAumento) };
+  if (await guardarAumento(entrada, nuevoMonto, hoy)) {
+    estado.marks[clave] = { date: formatearFecha(hoy), importeNuevo: nuevoMonto, ipc: estado.ipc, ...anterior };
     await guardarMarcas();
   }
 }
 
 // Deshacer "enviado": vuelve el alquiler al importe anterior y saca la marca.
-async function deshacerAumentoEnviado(key) {
-  const entry = entradaPorDireccion(key.split('|')[1]);
-  const mk = estado.marks[key];
+async function deshacerAumentoEnviado(clave) {
+  const entrada = entradaPorDireccion(clave.split('|')[1]);
+  const mk = estado.marks[clave];
   // Revierte el importe solo si la marca guardo el estado previo (las importadas no lo tienen).
-  if (entry && mk && mk.importeAnterior) {
+  if (entrada && mk && mk.importeAnterior) {
     try {
-      reemplazarEntrada(await call('modificarContrato', entry.id,
+      reemplazarEntrada(await call('modificarContrato', entrada.id,
         { importe: mk.importeAnterior, ultimoAumento: mk.ultimoAumentoAnterior || null }));
     } catch (err) {
       mostrarAviso('Error al revertir el aumento: ' + esc(err.message), 'err');
       return false;
     }
   }
-  delete estado.marks[key];
+  delete estado.marks[clave];
   await guardarMarcas();
   return true;
 }
@@ -224,31 +224,31 @@ export function iniciar() {
 
   document.getElementById('content').addEventListener('click', async e => {
     // ── aumentos resueltos: desplegar el detalle / deshacer ─────────────────────
-    const aumUndo = e.target.closest('[data-aum-undo]');
-    if (aumUndo) {
-      aumUndo.disabled = true;
-      if (await deshacerAumentoEnviado(aumUndo.dataset.aumUndo)) {
-        aumAbiertos.delete(aumUndo.dataset.aumUndo);
+    const aumDeshacer = e.target.closest('[data-aum-undo]');
+    if (aumDeshacer) {
+      aumDeshacer.disabled = true;
+      if (await deshacerAumentoEnviado(aumDeshacer.dataset.aumUndo)) {
+        aumAbiertos.delete(aumDeshacer.dataset.aumUndo);
         mostrarAviso('&#8617; Aumento deshecho: el alquiler volvió al importe anterior', 'info');
       }
       dibujar();
       return;
     }
-    const aumToggle = e.target.closest('[data-aum-toggle]');
-    if (aumToggle) {
-      const k = aumToggle.dataset.aumToggle;
+    const aumAlternar = e.target.closest('[data-aum-toggle]');
+    if (aumAlternar) {
+      const k = aumAlternar.dataset.aumToggle;
       if (aumAbiertos.has(k)) aumAbiertos.delete(k); else aumAbiertos.add(k);
       dibujar();
       return;
     }
 
-    const copyBtn = e.target.closest('[data-copy]');
-    if (copyBtn) {
-      copiarAlPortapapeles(copyBtn.dataset.copy);
-      copyBtn.classList.add('copied');
-      const orig = copyBtn.textContent;
-      copyBtn.textContent = '✓';
-      setTimeout(() => { copyBtn.textContent = orig; copyBtn.classList.remove('copied'); }, 1800);
+    const btnCopiar = e.target.closest('[data-copy]');
+    if (btnCopiar) {
+      copiarAlPortapapeles(btnCopiar.dataset.copy);
+      btnCopiar.classList.add('copied');
+      const original = btnCopiar.textContent;
+      btnCopiar.textContent = '✓';
+      setTimeout(() => { btnCopiar.textContent = original; btnCopiar.classList.remove('copied'); }, 1800);
       return;
     }
 
@@ -267,13 +267,13 @@ export function iniciar() {
     const naConf = e.target.closest('[data-na-conf]');
     if (naConf) {
       const naKy   = naConf.dataset.naConf;
-      const descEl = document.getElementById('inp-na-desc');
-      const desc   = descEl ? descEl.value.trim() : '';
-      const entry  = entradaPorDireccion(naKy.split('|')[1]);   // na|dir|m|y
-      estado.marks[naKy]  = { date: formatearFecha(new Date()), desc };
+      const elDescripcion = document.getElementById('inp-na-desc');
+      const descripcion   = elDescripcion ? elDescripcion.value.trim() : '';
+      const entrada  = entradaPorDireccion(naKy.split('|')[1]);   // na|dir|m|y
+      estado.marks[naKy]  = { date: formatearFecha(new Date()), desc: descripcion };
       guardarMarcas();
       pendientes.noAumenta = null;
-      if (entry && desc) await guardarNotas(entry, agregarNota(entry, `NO AUMENTA: ${desc}`));
+      if (entrada && descripcion) await guardarNotas(entrada, agregarNota(entrada, `NO AUMENTA: ${descripcion}`));
       dibujar();
       return;
     }

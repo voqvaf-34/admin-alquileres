@@ -48,29 +48,29 @@ function mostrarModalAlta() {
   setTimeout(() => document.getElementById('m-edificio').focus(), 80);
 }
 
-export function mostrarModalEdicion(entry) {
-  entradaEditando = entry;
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  set('m-edificio', entry.edificio);
-  set('m-calle',    entry.calle || (entry.edificio ? '' : entry.direccion));
-  set('m-unidad',   entry.unidad);
-  set('m-prop',     entry.propietario);
-  set('m-tel-prop', entry.telProp);
-  set('m-mail-prop',entry.mailProp);
-  set('m-inq',      entry.inquilino);
-  set('m-tel-inq',  entry.telInq);
-  set('m-mail-inq', entry.mailInq);
-  set('m-importe',  entry.importe || '');
-  set('m-notas',    entry.notas);
-  ponerOpcionDuracion(entry.contratoStr || '');
-  set('m-remitente', entry.remitente);
-  ponerOpcionesGarantia(entry.garantia);
-  ponerMoneda(entry.moneda);
-  ponerCamposOpcionales(!!entry.remitente, D.comentarios(entry).length > 0);
-  document.getElementById('m-fecha').value = entry.fechaInicio
-    ? entry.fechaInicio.getFullYear() + '-' +
-      String(entry.fechaInicio.getMonth()+1).padStart(2,'0') + '-' +
-      String(entry.fechaInicio.getDate()).padStart(2,'0')
+export function mostrarModalEdicion(entrada) {
+  entradaEditando = entrada;
+  const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
+  set('m-edificio', entrada.edificio);
+  set('m-calle',    entrada.calle || (entrada.edificio ? '' : entrada.direccion));
+  set('m-unidad',   entrada.unidad);
+  set('m-prop',     entrada.propietario);
+  set('m-tel-prop', entrada.telProp);
+  set('m-mail-prop',entrada.mailProp);
+  set('m-inq',      entrada.inquilino);
+  set('m-tel-inq',  entrada.telInq);
+  set('m-mail-inq', entrada.mailInq);
+  set('m-importe',  entrada.importe || '');
+  set('m-notas',    entrada.notas);
+  ponerOpcionDuracion(entrada.contratoStr || '');
+  set('m-remitente', entrada.remitente);
+  ponerOpcionesGarantia(entrada.garantia);
+  ponerMoneda(entrada.moneda);
+  ponerCamposOpcionales(!!entrada.remitente, D.comentarios(entrada).length > 0);
+  document.getElementById('m-fecha').value = entrada.fechaInicio
+    ? entrada.fechaInicio.getFullYear() + '-' +
+      String(entrada.fechaInicio.getMonth()+1).padStart(2,'0') + '-' +
+      String(entrada.fechaInicio.getDate()).padStart(2,'0')
     : '';
   document.getElementById('modal-add-title').textContent = 'Editar Alquiler';
   const btn = document.getElementById('modal-submit');
@@ -82,17 +82,17 @@ export function mostrarModalEdicion(entry) {
 
 // Duracion: viñetas fijas (1, 2, 3 años). Si el contrato tiene otra (o se agrega con "+"),
 // queda como viñeta extra solo para ese contrato.
-function ponerOpcionDuracion(value) {
+function ponerOpcionDuracion(valor) {
   const sel = document.getElementById('m-duracion');
   sel.querySelectorAll('option[data-custom]').forEach(o => o.remove());
-  const same = [...sel.options].find(o => o.value && o.value.toLowerCase() === String(value || '').trim().toLowerCase());
-  if (same) value = same.value;
-  if (value && !same) {
+  const igual = [...sel.options].find(o => o.value && o.value.toLowerCase() === String(valor || '').trim().toLowerCase());
+  if (igual) valor = igual.value;
+  if (valor && !igual) {
     const o = document.createElement('option');
-    o.value = value; o.textContent = value; o.dataset.custom = '1';
+    o.value = valor; o.textContent = valor; o.dataset.custom = '1';
     sel.appendChild(o);
   }
-  sel.value = value;
+  sel.value = valor;
 }
 
 // Opciones = las de fabrica + las que se agregaron desde la app + las que ya usa algun contrato.
@@ -100,17 +100,17 @@ function opcionesGarantia() {
   let extra = [];
   try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
   const todas = [...D.GARANTIAS_PREDETERMINADAS, ...extra, ...estado.entries.map(e => e.garantia)].filter(Boolean);
-  const seen = new Set();
-  return todas.filter(g => { const k = g.toUpperCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  const vistos = new Set();
+  return todas.filter(g => { const k = g.toUpperCase(); if (vistos.has(k)) return false; vistos.add(k); return true; });
 }
 
-function ponerOpcionesGarantia(value) {
+function ponerOpcionesGarantia(valor) {
   const sel = document.getElementById('m-garantia');
-  const opts = opcionesGarantia();
-  const match = opts.find(g => g.toUpperCase() === String(value || '').toUpperCase());
+  const opciones = opcionesGarantia();
+  const coincide = opciones.find(g => g.toUpperCase() === String(valor || '').toUpperCase());
   sel.innerHTML = `<option value="">Sin cargar</option>`
-    + opts.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
-  sel.value = match || '';
+    + opciones.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  sel.value = coincide || '';
   const dl = document.getElementById('dl-remitentes');
   const rems = [...new Set(estado.entries.map(e => e.remitente).filter(Boolean))].sort();
   dl.innerHTML = rems.map(r => `<option value="${esc(r)}">`).join('');
@@ -119,23 +119,23 @@ function ponerOpcionesGarantia(value) {
 
 function actualizarAyudaGestion() {
   const g = document.getElementById('m-garantia').value;
-  const who = D.gestionadoPor({ garantia: g, remitente: document.getElementById('m-remitente').value.trim() });
-  document.getElementById('m-gestion-hint').textContent = who
-    ? `Los aumentos y renovaciones los gestiona ${who}: no aparece en Aumentos ni Renovaciones.`
+  const quien = D.gestionadoPor({ garantia: g, remitente: document.getElementById('m-remitente').value.trim() });
+  document.getElementById('m-gestion-hint').textContent = quien
+    ? `Los aumentos y renovaciones los gestiona ${quien}: no aparece en Aumentos ni Renovaciones.`
     : 'Los aumentos los hace la inmobiliaria.';
 }
 
 // Garantia nueva (viñeta "+"): queda elegida y guardada como opcion para los proximos.
-function agregarOpcionGarantia(name) {
-  const exists = opcionesGarantia().find(g => g.toUpperCase() === name.toUpperCase());
-  if (!exists) {
+function agregarOpcionGarantia(nombre) {
+  const existe = opcionesGarantia().find(g => g.toUpperCase() === nombre.toUpperCase());
+  if (!existe) {
     let extra = [];
     try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
-    extra.push(name);
+    extra.push(nombre);
     estado.appSettings.garantias = JSON.stringify(extra);
     call('guardarAjuste', 'garantias', estado.appSettings.garantias).catch(() => {});
   }
-  ponerOpcionesGarantia(exists || name);
+  ponerOpcionesGarantia(existe || nombre);
 }
 
 function ocultarModalAlta() {
@@ -163,7 +163,7 @@ async function enviarAlta() {
   if (!edificio && !calle)      { mostrarAviso('Completá el edificio o la calle.', 'err'); return; }
   if (!importe || importe <= 0) { mostrarAviso('El importe es obligatorio.', 'err'); return; }
 
-  const payload = {
+  const carga = {
     edificio, calle, unidad,
     propietario: (document.getElementById('m-prop').value     || '').trim(),
     telProp:     (document.getElementById('m-tel-prop').value || '').trim(),
@@ -181,24 +181,24 @@ async function enviarAlta() {
     remitente:   document.getElementById('m-remitente').value.trim(),
   };
 
-  const isEdit = entradaEditando !== null;
+  const esEditar = entradaEditando !== null;
   const btn = document.getElementById('modal-submit');
   btn.disabled    = true;
   btn.textContent = 'Guardando...';
   try {
-    const res = isEdit
-      ? await call('editarContrato', entradaEditando.id, payload)
-      : await call('agregarContrato', payload);
+    const res = esEditar
+      ? await call('editarContrato', entradaEditando.id, carga)
+      : await call('agregarContrato', carga);
     aplicarPropietarios(res);
     reemplazarEntrada(res.contract);
-    mostrarAviso(isEdit ? '&#10003; Alquiler actualizado' : '&#10003; Alquiler agregado correctamente', 'ok');
+    mostrarAviso(esEditar ? '&#10003; Alquiler actualizado' : '&#10003; Alquiler agregado correctamente', 'ok');
     ocultarModalAlta();
     llenarAniosBase();
     dibujar();
   } catch (err) {
     mostrarAviso('Error: ' + esc(err.message), 'err');
     btn.disabled    = false;
-    btn.textContent = isEdit ? 'Guardar cambios' : 'Guardar alquiler';
+    btn.textContent = esEditar ? 'Guardar cambios' : 'Guardar alquiler';
   }
 }
 
@@ -225,18 +225,18 @@ export function iniciar() {
   document.getElementById('m-remitente').addEventListener('input', actualizarAyudaGestion);
 
   // Campos con viñetas (deben existir antes del autocompletado)
-  const S = Separadores, busy = () => _acIndice >= 0 && _acOpciones.length > 0;
+  const S = Separadores, ocupado = () => _acIndice >= 0 && _acOpciones.length > 0;
   camposConChips['m-adm-edificios'] = armarChips('m-adm-edificios', { split: S.edificios, join: a => a.join('; '), placeholder: 'Nombre del edificio + Enter', addLabel: 'Edificio' });
   camposConChips['m-adm-telefono']  = armarChips('m-adm-telefono',  { split: S.telefonos, join: a => a.join('; '), placeholder: 'Teléfono + Enter', addLabel: 'Teléfono' });
   camposConChips['m-adm-mail']      = armarChips('m-adm-mail',      { split: S.mails,     join: a => a.join('; '), placeholder: 'Mail + Enter', addLabel: 'Mail' });
-  camposConChips['m-prop'] = armarChips('m-prop', { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', addLabel: 'Propietario', isBusy: busy });
-  camposConChips['m-inq']  = armarChips('m-inq',  { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', addLabel: 'Inquilino', isBusy: busy });
+  camposConChips['m-prop'] = armarChips('m-prop', { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', addLabel: 'Propietario', isBusy: ocupado });
+  camposConChips['m-inq']  = armarChips('m-inq',  { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', addLabel: 'Inquilino', isBusy: ocupado });
   // Comentarios: las notas de renovacion no se muestran (se conservan al guardar, ver enviarAlta).
   camposConChips['m-notas'] = armarChips('m-notas', { split: s => D.comentarios({ notas: s }), join: a => a.join(' | '),
     placeholder: 'Observaciones, condiciones especiales... + Enter', addLabel: 'Comentario' });
   for (const [id, sp, lbl, ph] of [['m-tel-prop', S.telefonos, 'Teléfono', '09X XXX XXX'], ['m-tel-inq', S.telefonos, 'Teléfono', '09X XXX XXX'],
                                    ['m-mail-prop', S.mails, 'Mail', 'mail@ejemplo.com'], ['m-mail-inq', S.mails, 'Mail', 'mail@ejemplo.com']]) {
-    camposConChips[id] = armarChips(id, { split: sp, join: a => a.join(' / '), placeholder: ph, addLabel: lbl, isBusy: busy });
+    camposConChips[id] = armarChips(id, { split: sp, join: a => a.join(' / '), placeholder: ph, addLabel: lbl, isBusy: ocupado });
   }
   armarSelector('m-garantia', { onAdd: agregarOpcionGarantia, addLabel: 'Otra garantía', placeholder: 'Nombre de la garantía' });
   armarSelector('m-duracion', { onAdd: t => ponerOpcionDuracion(t), addLabel: 'Otra', placeholder: 'Ej: 18 meses' });

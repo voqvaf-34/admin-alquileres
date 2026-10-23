@@ -5,7 +5,7 @@ const path = require('path');
 const { ctx } = require('./contexto');
 const { ICONO, ARG_INICIO_OCULTO, ALTO_BARRA_TITULO, ICONO_BANDEJA } = require('./config');
 
-let tray = null;
+let bandeja = null;
 
 const FUERA_DE_PANTALLA = !!process.env.ADMIN_ALQ_FUERA_DE_PANTALLA;
 
@@ -29,14 +29,14 @@ function leerBarra() {
 let zoom = 1;
 const alturaBarra = () => Math.round(ALTO_BARRA_TITULO * zoom);
 
-function ponerColorBarraTitulo(color, ink) {
-  if (!esHex(color) || !esHex(ink)) throw new Error('Color no valido.');
+function ponerColorBarraTitulo(color, tinta) {
+  if (!esHex(color) || !esHex(tinta)) throw new Error('Color no valido.');
   if (ctx.win && !ctx.win.isDestroyed()) {
     ctx.win.setBackgroundColor(color);
-    if (process.platform === 'win32') ctx.win.setTitleBarOverlay({ color, symbolColor: ink, height: alturaBarra() });
+    if (process.platform === 'win32') ctx.win.setTitleBarOverlay({ color, symbolColor: tinta, height: alturaBarra() });
   }
-  const prev = leerBarra();
-  if (prev.color !== color || prev.ink !== ink) fs.writeFileSync(archivoBarra(), JSON.stringify({ color, ink }));
+  const anterior = leerBarra();
+  if (anterior.color !== color || anterior.ink !== tinta) fs.writeFileSync(archivoBarra(), JSON.stringify({ color, ink: tinta }));
   return true;
 }
 
@@ -75,7 +75,7 @@ function ponerIconoApp(png) {
     try { fs.unlinkSync(archivoIcono()); } catch (_) {}
   }
   if (ctx.win && !ctx.win.isDestroyed()) ctx.win.setIcon(img || nativeImage.createFromPath(ICONO));
-  if (tray && !tray.isDestroyed()) tray.setImage(iconoBandeja(img));
+  if (bandeja && !bandeja.isDestroyed()) bandeja.setImage(iconoBandeja(img));
   return true;
 }
 
@@ -102,9 +102,9 @@ function armarMenuBandeja() {
     { type: 'separator' },
     {
       label: 'Iniciar con Windows', type: 'checkbox', checked: arranqueAutomaticoActivo(), enabled: app.isPackaged,
-      click: item => {
-        app.setLoginItemSettings({ openAtLogin: item.checked, args: [ARG_INICIO_OCULTO] });
-        tray.setContextMenu(armarMenuBandeja());
+      click: elemento => {
+        app.setLoginItemSettings({ openAtLogin: elemento.checked, args: [ARG_INICIO_OCULTO] });
+        bandeja.setContextMenu(armarMenuBandeja());
       },
     },
     { type: 'separator' },
@@ -114,13 +114,13 @@ function armarMenuBandeja() {
 
 function crearBandeja() {
   if (FUERA_DE_PANTALLA) return;
-  tray = new Tray(iconoBandeja(iconoActual()));
-  tray.setToolTip(app.getName());
-  tray.setContextMenu(armarMenuBandeja());
-  tray.on('click', mostrarVentana);
+  bandeja = new Tray(iconoBandeja(iconoActual()));
+  bandeja.setToolTip(app.getName());
+  bandeja.setContextMenu(armarMenuBandeja());
+  bandeja.on('click', mostrarVentana);
 }
 
-function crearVentana({ hidden = false } = {}) {
+function crearVentana({ hidden: oculto = false } = {}) {
   const barra = leerBarra();
   ctx.win = new BrowserWindow({
     width: 1400, height: 900, minWidth: 900, minHeight: 600,
@@ -146,19 +146,19 @@ function crearVentana({ hidden = false } = {}) {
 
   // Links externos (WhatsApp, mailto) se abren fuera de la app. En las pruebas automaticas
   // (ADMIN_ALQ_NO_EXTERNAL) nunca se abren: solo se anotan.
-  const openExt = url => {
+  const abrirExterno = url => {
     if (!/^(https:|mailto:)/i.test(url)) return;
     if (process.env.ADMIN_ALQ_NO_EXTERNAL) { (global.blockedExternal = global.blockedExternal || []).push(url); return; }
     shell.openExternal(url);
   };
-  ctx.win.webContents.setWindowOpenHandler(({ url }) => { openExt(url); return { action: 'deny' }; });
+  ctx.win.webContents.setWindowOpenHandler(({ url }) => { abrirExterno(url); return { action: 'deny' }; });
   ctx.win.webContents.on('will-navigate', (e, url) => {
-    if (!url.startsWith('file://')) { e.preventDefault(); openExt(url); }
+    if (!url.startsWith('file://')) { e.preventDefault(); abrirExterno(url); }
   });
 
   // Se muestra cuando el tema ya esta aplicado (evita el destello inicial).
   ctx.win.once('ready-to-show', () => {
-    if (hidden) return;
+    if (oculto) return;
     if (FUERA_DE_PANTALLA) ctx.win.showInactive(); else ctx.win.show();
   });
 
@@ -167,9 +167,9 @@ function crearVentana({ hidden = false } = {}) {
     if (ctx.isQuitting) return;
     e.preventDefault();
     ctx.win.hide();
-    if (!trayHintShown && tray) {
+    if (!trayHintShown && bandeja) {
       trayHintShown = true;
-      tray.displayBalloon({
+      bandeja.displayBalloon({
         iconType: 'info', title: app.getName(),
         content: 'Sigue abierta en la bandeja. Para cerrarla del todo: clic derecho en el icono > Cerrar.',
       });

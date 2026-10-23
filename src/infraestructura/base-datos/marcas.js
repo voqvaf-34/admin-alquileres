@@ -2,11 +2,11 @@
 class MetodosMarcas {
   // ── marks ────────────────────────────────────────────────────────────────
   obtenerMarcas() {
-    const out = {};
+    const salida = {};
     for (const r of this.consultar('SELECT key, data FROM marks')) {
-      try { out[r.key] = JSON.parse(r.data); } catch (_) {}
+      try { salida[r.key] = JSON.parse(r.data); } catch (_) {}
     }
-    return out;
+    return salida;
   }
 
   reemplazarMarcas(marks) {

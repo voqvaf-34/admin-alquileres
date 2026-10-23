@@ -15,27 +15,27 @@ function interpretarHojaModelo(ws, columnas, aRegistro) {
   const filas = filasDe(ws);
   const enc = D.detectarEncabezados(filas, columnas);
   if (!enc) return null;
-  const out = [];
+  const salida = [];
   for (let r = enc.fila + 1; r < filas.length; r++) {
-    const reg = aRegistro(filas[r] || [], enc.columnas, r);
-    if (reg) out.push(reg);
+    const registro = aRegistro(filas[r] || [], enc.columnas, r);
+    if (registro) salida.push(registro);
   }
-  return out;
+  return salida;
 }
 
 function interpretarHojaContratos(ws) {
   if (!ws || !ws['!ref']) return [];
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  const out = [];
+  const rango = XLSX.utils.decode_range(ws['!ref']);
+  const salida = [];
   let estadoCol = -1;
 
-  for (let c = 0; c <= range.e.c; c++) {
-    const cell = ws[XLSX.utils.encode_cell({r:0, c})];
-    if (cell && String(cell.v).trim().toUpperCase() === 'ESTADO') { estadoCol = c; break; }
+  for (let c = 0; c <= rango.e.c; c++) {
+    const celda = ws[XLSX.utils.encode_cell({r:0, c})];
+    if (celda && String(celda.v).trim().toUpperCase() === 'ESTADO') { estadoCol = c; break; }
   }
 
-  for (let r = range.s.r; r <= range.e.r; r++) {
-    const g = c => { const cell = ws[XLSX.utils.encode_cell({r, c})]; return cell ? cell.v : null; };
+  for (let r = rango.s.r; r <= rango.e.r; r++) {
+    const g = c => { const celda = ws[XLSX.utils.encode_cell({r, c})]; return celda ? celda.v : null; };
     const a = g(0), b = g(1);
     if (a && typeof a === 'number' && a >= 2020 && a <= 2035) continue;
     if (b && typeof b === 'string' && D.MAPA_MESES[b.trim().toUpperCase().replace(/\s+/g,'')]) continue;
@@ -53,8 +53,8 @@ function interpretarHojaContratos(ws) {
     if (typeof ultRaw === 'number' && ultRaw > 30000) {
       ultimoAumento = D.fechaExcel(ultRaw);
     } else if (typeof ultRaw === 'string' && ultRaw.trim()) {
-      const asDate = D.interpretarMesAnio(ultRaw);
-      if (asDate) ultimoAumento = asDate;
+      const comoFecha = D.interpretarMesAnio(ultRaw);
+      if (comoFecha) ultimoAumento = comoFecha;
       else remitente = ultRaw.trim().replace(/^(MANDA|ENVIA)\s+/i, '').trim();
     }
 
@@ -63,7 +63,7 @@ function interpretarHojaContratos(ws) {
     if (fechaRaw instanceof Date) fecha = new Date(fechaRaw.getUTCFullYear(), fechaRaw.getUTCMonth(), fechaRaw.getUTCDate());
     else if (typeof fechaRaw === 'number') fecha = D.fechaExcel(fechaRaw);
 
-    out.push({
+    salida.push({
       sourceRow:     r,
       direccion:     b.trim(),
       propietario:   textoLimpio(g(2)),
@@ -82,22 +82,22 @@ function interpretarHojaContratos(ws) {
       inactive,
     });
   }
-  return out;
+  return salida;
 }
 
 function interpretarHojaAdmins(ws) {
   if (!ws || !ws['!ref']) return [];
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  const out = [];
-  for (let r = range.s.r; r <= range.e.r; r++) {
-    const g = c => { const cell = ws[XLSX.utils.encode_cell({r, c})]; return cell ? cell.v : null; };
+  const rango = XLSX.utils.decode_range(ws['!ref']);
+  const salida = [];
+  for (let r = rango.s.r; r <= rango.e.r; r++) {
+    const g = c => { const celda = ws[XLSX.utils.encode_cell({r, c})]; return celda ? celda.v : null; };
     const nombreRaw = g(0);
     if (!nombreRaw || typeof nombreRaw !== 'string') continue;
     const nombre = nombreRaw.trim();
     if (!nombre || nombre.toUpperCase() === 'ADMINISTRACIONES') continue;
-    out.push({ sourceRow: r, nombre, edificios: textoLimpio(g(1)), telefono: textoLimpio(g(2)), mail: textoLimpio(g(3)) });
+    salida.push({ sourceRow: r, nombre, edificios: textoLimpio(g(1)), telefono: textoLimpio(g(2)), mail: textoLimpio(g(3)) });
   }
-  return out;
+  return salida;
 }
 
 const hoja = (wb, ...nombres) => {
@@ -108,9 +108,9 @@ const hoja = (wb, ...nombres) => {
 function leerLibro(wb) {
   const wsC = hoja(wb, 'alquileres', 'alquilados', 'contratos') || wb.Sheets[wb.SheetNames[0]];
   const wsA = hoja(wb, 'administraciones');
-  const contracts = interpretarHojaModelo(wsC, D.COLUMNAS_ALQUILERES, D.filaAContrato);
-  if (contracts) {
-    return { formato: 'plantilla', contracts, admins: interpretarHojaModelo(wsA, D.COLUMNAS_ADMINISTRACIONES, D.filaAAdministracion) || [] };
+  const contratos = interpretarHojaModelo(wsC, D.COLUMNAS_ALQUILERES, D.filaAContrato);
+  if (contratos) {
+    return { formato: 'plantilla', contracts: contratos, admins: interpretarHojaModelo(wsA, D.COLUMNAS_ADMINISTRACIONES, D.filaAAdministracion) || [] };
   }
   return { formato: 'clasico', contracts: interpretarHojaContratos(wsC), admins: interpretarHojaAdmins(wsA) };
 }
@@ -122,9 +122,9 @@ function leerBuffer(buf) {
   return leerLibro(XLSX.read(buf, { type: 'buffer', codepage: esUtf8(buf) ? 65001 : 1252 }));
 }
 
-function leerArchivoLibro(filePath) {
+function leerArchivoLibro(rutaArchivo) {
   // Lectura a buffer: no bloquea el archivo si Excel lo tiene abierto.
-  return leerBuffer(fs.readFileSync(filePath));
+  return leerBuffer(fs.readFileSync(rutaArchivo));
 }
 
 // Planilla modelo para completar e importar: encabezados, dos filas de ejemplo e instrucciones.
@@ -157,6 +157,6 @@ function libroModelo() {
   return wb;
 }
 
-function escribirModelo(filePath) { XLSX.writeFile(libroModelo(), filePath); }
+function escribirModelo(rutaArchivo) { XLSX.writeFile(libroModelo(), rutaArchivo); }
 
 module.exports = { leerBuffer, leerLibro, leerArchivoLibro, libroModelo, escribirModelo };

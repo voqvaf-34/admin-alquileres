@@ -4,8 +4,8 @@ import { claveAumento, claveNoAumenta } from './marcas.js';
 
 // Un aumento ya enviado actualiza ultimoAumento al mes actual; la mark del mes
 // lo mantiene visible como resuelto en vez de desaparecer de la lista.
-export function obtenerAumentos(list, m, y, marks) {
-  return list.filter(e => {
+export function obtenerAumentos(lista, m, y, marks) {
+  return lista.filter(e => {
     if (e.inactive)  return false;
     if (gestionadoPor(e)) return false;
     if (!e.fechaInicio) return false;

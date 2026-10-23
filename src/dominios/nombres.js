@@ -6,41 +6,41 @@ const SIGLAS = new Set(['srl', 'sa', 's.a.', 'sas', 'ltda', 'bps', 'ute', 'antel
 export function mayusculasIniciales(s) {
   const texto = String(s || '').replace(/\s+/g, ' ').trim();
   if (!texto) return '';
-  let first = true;
-  return texto.split(/(\s+|[/\-(),.]+)/).map(tok => {
-    if (!tok || /^[\s/\-(),.]+$/.test(tok)) return tok;
-    const low = tok.toLocaleLowerCase('es');
-    let out;
-    if (/\d/.test(tok)) out = tok.toUpperCase();
-    else if (SIGLAS.has(low)) out = tok.toUpperCase();
-    else if (!first && MINUSCULAS.has(low)) out = low;
-    else out = low.charAt(0).toLocaleUpperCase('es') + low.slice(1);
-    first = false;
-    return out;
+  let primero = true;
+  return texto.split(/(\s+|[/\-(),.]+)/).map(pieza => {
+    if (!pieza || /^[\s/\-(),.]+$/.test(pieza)) return pieza;
+    const minuscula = pieza.toLocaleLowerCase('es');
+    let salida;
+    if (/\d/.test(pieza)) salida = pieza.toUpperCase();
+    else if (SIGLAS.has(minuscula)) salida = pieza.toUpperCase();
+    else if (!primero && MINUSCULAS.has(minuscula)) salida = minuscula;
+    else salida = minuscula.charAt(0).toLocaleUpperCase('es') + minuscula.slice(1);
+    primero = false;
+    return salida;
   }).join('');
 }
 
 // Arma el nombre a mostrar: "Edificio - Calle 1234 U601" (partes opcionales).
 export function formatearDireccion({ edificio, calle, unidad }) {
-  const left = String(edificio || '').trim(), mid = String(calle || '').trim(), u = String(unidad || '').trim();
-  const unitTxt = u ? (/^\d/.test(u) ? `U${u}` : u) : '';
-  const right = [mid, unitTxt].filter(Boolean).join(' ');
-  if (left && right) return mid ? `${left} - ${right}` : `${left} ${unitTxt}`;
-  return left || right;
+  const izquierda = String(edificio || '').trim(), medio = String(calle || '').trim(), u = String(unidad || '').trim();
+  const textoUnidad = u ? (/^\d/.test(u) ? `U${u}` : u) : '';
+  const derecha = [medio, textoUnidad].filter(Boolean).join(' ');
+  if (izquierda && derecha) return medio ? `${izquierda} - ${derecha}` : `${izquierda} ${textoUnidad}`;
+  return izquierda || derecha;
 }
 
 // Separa texto libre en edificio / calle / unidad / nota. Heuristica: se revisa con reglas.
 export function interpretarDireccion(raw) {
   let s = String(raw || '').replace(/\s+/g, ' ').trim();
-  const notes = [];
-  s = s.replace(/\(([^)]*)\)/g, (_, n) => { notes.push(n.trim()); return ' '; });
+  const notas = [];
+  s = s.replace(/\(([^)]*)\)/g, (_, n) => { notas.push(n.trim()); return ' '; });
   s = s.replace(/\b\d\s*(?:D|DORM\w*|DROM\w*)\b\.?/gi, ' ');        // "1 D", "3 DORMITORIOS"
   s = s.replace(/\s+/g, ' ').trim();
 
   let unidad = '';
   const extra = s.match(/\s*\+\s*([A-Z]+\s*\d+)\s*$/i);                  // "+ GGE6"
-  let extraTxt = '';
-  if (extra) { extraTxt = ` + ${extra[1].replace(/\s+/g, '').toUpperCase()}`; s = s.slice(0, extra.index).trim(); }
+  let textoExtra = '';
+  if (extra) { textoExtra = ` + ${extra[1].replace(/\s+/g, '').toUpperCase()}`; s = s.slice(0, extra.index).trim(); }
 
   const uRe = /(?:^|[\s,])(?:U|UNIDAD|APTO\.?|APT\.?|AP\.?|APARTAMENTO)\s*\.?\s*(\d{1,4}[A-Z]?)\b/i;
   const um = s.match(uRe);
@@ -55,16 +55,16 @@ export function interpretarDireccion(raw) {
   }
 
   // Separador entre edificio y calle: " - " o ",".
-  const parts = s.split(/\s+-\s+|\s*,\s*/).map(x => x.trim()).filter(Boolean);
+  const partes = s.split(/\s+-\s+|\s*,\s*/).map(x => x.trim()).filter(Boolean);
   let edificio = '', calle = '';
-  const isStreet = p => /[A-Za-zÁÉÍÓÚáéíóúñÑ.]\s*\d{2,5}\b/.test(p) && !/^\d{1,4}$/.test(p);
-  if (parts.length >= 2) {
-    const si = parts.findIndex(isStreet);
-    if (si > 0) { edificio = parts.slice(0, si).join(' '); calle = parts.slice(si).join(' '); }
-    else if (si === 0) { calle = parts[0]; if (parts.length > 1 && /^\d+$/.test(parts[1])) notes.push(parts[1]); else edificio = parts.slice(1).join(' '); }
-    else edificio = parts.join(' ');
+  const esCalle = p => /[A-Za-zÁÉÍÓÚáéíóúñÑ.]\s*\d{2,5}\b/.test(p) && !/^\d{1,4}$/.test(p);
+  if (partes.length >= 2) {
+    const si = partes.findIndex(esCalle);
+    if (si > 0) { edificio = partes.slice(0, si).join(' '); calle = partes.slice(si).join(' '); }
+    else if (si === 0) { calle = partes[0]; if (partes.length > 1 && /^\d+$/.test(partes[1])) notas.push(partes[1]); else edificio = partes.slice(1).join(' '); }
+    else edificio = partes.join(' ');
   } else {
-    const p = parts[0] || '';
+    const p = partes[0] || '';
     // "Torre Ceibo Av. Italia 875" / "Edificio Araza Bv. Artigas 2674": edificio + calle en un mismo tramo.
     const m = p.match(/^(.*?)\s+((?:AV\.?|AVDA\.?|BV\.?|BVAR\.?|DR\.?|RAMBLA|CALLE)\s*.*\d{2,5})$/i)
       || (unidad && p.match(/^([A-ZÁÉÍÓÚÑ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ]{2,})*)\s+([A-Za-zÁÉÍÓÚáéíóúñÑ.]+(?:\s+[A-Za-zÁÉÍÓÚáéíóúñÑ.]+)*\s+\d{3,5})$/));
@@ -74,12 +74,12 @@ export function interpretarDireccion(raw) {
       const bu = p.match(/^(.*[A-Za-z].*?)\s+(\d{3,4})$/);
       if (bu && p === p.toUpperCase()) { edificio = bu[1]; unidad = bu[2]; }
       else calle = p;
-    } else if (isStreet(p)) calle = p;
+    } else if (esCalle(p)) calle = p;
     else edificio = p;
   }
-  if (unidad) unidad += extraTxt; else if (extraTxt) notes.push(extraTxt.trim());
+  if (unidad) unidad += textoExtra; else if (textoExtra) notas.push(textoExtra.trim());
   return {
     edificio: mayusculasIniciales(edificio), calle: mayusculasIniciales(calle), unidad,
-    nota: notes.filter(Boolean).map(n => mayusculasIniciales(n)).join('; '),
+    nota: notas.filter(Boolean).map(n => mayusculasIniciales(n)).join('; '),
   };
 }

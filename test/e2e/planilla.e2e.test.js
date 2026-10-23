@@ -7,12 +7,12 @@ const { lanzar, carpetaTemporal, captura } = require('./helpers');
 
 test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
   const destino = path.join(carpetaTemporal('alq-planilla-'), 'planilla-alquileres.xlsx');
-  let { app, page, errors } = await lanzar(carpetaTemporal());
+  let { app, page, errors: errores } = await lanzar(carpetaTemporal());
   try {
     await page.waitForSelector('#upload-screen', { state: 'visible' });
     // El dialogo "Guardar como" se responde desde el proceso principal (no se abre la carpeta).
-    await app.evaluate(({ dialog, shell }, file) => {
-      dialog.showSaveDialog = async () => ({ canceled: false, filePath: file });
+    await app.evaluate(({ dialog, shell }, archivo) => {
+      dialog.showSaveDialog = async () => ({ canceled: false, filePath: archivo });
       shell.showItemInFolder = () => {};
     }, destino);
     await captura(page, '30-inicio-planilla');
@@ -20,10 +20,10 @@ test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
     await page.waitForSelector('#toast.show');
     assert.match(await page.textContent('#toast'), /Planilla modelo guardada/);
     assert.ok(fs.existsSync(destino), 'se guardo la planilla');
-    assert.deepEqual(errors, []);
+    assert.deepEqual(errores, []);
   } finally { await app.close(); }
 
-  ({ app, page, errors } = await lanzar(carpetaTemporal(), { ADMIN_ALQ_IMPORT_FILE: destino }));
+  ({ app, page, errors: errores } = await lanzar(carpetaTemporal(), { ADMIN_ALQ_IMPORT_FILE: destino }));
   try {
     await page.waitForSelector('#app-screen', { state: 'visible' });
     const datos = await page.evaluate(() => ({
@@ -37,7 +37,7 @@ test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
     ]);
     assert.deepEqual(datos.propietarios, ['Ana Perez', 'Carla Mendez', 'Diego Mendez']);
     assert.deepEqual(datos.admins, ['Administración Sur (Laura Gómez)']);
-    assert.deepEqual(errors, []);
+    assert.deepEqual(errores, []);
   } finally { await app.close(); }
 });
 
@@ -47,7 +47,7 @@ test('importar planilla con la app en uso: agregar (sin repetir), reemplazar y d
   const archivo = path.join(carpetaTemporal('alq-planilla-'), 'mis-alquileres.xlsx');
   XLSX.writeFile(libroModelo(), archivo);
 
-  const { app, page, errors } = await lanzar(carpetaTemporal());
+  const { app, page, errors: errores } = await lanzar(carpetaTemporal());
   try {
     await page.click('#btn-start-demo');
     await page.waitForSelector('#app-screen', { state: 'visible' });
@@ -87,6 +87,6 @@ test('importar planilla con la app en uso: agregar (sin repetir), reemplazar y d
     assert.equal(await total(), 2);
     await page.click('#btn-undo');
     await page.waitForFunction(() => app.estado.entries.length === 23);
-    assert.deepEqual(errors, []);
+    assert.deepEqual(errores, []);
   } finally { await app.close(); }
 });

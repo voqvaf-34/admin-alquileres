@@ -38,14 +38,14 @@ const limpiarTitulo = v => normalizar(String(v ?? '')).replace(/[^a-z0-9]+/g, ' 
 // o null si no hay una fila con todas las columnas obligatorias.
 export function detectarEncabezados(filas, columnas = COLUMNAS_ALQUILERES) {
   for (let r = 0; r < Math.min(filas.length, 10); r++) {
-    const map = {};
+    const mapa = {};
     (filas[r] || []).forEach((v, c) => {
       const t = limpiarTitulo(v);
       if (!t) return;
-      const col = columnas.find(k => !(k.campo in map) && k.alias.includes(t));
-      if (col) map[col.campo] = c;
+      const col = columnas.find(k => !(k.campo in mapa) && k.alias.includes(t));
+      if (col) mapa[col.campo] = c;
     });
-    if (columnas.filter(k => k.obligatoria).every(k => k.campo in map)) return { fila: r, columnas: map };
+    if (columnas.filter(k => k.obligatoria).every(k => k.campo in mapa)) return { fila: r, columnas: mapa };
   }
   return null;
 }
@@ -74,14 +74,14 @@ export function leerMoneda(v) {
 const INACTIVO = /^(inactivo|inactiva|no|baja|finalizado|terminado)$/;
 
 // Una fila de la planilla -> contrato listo para importar. null si la fila esta vacia o no tiene importe.
-export function filaAContrato(fila, columnas, sourceRow) {
+export function filaAContrato(fila, columnas, filaOrigen) {
   const get = campo => (campo in columnas ? fila[columnas[campo]] : null);
   const direccion = texto(get('direccion'));
   const importe = interpretarImporteUY(get('importe'));
   if (!direccion || !importe) return null;
   const inicial = interpretarImporteUY(get('importeBase'));
   return {
-    sourceRow,
+    sourceRow: filaOrigen,
     direccion,
     propietario:   texto(get('propietario')),
     telProp:       texto(get('telProp')),
@@ -102,10 +102,10 @@ export function filaAContrato(fila, columnas, sourceRow) {
   };
 }
 
-export function filaAAdministracion(fila, columnas, sourceRow) {
+export function filaAAdministracion(fila, columnas, filaOrigen) {
   const get = campo => (campo in columnas ? texto(fila[columnas[campo]]) : '');
   const nombre = get('nombre');
-  return nombre ? { sourceRow, nombre, edificios: get('edificios'), telefono: get('telefono'), mail: get('mail') } : null;
+  return nombre ? { sourceRow: filaOrigen, nombre, edificios: get('edificios'), telefono: get('telefono'), mail: get('mail') } : null;
 }
 
 // Filas de ejemplo para la planilla modelo (inventadas).

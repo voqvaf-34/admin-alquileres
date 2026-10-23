@@ -16,10 +16,10 @@ async function lanzar(env) {
 
 test('editor publica y el visor muestra en solo lectura, actualizandose solo', { timeout: 120000 }, async () => {
   fs.mkdirSync(SHOTS, { recursive: true });
-  const shared = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'alq-shared-')), 'Base Admin Alquileres');
+  const compartida = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'alq-shared-')), 'Base Admin Alquileres');
   const editor = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-ed-')),
-    ADMIN_ALQ_SHARED_DIR: shared });
-  let viewer;
+    ADMIN_ALQ_SHARED_DIR: compartida });
+  let visor;
   try {
     // El editor arranca con los datos de ejemplo y una marca propia.
     await editor.page.click('#btn-start-demo');
@@ -30,12 +30,12 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     await editor.page.click('#cfg-guardar');
     await editor.page.waitForSelector('#modal-config', { state: 'hidden' });
     await editor.page.waitForFunction(() => document.getElementById('share-dot').classList.contains('ok'));
-    assert.ok(fs.existsSync(path.join(shared, 'alquileres.sqlite')), 'la base se publico');
+    assert.ok(fs.existsSync(path.join(compartida, 'alquileres.sqlite')), 'la base se publico');
     const total = await editor.page.evaluate(() => app.estado.entries.length);
 
-    viewer = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
-      ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: shared, ADMIN_ALQ_POLL_MS: '500' });
-    const vp = viewer.page;
+    visor = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
+      ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: compartida, ADMIN_ALQ_POLL_MS: '500' });
+    const vp = visor.page;
     await vp.waitForSelector('#app-screen', { state: 'visible' });
     assert.equal(await vp.evaluate(() => app.estado.entries.length), total, 'el visor ve los mismos datos');
     assert.ok(await vp.isVisible('.viewer-badge'));
@@ -92,10 +92,10 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     // El visor no puede escribir: no hay canales de modificacion.
     const r = await vp.evaluate(() => window.api.agregarContrato({ direccion: 'X', importeBase: 1 }).catch(() => 'rechazado'));
     assert.ok(r === 'rechazado' || (r && r.ok === false), 'escritura rechazada');
-    assert.deepEqual(viewer.errors, []);
+    assert.deepEqual(visor.errors, []);
     assert.deepEqual(editor.errors, []);
   } finally {
-    if (viewer) await viewer.app.close();
+    if (visor) await visor.app.close();
     await editor.app.close();
   }
 });

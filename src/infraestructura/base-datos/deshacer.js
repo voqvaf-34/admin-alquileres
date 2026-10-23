@@ -8,11 +8,11 @@ class MetodosDeshacer {
   // en un solo paso, ej. "marcar enviado" = importe + marca; agrupar=false para cambios grandes
   // (importaciones) que siempre son un paso propio: ni se juntan con el anterior ni el siguiente
   // se junta con ellos (t = 0).
-  puntoDeControl(label, agrupar = true) {
-    const now = Date.now();
-    const last = this.undoStack[this.undoStack.length - 1];
-    if (agrupar && last && last.t && now - last.t < DESHACER_AGRUPAR_MS) { last.t = now; return false; }
-    this.undoStack.push({ label, t: agrupar ? now : 0, data: this.db.export() });
+  puntoDeControl(etiqueta, agrupar = true) {
+    const ahora = Date.now();
+    const ultimo = this.undoStack[this.undoStack.length - 1];
+    if (agrupar && ultimo && ultimo.t && ahora - ultimo.t < DESHACER_AGRUPAR_MS) { ultimo.t = ahora; return false; }
+    this.undoStack.push({ label: etiqueta, t: agrupar ? ahora : 0, data: this.db.export() });
     this.db.run('PRAGMA foreign_keys = ON;');
     if (this.undoStack.length > LIMITE_DESHACER) this.undoStack.shift();
     this.redoStack = [];
@@ -20,25 +20,25 @@ class MetodosDeshacer {
   }
   descartarPuntoDeControl() { this.undoStack.pop(); }
 
-  _cargarCopia(data) {
+  _cargarCopia(datos) {
     this.db.close();
-    this.db = new this.SQL.Database(data);
+    this.db = new this.SQL.Database(datos);
     this.db.run('PRAGMA foreign_keys = ON;');
     this.persistir();
   }
   deshacerCambio() {
-    const prev = this.undoStack.pop();
-    if (!prev) throw new Error('No hay cambios para deshacer.');
-    this.redoStack.push({ label: prev.label, data: this.db.export() });
-    this._cargarCopia(prev.data);
-    return prev.label;
+    const anterior = this.undoStack.pop();
+    if (!anterior) throw new Error('No hay cambios para deshacer.');
+    this.redoStack.push({ label: anterior.label, data: this.db.export() });
+    this._cargarCopia(anterior.data);
+    return anterior.label;
   }
   rehacerCambio() {
-    const next = this.redoStack.pop();
-    if (!next) throw new Error('No hay cambios para rehacer.');
-    this.undoStack.push({ label: next.label, t: 0, data: this.db.export() });
-    this._cargarCopia(next.data);
-    return next.label;
+    const siguiente = this.redoStack.pop();
+    if (!siguiente) throw new Error('No hay cambios para rehacer.');
+    this.undoStack.push({ label: siguiente.label, t: 0, data: this.db.export() });
+    this._cargarCopia(siguiente.data);
+    return siguiente.label;
   }
   estadoDeshacer() {
     const u = this.undoStack[this.undoStack.length - 1], r = this.redoStack[this.redoStack.length - 1];

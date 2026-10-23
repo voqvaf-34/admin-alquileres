@@ -17,8 +17,8 @@ async function desplegarPrimeraFila(page) {
 }
 
 test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) => {
-  const dataDir = carpetaTemporal();
-  const { app, page, errors } = await lanzar(dataDir);
+  const carpetaDatos = carpetaTemporal();
+  const { app, page, errors: errores } = await lanzar(carpetaDatos);
   await page.evaluate(() => { window.confirm = () => true; });
   // Los formularios solo se cierran con Cancelar/Guardar: si una prueba falla con uno abierto,
   // se cierra antes de la siguiente para que no queden todas trabadas.
@@ -108,7 +108,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   });
 
   await t.test('alta de alquiler con autocompletado', async () => {
-    const existing = await page.evaluate(() => app.estado.owners.find(o => o.nombre === 'Bruno Silva'));
+    const existentes = await page.evaluate(() => app.estado.owners.find(o => o.nombre === 'Bruno Silva'));
     await page.click('#btn-add-entry');
     await esperarFoco(page, 'm-edificio');
     // Elegir un apto existente en "Edificio" completa las tres partes y el propietario.
@@ -126,9 +126,9 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.click('#m-prop-chips .chip-x');
     await page.fill('#m-prop-entry', 'Bruno');
     await page.waitForSelector('#ac-dropdown .ac-item');
-    await page.locator('#ac-dropdown .ac-item', { hasText: existing.nombre }).first().click();
-    assert.equal(await page.inputValue('#m-prop'), existing.nombre);
-    assert.equal(await page.inputValue('#m-tel-prop'), existing.telefono, 'autocompleta el telefono del propietario');
+    await page.locator('#ac-dropdown .ac-item', { hasText: existentes.nombre }).first().click();
+    assert.equal(await page.inputValue('#m-prop'), existentes.nombre);
+    assert.equal(await page.inputValue('#m-tel-prop'), existentes.telefono, 'autocompleta el telefono del propietario');
     await page.click('#m-prop-chips .chip-x');
     await page.fill('#m-prop-entry', 'Propietario Nuevo E2E');
     await page.keyboard.press('Enter');
@@ -193,7 +193,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     assert.equal(await page.locator(`[data-detail-id="${id}"] .nota-chip`).count(), 1, 'las renovaciones no aparecen como comentario');
     await page.click(`[data-detail-id="${id}"] [data-timeline]`);
     await page.waitForSelector('#modal-timeline.open');
-    const titulos = await page.$$eval('#tl-list .tl-title', els => els.map(x => x.textContent));
+    const titulos = await page.$$eval('#tl-list .tl-title', elementos => elementos.map(x => x.textContent));
     assert.equal(titulos[0], 'Entró al apto', titulos.join(' | '));
     assert.ok(titulos.includes('Renovó') && titulos.some(x => /Renovó de nuevo/.test(x)), titulos.join(' | '));
     await page.keyboard.press('Escape');
@@ -262,9 +262,9 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.click('#modal-owner-submit');
     await page.waitForSelector('#modal-owner', { state: 'hidden' });
     assert.match(await page.locator(`[data-owner-row="${id}"]`).textContent(), /Administrador: Gestor E2E/);
-    const acct = page.locator(`[data-acct-owner="${id}"]`).first();
-    await acct.fill('BROU 001234567-00001');
-    await acct.press('Tab');
+    const cuenta = page.locator(`[data-acct-owner="${id}"]`).first();
+    await cuenta.fill('BROU 001234567-00001');
+    await cuenta.press('Tab');
     await page.waitForFunction(i => app.estado.ownerAccounts.some(a => a.ownerId === i && a.cuenta === 'BROU 001234567-00001'), id);
     assert.match(await page.textContent('#owners-tbody .db-detail-row'), /Falta para contratos: foto de cedula/);
     // El contacto aparece tambien en el detalle del apto.
@@ -310,15 +310,15 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   await t.test('aumentos: marcar enviado colapsa, persiste el nuevo importe y se puede deshacer', async () => {
     await page.click('#tab-aumentos');
     await page.fill('#inp-ipc', '5');
-    const card = page.locator('.card', { hasText: DIR });
-    await card.waitFor();
-    assert.match(await card.textContent(), /\$21\.000/, 'nuevo importe con IPC 5%');
+    const tarjeta = page.locator('.card', { hasText: DIR });
+    await tarjeta.waitFor();
+    assert.match(await tarjeta.textContent(), /\$21\.000/, 'nuevo importe con IPC 5%');
     const pendientes = () => page.evaluate(() => { const a = document.querySelector('#tab-aumentos .tab-aviso'); return a && !a.hidden ? +a.textContent : 0; });
     const antes = await pendientes();
-    await card.locator('[data-aum]').click();
-    const compact = page.locator('.card-compact', { hasText: DIR });
-    await compact.waitFor();
-    assert.match(await compact.textContent(), /Enviado .*\$20\.000.*\$21\.000/);
+    await tarjeta.locator('[data-aum]').click();
+    const compacto = page.locator('.card-compact', { hasText: DIR });
+    await compacto.waitFor();
+    assert.match(await compacto.textContent(), /Enviado .*\$20\.000.*\$21\.000/);
     assert.equal(await pendientes(), antes - 1, 'el circulito cuenta solo los pendientes');
     const e = await page.evaluate(d => { const x = app.estado.entries.find(y => y.direccion === d); return { importe: x.importe, ult: x.ultimoAumento && x.ultimoAumento.getMonth() }; }, DIR);
     assert.deepEqual(e, { importe: 21000, ult: new Date().getMonth() });
@@ -326,7 +326,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     assert.equal(await page.locator('.card', { hasText: DIR }).count(), 0, 'filtro sin resolver lo oculta');
     await page.uncheck('#op-show-sinresolver');
     // Tocar el resuelto despliega el detalle (no lo deshace); deshacer es un boton aparte.
-    await compact.locator('[data-aum-toggle]').click();
+    await compacto.locator('[data-aum-toggle]').click();
     const abierta = page.locator('.card-compact.abierta', { hasText: DIR });
     await abierta.waitFor();
     assert.match(await abierta.textContent(), /IPC aplicado: 5,00%/);
@@ -337,16 +337,16 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   });
 
   await t.test('aumentos: copiar mensajes con la marca y los datos del contrato', async () => {
-    const card = page.locator('.card', { hasText: DIR });
-    const inq = await card.locator('.copy-btn[title="Copiar mensaje inquilino"]').getAttribute('data-copy');
-    const prop = await card.locator('.copy-btn[title="Copiar mensaje propietario"]').getAttribute('data-copy');
+    const tarjeta = page.locator('.card', { hasText: DIR });
+    const inq = await tarjeta.locator('.copy-btn[title="Copiar mensaje inquilino"]').getAttribute('data-copy');
+    const prop = await tarjeta.locator('.copy-btn[title="Copiar mensaje propietario"]').getAttribute('data-copy');
     assert.match(inq, /^Hola! Te escribo desde Mi Inmobiliaria\. .*es de 5,00% quedando en \$21\.000/);
     assert.match(prop, new RegExp(`de ${DIR}\\.`));
   });
 
   await t.test('no aumenta con descripcion', async () => {
-    const card = page.locator('.card', { hasText: DIR });
-    await card.locator('[data-na-start]').click();
+    const tarjeta = page.locator('.card', { hasText: DIR });
+    await tarjeta.locator('[data-na-start]').click();
     await page.fill('#inp-na-desc', 'acuerdo e2e');
     await page.click('[data-na-conf]');
     await page.locator('.card-compact', { hasText: 'No aumenta' }).filter({ hasText: DIR }).waitFor();
@@ -361,9 +361,9 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.waitForSelector('#content .sec-title');
     assert.equal(await page.isVisible('#inp-ipc'), false, 'el IPC no se ve en Renovaciones');
     assert.match(await page.textContent('#tab-vencimientos'), /^Renovaciones\d*$/);
-    const dirs = await page.$$eval('#content .card:not(.card-compact) .card-top > span:first-child',
-      els => els.map(x => x.textContent.replace(/VENCIDO.*/, '').trim()));
-    assert.equal(new Set(dirs).size, dirs.length, 'ningun vencimiento repetido: ' + dirs.join(' | '));
+    const direcciones = await page.$$eval('#content .card:not(.card-compact) .card-top > span:first-child',
+      elementos => elementos.map(x => x.textContent.replace(/VENCIDO.*/, '').trim()));
+    assert.equal(new Set(direcciones).size, direcciones.length, 'ningun vencimiento repetido: ' + direcciones.join(' | '));
     const colores = await page.evaluate(() => [5, 10, 11, 30].map(d => {
       const x = new Date(); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() + d); return app.colorPorDias(x);
     }));
@@ -375,10 +375,10 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
       if (!clip.startsWith('Hola!')) await new Promise(r => setTimeout(r, 100));
     }
     assert.match(clip, /^Hola! Te escribo desde Mi Inmobiliaria\. Te avisamos que el contrato de arrendamiento vence el \d{2}\/\d{2}\/\d{4}/);
-    const card = page.locator('.card:not(.card-compact)').filter({ has: page.locator('[data-vstart]') }).first();
-    const dir = (await card.locator('.card-top span').first().textContent()).replace(/VENCIDO.*/, '').trim();
+    const tarjeta = page.locator('.card:not(.card-compact)').filter({ has: page.locator('[data-vstart]') }).first();
+    const dir = (await tarjeta.locator('.card-top span').first().textContent()).replace(/VENCIDO.*/, '').trim();
     const notasAntes = await page.evaluate(d => app.entradaPorDireccion(d).notas, dir);
-    await card.locator('[data-vstart]').click();
+    await tarjeta.locator('[data-vstart]').click();
     await page.fill('#inp-venc-date', `${new Date().getFullYear()}-01-01`);
     await page.click('[data-vconf]');
     await page.waitForFunction(d => !!app.estado.marks['v|' + d], dir);
@@ -394,9 +394,9 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
 
   await t.test('no renueva: si sigue activo continua; si no, pasa a inactivo; ambos se deshacen', async () => {
     await page.click('#tab-vencimientos');
-    const pick = async () => page.locator('.card:not(.card-compact) [data-nr-start]').first().getAttribute('data-nr-start');
+    const elegir = async () => page.locator('.card:not(.card-compact) [data-nr-start]').first().getAttribute('data-nr-start');
     const espera = ms => new Promise(r => setTimeout(r, ms));
-    let dir = await pick();
+    let dir = await elegir();
     await espera(1600);
     await page.click(`[data-nr-start="${dir}"]`);
     await page.check('#inp-nr-sigue');
@@ -405,7 +405,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     assert.equal(await page.evaluate(d => app.entradaPorDireccion(d).inactive, dir), false, 'sigue activo');
     await page.click('#btn-undo');
     await page.waitForFunction(d => !app.estado.marks['nr|' + d], dir);
-    dir = await pick();
+    dir = await elegir();
     await espera(1600);
     await page.click(`[data-nr-start="${dir}"]`);
     await page.click('[data-nr-conf]');
@@ -416,7 +416,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
 
   await t.test('administraciones: alta con viñetas, edicion y baja', async () => {
     await page.click('#tab-administraciones');
-    const before = await page.locator('#admin-tbody tr[data-admin-row]').count();
+    const antesDe = await page.locator('#admin-tbody tr[data-admin-row]').count();
     await page.click('#btn-add-admin');
     await esperarFoco(page, 'm-adm-nombre');
     await page.fill('#m-adm-nombre', 'ADMIN E2E');
@@ -432,12 +432,12 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.fill('#m-adm-telefono-entry', '098 765 432');
     await page.click('#modal-admin-submit');
     await page.waitForSelector('#modal-admin', { state: 'hidden' });
-    assert.equal(await page.locator('#admin-tbody tr[data-admin-row]').count(), before + 1);
-    const row = page.locator('#admin-tbody tr', { hasText: 'ADMIN E2E' });
-    assert.equal(await row.locator('a.wa').first().getAttribute('href'), 'https://wa.me/59899123456');
-    const saved = await page.evaluate(() => app.estado.admins.find(a => a.nombre === 'ADMIN E2E'));
-    assert.deepEqual([saved.edificios, saved.telefono], ['Edificio Uno; Edificio Dos', '099 123 456; 098 765 432']);
-    await row.locator('[data-admin-edit]').click();
+    assert.equal(await page.locator('#admin-tbody tr[data-admin-row]').count(), antesDe + 1);
+    const fila = page.locator('#admin-tbody tr', { hasText: 'ADMIN E2E' });
+    assert.equal(await fila.locator('a.wa').first().getAttribute('href'), 'https://wa.me/59899123456');
+    const guardado = await page.evaluate(() => app.estado.admins.find(a => a.nombre === 'ADMIN E2E'));
+    assert.deepEqual([guardado.edificios, guardado.telefono], ['Edificio Uno; Edificio Dos', '099 123 456; 098 765 432']);
+    await fila.locator('[data-admin-edit]').click();
     await esperarFoco(page, 'm-adm-nombre');
     assert.equal(await page.locator('#m-adm-telefono-chips .chip:not(.chip-add)').count(), 2);
     await page.locator('#m-adm-edificios-chips .chip', { hasText: 'Edificio Dos' }).locator('.chip-x').click();
@@ -445,7 +445,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.click('#modal-admin-submit');
     await page.locator('#admin-tbody tr', { hasText: 'ADMIN E2E 2' }).waitFor();
     await page.locator('#admin-tbody tr', { hasText: 'ADMIN E2E 2' }).locator('[data-admin-del]').click();
-    await page.waitForFunction(n => document.querySelectorAll('#admin-tbody tr[data-admin-row]').length === n, before);
+    await page.waitForFunction(n => document.querySelectorAll('#admin-tbody tr[data-admin-row]').length === n, antesDe);
   });
 
   await t.test('exportar CSV', async () => {
@@ -482,11 +482,11 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     assert.equal(await app.evaluate(({ BrowserWindow }) => { const w = BrowserWindow.getAllWindows()[0]; w.showInactive(); return w.isVisible(); }), true);
   });
 
-  assert.deepEqual(errors, [], 'sin errores de consola');
+  assert.deepEqual(errores, [], 'sin errores de consola');
   await app.close();
 
   await t.test('los datos persisten al reabrir la app', async () => {
-    const r = await lanzar(dataDir);
+    const r = await lanzar(carpetaDatos);
     try {
       await r.page.waitForSelector('#app-screen', { state: 'visible' });
       const c = await r.page.evaluate(d => app.estado.entries.find(e => e.direccion === d), DIR);
@@ -494,7 +494,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
       assert.equal(c.notas, 'comentario e2e | NO AUMENTA: acuerdo e2e');
       assert.equal(c.inactive, true);
       assert.equal(c.garantia, 'Fianza E2E');
-      assert.ok(fs.readdirSync(path.join(dataDir, 'backups')).length >= 1, 'hay copias de seguridad');
+      assert.ok(fs.readdirSync(path.join(carpetaDatos, 'backups')).length >= 1, 'hay copias de seguridad');
       assert.deepEqual(r.errors, []);
     } finally { await r.app.close(); }
   });

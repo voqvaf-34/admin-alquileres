@@ -21,9 +21,9 @@ async function cargarVisor() {
   }
   if (!ctx.viewer.dir) { ctx.viewer.error = 'Todavía no se eligió la carpeta compartida.'; return; }
   try {
-    const next = await BaseDatos.open(share.rutaBaseCompartida(ctx.viewer.dir), { readOnly: true });
+    const siguiente = await BaseDatos.open(share.rutaBaseCompartida(ctx.viewer.dir), { readOnly: true });
     if (ctx.store) ctx.store.close();
-    ctx.store = next;
+    ctx.store = siguiente;
     ctx.viewer.mtime = share.fechaModBase(ctx.viewer.dir);
     ctx.viewer.lastLoad = new Date().toISOString();
     ctx.viewer.error = null;

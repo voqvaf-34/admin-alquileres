@@ -25,19 +25,19 @@ function adminsFiltradas() {
 
 export function dibujarTablaAdmins() {
   if (!estado.admins) return;
-  const filtered = adminsFiltradas();
-  const countEl = document.getElementById('admin-count');
-  if (countEl) countEl.textContent = `${filtered.length} / ${estado.admins.length} administraciones`;
+  const filtrados = adminsFiltradas();
+  const elCantidad = document.getElementById('admin-count');
+  if (elCantidad) elCantidad.textContent = `${filtrados.length} / ${estado.admins.length} administraciones`;
 
   const tbody = document.getElementById('admin-tbody');
   if (!tbody) return;
 
-  if (filtered.length === 0) {
+  if (filtrados.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty">Sin resultados.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = nuevosPrimero('administraciones', filtered).map(a => `
+  tbody.innerHTML = nuevosPrimero('administraciones', filtrados).map(a => `
     <tr data-admin-row="${a.id}">
       <td style="font-weight:600">${esc(a.nombre)}</td>
       <td>${formatearEdificios(a.edificios)}</td>
@@ -50,13 +50,13 @@ export function dibujarTablaAdmins() {
     </tr>`).join('');
 }
 
-function mostrarModalAdmin(entry) {
-  filaAdminEditando = entry ? entry.id : null;
-  document.getElementById('modal-admin-title').textContent = entry ? 'Editar Administracion' : 'Nueva Administracion';
-  document.getElementById('m-adm-nombre').value    = entry ? entry.nombre    : '';
-  document.getElementById('m-adm-edificios').value = entry ? entry.edificios : '';
-  document.getElementById('m-adm-telefono').value  = entry ? entry.telefono  : '';
-  document.getElementById('m-adm-mail').value      = entry ? entry.mail      : '';
+function mostrarModalAdmin(entrada) {
+  filaAdminEditando = entrada ? entrada.id : null;
+  document.getElementById('modal-admin-title').textContent = entrada ? 'Editar Administracion' : 'Nueva Administracion';
+  document.getElementById('m-adm-nombre').value    = entrada ? entrada.nombre    : '';
+  document.getElementById('m-adm-edificios').value = entrada ? entrada.edificios : '';
+  document.getElementById('m-adm-telefono').value  = entrada ? entrada.telefono  : '';
+  document.getElementById('m-adm-mail').value      = entrada ? entrada.mail      : '';
   const btn = document.getElementById('modal-admin-submit');
   btn.disabled = false;
   btn.textContent = 'Guardar';
@@ -72,7 +72,7 @@ async function enviarAdmin() {
   const nombre = (document.getElementById('m-adm-nombre').value || '').trim();
   if (!nombre) { mostrarAviso('El nombre de la administracion es obligatorio.', 'err'); return; }
 
-  const payload = {
+  const carga = {
     id:        filaAdminEditando,
     nombre,
     edificios: (document.getElementById('m-adm-edificios').value || '').trim(),
@@ -84,7 +84,7 @@ async function enviarAdmin() {
   btn.disabled    = true;
   btn.textContent = 'Guardando...';
   try {
-    estado.admins = await call('guardarAdmin', payload);
+    estado.admins = await call('guardarAdmin', carga);
     mostrarAviso('&#10003; Administracion guardada', 'ok');
     ocultarModalAdmin();
     dibujar();
@@ -132,17 +132,17 @@ export function iniciar() {
 
   // Acciones de fila en tabla Administraciones (editar / eliminar)
   document.getElementById('admin-tbody').addEventListener('click', e => {
-    const editBtn = e.target.closest('[data-admin-edit]');
-    if (editBtn) {
-      const entry = estado.admins && estado.admins.find(a => a.id === +editBtn.dataset.adminEdit);
-      if (entry) mostrarModalAdmin(entry);
+    const btnEditar = e.target.closest('[data-admin-edit]');
+    if (btnEditar) {
+      const entrada = estado.admins && estado.admins.find(a => a.id === +btnEditar.dataset.adminEdit);
+      if (entrada) mostrarModalAdmin(entrada);
       return;
     }
-    const delBtn = e.target.closest('[data-admin-del]');
-    if (delBtn) {
-      const id    = +delBtn.dataset.adminDel;
-      const entry = estado.admins && estado.admins.find(a => a.id === id);
-      borrarEntradaAdmin(id, entry ? entry.nombre : '');
+    const btnBorrar = e.target.closest('[data-admin-del]');
+    if (btnBorrar) {
+      const id    = +btnBorrar.dataset.adminDel;
+      const entrada = estado.admins && estado.admins.find(a => a.id === id);
+      borrarEntradaAdmin(id, entrada ? entrada.nombre : '');
       return;
     }
   });

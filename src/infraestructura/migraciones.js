@@ -7,17 +7,17 @@ const { REGLAS_DIRECCIONES, VERSION_DIRECCIONES, VERSION_LIMPIEZA, VERSION_GARAN
 // Direcciones con formato "Edificio - Calle 1234 U601" y mismo nombre para el mismo apto.
 function asegurarDirecciones(force) {
   if (!force && ctx.store.obtenerAjustes().addressVersion === VERSION_DIRECCIONES) return 0;
-  const list = ctx.store.listarContratos().map(c => {
+  const lista = ctx.store.listarContratos().map(c => {
     const a = normalizarDireccion(c.direccionOriginal || c.direccion, REGLAS_DIRECCIONES);
     return { id: c.id, edificio: a.edificio, calle: a.calle, unidad: a.unidad, direccion: a.direccion };
   });
-  if (list.length) {
+  if (lista.length) {
     ctx.store.respaldar('pre-direcciones');
-    ctx.store.aplicarDirecciones(list);
+    ctx.store.aplicarDirecciones(lista);
     ctx.store.ponerNombresInquilinos(ctx.store.listarContratos().map(c => ({ id: c.id, inquilino: D.mayusculasIniciales(c.inquilino) })));
   }
   ctx.store.guardarAjuste('addressVersion', VERSION_DIRECCIONES);
-  return list.length;
+  return lista.length;
 }
 
 // Propietarios/contactos a partir del texto de los contratos (una vez por version de reglas).

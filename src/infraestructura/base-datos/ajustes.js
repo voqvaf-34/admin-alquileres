@@ -2,19 +2,19 @@
 class MetodosAjustes {
   // ── settings ─────────────────────────────────────────────────────────────
   obtenerAjustes() {
-    const out = {};
-    for (const r of this.consultar('SELECT key, value FROM settings')) out[r.key] = r.value;
-    return out;
+    const salida = {};
+    for (const r of this.consultar('SELECT key, value FROM settings')) salida[r.key] = r.value;
+    return salida;
   }
-  guardarAjuste(key, value) {
-    this.guardarAjustes({ [key]: value });
+  guardarAjuste(clave, valor) {
+    this.guardarAjustes({ [clave]: valor });
   }
   // Varias claves en una sola transaccion (un solo guardado y una sola publicacion).
-  guardarAjustes(values) {
+  guardarAjustes(valores) {
     this.transaccion(() => {
-      for (const [key, value] of Object.entries(values)) this.db.run(
+      for (const [clave, valor] of Object.entries(valores)) this.db.run(
         'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
-        [key, value == null ? null : String(value)]);
+        [clave, valor == null ? null : String(valor)]);
     });
   }
 }

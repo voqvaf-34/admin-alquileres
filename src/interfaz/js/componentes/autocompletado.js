@@ -25,24 +25,24 @@ let _acTemporizador = null;
 
 function _acElemento() { return document.getElementById('ac-dropdown'); }
 
-function acMostrar(inputEl, suggestions) {
+function acMostrar(elCampo, sugerencias) {
   const el = _acElemento();
-  if (!suggestions.length) { acOcultar(); return; }
-  _acCampo = inputEl;
-  _acOpciones = suggestions;
+  if (!sugerencias.length) { acOcultar(); return; }
+  _acCampo = elCampo;
+  _acOpciones = sugerencias;
   _acIndice   = -1;
 
-  const q = normalizar(inputEl.value.trim());
-  el.innerHTML = suggestions.map((s, i) => {
-    const safe  = s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const start = normalizar(safe).indexOf(q);
-    const hi = (start >= 0 && q.length)
-      ? safe.slice(0, start) + '<mark>' + safe.slice(start, start + q.length) + '</mark>' + safe.slice(start + q.length)
-      : safe;
+  const q = normalizar(elCampo.value.trim());
+  el.innerHTML = sugerencias.map((s, i) => {
+    const seguro  = s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const inicio = normalizar(seguro).indexOf(q);
+    const hi = (inicio >= 0 && q.length)
+      ? seguro.slice(0, inicio) + '<mark>' + seguro.slice(inicio, inicio + q.length) + '</mark>' + seguro.slice(inicio + q.length)
+      : seguro;
     return `<div class="ac-item" data-ac-i="${i}">${hi}</div>`;
   }).join('');
 
-  const rect = inputEl.getBoundingClientRect();
+  const rect = elCampo.getBoundingClientRect();
   el.style.left    = rect.left + 'px';
   el.style.top     = (rect.bottom + 2) + 'px';
   el.style.width   = Math.max(rect.width, 200) + 'px';
@@ -56,40 +56,40 @@ function acOcultar() {
 }
 
 function acMarcarActiva(idx) {
-  const items = _acElemento().querySelectorAll('.ac-item');
-  items.forEach((el, i) => el.classList.toggle('ac-active', i === idx));
-  if (idx >= 0 && items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+  const elementos = _acElemento().querySelectorAll('.ac-item');
+  elementos.forEach((el, i) => el.classList.toggle('ac-active', i === idx));
+  if (idx >= 0 && elementos[idx]) elementos[idx].scrollIntoView({ block: 'nearest' });
   _acIndice = idx;
 }
 
-function acSeleccionar(value) {
-  const inputId = _acCampo ? _acCampo.id : null;
-  if (inputId && inputId.endsWith('-entry') && camposConChips[inputId.replace('-entry', '')]) {
-    const base = inputId.replace('-entry', '');
-    camposConChips[base].add(value);                                 // cada valor elegido es una viñeta
+function acSeleccionar(valor) {
+  const idCampo = _acCampo ? _acCampo.id : null;
+  if (idCampo && idCampo.endsWith('-entry') && camposConChips[idCampo.replace('-entry', '')]) {
+    const base = idCampo.replace('-entry', '');
+    camposConChips[base].add(valor);                                 // cada valor elegido es una viñeta
     // tel/mail se completan con el primer nombre; con un segundo nombre no se pisan.
     if ((base === 'm-prop' || base === 'm-inq') && Separadores.personas(document.getElementById(base).value).length === 1) {
-      if (inputId === 'm-inq-entry') acCompletarDesdeInquilino(value); else acCompletarDesdePropietario(value);
+      if (idCampo === 'm-inq-entry') acCompletarDesdeInquilino(valor); else acCompletarDesdePropietario(valor);
     }
     acOcultar();
     return;
   }
-  if (_acCampo) { _acCampo.value = value; _acCampo.dispatchEvent(new Event('change')); }
-  if (inputId === 'm-edificio') acElegirDireccion(value);
+  if (_acCampo) { _acCampo.value = valor; _acCampo.dispatchEvent(new Event('change')); }
+  if (idCampo === 'm-edificio') acElegirDireccion(valor);
   acOcultar();
 }
 
 // En el campo Edificio se puede elegir un apto existente (completa todo) o solo un edificio
 // (completa la calle).
-function acElegirDireccion(value) {
+function acElegirDireccion(valor) {
   const set = (id, val) => { document.getElementById(id).value = val || ''; };
-  const apt = estado.entries.filter(e => e.direccion === value).sort((a, b) => b.id - a.id)[0];
-  if (apt) {
-    set('m-edificio', apt.edificio); set('m-calle', apt.calle); set('m-unidad', apt.unidad);
-    acCompletarDesdeDireccion(value);
+  const apto = estado.entries.filter(e => e.direccion === valor).sort((a, b) => b.id - a.id)[0];
+  if (apto) {
+    set('m-edificio', apto.edificio); set('m-calle', apto.calle); set('m-unidad', apto.unidad);
+    acCompletarDesdeDireccion(valor);
     acResaltar(['m-edificio', 'm-calle', 'm-unidad']);
   } else {
-    const b = estado.entries.find(e => e.edificio === value && e.calle);
+    const b = estado.entries.find(e => e.edificio === valor && e.calle);
     if (b) { set('m-calle', b.calle); acResaltar(['m-calle']); }
     setTimeout(() => document.getElementById('m-unidad').focus(), 0);
   }
@@ -110,10 +110,10 @@ export function actualizarVistaDireccion() {
 function acCompletarDesdeDireccion(dir) {
   if (!estado.entries) return;
   // si hay varios (misma dirección alquilada varias veces), tomar el más reciente
-  const matches = estado.entries.filter(e => e.direccion === dir);
-  if (!matches.length) return;
-  const e = matches.reduce((a, b) => (b.id > a.id ? b : a));
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const coincidencias = estado.entries.filter(e => e.direccion === dir);
+  if (!coincidencias.length) return;
+  const e = coincidencias.reduce((a, b) => (b.id > a.id ? b : a));
+  const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
   set('m-prop',      e.propietario);
   set('m-tel-prop',  e.telProp);
   set('m-mail-prop', e.mailProp);
@@ -126,7 +126,7 @@ function acCompletarDesdeDireccion(dir) {
 function acCompletarDesdePropietario(prop) {
   const o = estado.owners.find(x => x.nombre === prop);
   if (!o) return;
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
   set('m-tel-prop',  o.telefono);
   set('m-mail-prop', o.mail);
   acResaltar(['m-tel-prop','m-mail-prop']);
@@ -134,10 +134,10 @@ function acCompletarDesdePropietario(prop) {
 
 function acCompletarDesdeInquilino(inq) {
   if (!estado.entries) return;
-  const matches = estado.entries.filter(e => e.inquilino === inq || Separadores.personas(e.inquilino).includes(inq));
-  if (!matches.length) return;
-  const e = matches.reduce((a, b) => (b.id > a.id ? b : a));
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const coincidencias = estado.entries.filter(e => e.inquilino === inq || Separadores.personas(e.inquilino).includes(inq));
+  if (!coincidencias.length) return;
+  const e = coincidencias.reduce((a, b) => (b.id > a.id ? b : a));
+  const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
   set('m-tel-inq',  e.telInq);
   set('m-mail-inq', e.mailInq);
   acResaltar(['m-tel-inq','m-mail-inq']);
@@ -155,18 +155,18 @@ function acResaltar(ids) {
 }
 
 export function conectarAutocompletado() {
-  const dropEl = document.createElement('div');
-  dropEl.id = 'ac-dropdown';
-  document.body.appendChild(dropEl);
+  const elQuitar = document.createElement('div');
+  elQuitar.id = 'ac-dropdown';
+  document.body.appendChild(elQuitar);
 
-  dropEl.addEventListener('mousedown', e => {
-    const item = e.target.closest('.ac-item');
-    if (!item) return;
+  elQuitar.addEventListener('mousedown', e => {
+    const elemento = e.target.closest('.ac-item');
+    if (!elemento) return;
     e.preventDefault();
-    acSeleccionar(_acOpciones[+item.dataset.acI]);
+    acSeleccionar(_acOpciones[+elemento.dataset.acI]);
   });
 
-  Object.entries(AC_CAMPOS).forEach(([id, getter]) => {
+  Object.entries(AC_CAMPOS).forEach(([id, lector]) => {
     const inp = document.getElementById(id);
     if (!inp) return;
 
@@ -174,15 +174,15 @@ export function conectarAutocompletado() {
       if (!estado.entries) { acOcultar(); return; }
       const q = normalizar(inp.value.trim());
       if (!q) { acOcultar(); return; }
-      const source = id === 'm-prop-entry' ? estado.owners.map(o => o.nombre)
+      const origen = id === 'm-prop-entry' ? estado.owners.map(o => o.nombre)
         : id === 'm-inq-entry' ? estado.entries.flatMap(e => Separadores.personas(e.inquilino))
-        : /^m-tel-/.test(id) ? estado.entries.flatMap(e => Separadores.telefonos(getter(e) || ''))
-        : /^m-mail-/.test(id) ? estado.entries.flatMap(e => Separadores.mails(getter(e) || ''))
-        : id === 'm-edificio' ? [...estado.entries.map(e => e.direccion), ...estado.entries.map(getter)]
-        : estado.entries.map(getter);
-      const unique = [...new Set(source.filter(v => v && v.trim()))];
-      const matches = unique.filter(v => normalizar(v).includes(q)).slice(0, 12);
-      acMostrar(inp, matches);
+        : /^m-tel-/.test(id) ? estado.entries.flatMap(e => Separadores.telefonos(lector(e) || ''))
+        : /^m-mail-/.test(id) ? estado.entries.flatMap(e => Separadores.mails(lector(e) || ''))
+        : id === 'm-edificio' ? [...estado.entries.map(e => e.direccion), ...estado.entries.map(lector)]
+        : estado.entries.map(lector);
+      const unicos = [...new Set(origen.filter(v => v && v.trim()))];
+      const coincidencias = unicos.filter(v => normalizar(v).includes(q)).slice(0, 12);
+      acMostrar(inp, coincidencias);
     });
 
     inp.addEventListener('keydown', e => {

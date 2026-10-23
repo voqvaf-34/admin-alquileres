@@ -43,9 +43,9 @@ export function interpretarDMA(texto) {
 export function interpretarMesAnio(texto) {
   const m = String(texto).trim().match(/^(\d{1,2})\/(\d{2,4})$/);
   if (!m) return null;
-  const month = parseInt(m[1], 10) - 1;
-  let year = parseInt(m[2], 10);
-  if (year < 100) year += 2000;
-  if (month < 0 || month > 11) return null;
-  return new Date(year, month, 1);
+  const mes = parseInt(m[1], 10) - 1;
+  let anio = parseInt(m[2], 10);
+  if (anio < 100) anio += 2000;
+  if (mes < 0 || mes > 11) return null;
+  return new Date(anio, mes, 1);
 }

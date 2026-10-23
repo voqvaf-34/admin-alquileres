@@ -7,13 +7,13 @@ const { BaseDatos } = require('../../src/infraestructura/base-datos');
 
 const tmp = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'alq-undo-')), 'x.sqlite');
 const base = { importeBase: 20000, contratoStr: '2 AÑOS', fechaInicio: '2024-01-01' };
-const wait = ms => new Promise(r => setTimeout(r, ms));
+const esperar = ms => new Promise(r => setTimeout(r, ms));
 
 test('deshacer y rehacer restauran la base', async () => {
   const s = await BaseDatos.open(tmp());
   s.puntoDeControl('Agregar alquiler');
   s.agregarContrato({ ...base, direccion: 'A 1' });
-  await wait(1600);
+  await esperar(1600);
   s.puntoDeControl('Agregar alquiler');
   s.agregarContrato({ ...base, direccion: 'B 2' });
   assert.equal(s.listarContratos().length, 2);
@@ -29,9 +29,9 @@ test('deshacer y rehacer restauran la base', async () => {
   assert.equal(s.listarContratos().length, 2);
   s.close();
 
-  const again = await BaseDatos.open(s.filePath);
-  assert.equal(again.listarContratos().length, 2, 'el estado rehecho queda guardado en disco');
-  again.close();
+  const otraVez = await BaseDatos.open(s.filePath);
+  assert.equal(otraVez.listarContratos().length, 2, 'el estado rehecho queda guardado en disco');
+  otraVez.close();
 });
 
 test('cambios seguidos se agrupan y un cambio nuevo borra el rehacer', async () => {
@@ -45,7 +45,7 @@ test('cambios seguidos se agrupan y un cambio nuevo borra el rehacer', async () 
   assert.equal(s.obtenerContrato(c.id).importe, 20000);
   assert.deepEqual(s.obtenerMarcas(), {});
   assert.equal(s.estadoDeshacer().canRedo, true);
-  await wait(1600);
+  await esperar(1600);
   s.puntoDeControl('Modificar alquiler');
   s.modificarContrato(c.id, { notas: 'x' });
   assert.equal(s.estadoDeshacer().canRedo, false);
@@ -78,9 +78,9 @@ test('normalizar direcciones conserva la original y mueve las marcas', async () 
   s.ponerCuentaPropietario(s.guardarPropietario({ nombre: 'Juan' }), 'TORRE CEIBO 403', 'BROU 123');
   const dir = 'Torre Ceibo - Ceibo 1500 U403';
   s.aplicarDirecciones([a, b].map(c => ({ id: c.id, edificio: 'Torre Ceibo', calle: 'Ceibo 1500', unidad: '403', direccion: dir })));
-  const list = s.listarContratos();
-  assert.deepEqual(list.map(c => c.direccion), [dir, dir]);
-  assert.deepEqual(list.map(c => c.direccionOriginal), ['TORRE CEIBO 403', 'TORRE CEIBO U 403, Ceibo 1500']);
+  const lista = s.listarContratos();
+  assert.deepEqual(lista.map(c => c.direccion), [dir, dir]);
+  assert.deepEqual(lista.map(c => c.direccionOriginal), ['TORRE CEIBO 403', 'TORRE CEIBO U 403, Ceibo 1500']);
   assert.deepEqual(s.obtenerMarcas(), { [`v|${dir}`]: { date: '01/06/2026' } }, 'queda la marca mas reciente');
   s.close();
 });

@@ -16,10 +16,10 @@ export function guardarMarcas() {
 }
 
 // Aumento enviado: registra el mes del aumento y el nuevo importe.
-export async function guardarAumento(entry, newAmount, date) {
+export async function guardarAumento(entrada, nuevoMonto, fecha) {
   try {
-    const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    reemplazarEntrada(await call('modificarContrato', entry.id, { importe: newAmount, ultimoAumento: D.aFechaISO(firstOfMonth) }));
+    const primeroDelMes = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+    reemplazarEntrada(await call('modificarContrato', entrada.id, { importe: nuevoMonto, ultimoAumento: D.aFechaISO(primeroDelMes) }));
     mostrarAviso('&#10003; Aumento guardado', 'ok');
     return true;
   } catch (err) {
@@ -28,9 +28,9 @@ export async function guardarAumento(entry, newAmount, date) {
   }
 }
 
-export async function guardarNotas(entry, text, okMsg) {
+export async function guardarNotas(entrada, texto, okMsg) {
   try {
-    reemplazarEntrada(await call('modificarContrato', entry.id, { notas: text.trim() }));
+    reemplazarEntrada(await call('modificarContrato', entrada.id, { notas: texto.trim() }));
     if (okMsg) mostrarAviso(okMsg, 'ok');
     return true;
   } catch (err) {
@@ -39,15 +39,15 @@ export async function guardarNotas(entry, text, okMsg) {
   }
 }
 
-export function agregarNota(entry, txt) {
-  const prev = entry.notas ? entry.notas.trim() : '';
-  return prev ? prev + ' | ' + txt : txt;
+export function agregarNota(entrada, txt) {
+  const anterior = entrada.notas ? entrada.notas.trim() : '';
+  return anterior ? anterior + ' | ' + txt : txt;
 }
 
 // La renovacion ya queda en las marcas (recuadro verde y linea de tiempo): a los comentarios
 // solo va el comentario que se haya escrito al renovar.
-export async function guardarRenovacion(entry, years, comment) {
-  if (comment) return guardarNotas(entry, agregarNota(entry, comment), '&#10003; Renovacion guardada');
+export async function guardarRenovacion(entrada, anios, comentario) {
+  if (comentario) return guardarNotas(entrada, agregarNota(entrada, comentario), '&#10003; Renovacion guardada');
   mostrarAviso('&#10003; Renovacion guardada', 'ok');
   return true;
 }
@@ -57,17 +57,17 @@ export function entradaPorDireccion(dir) {
   if (!estado.entries) return null;
   const coincidencias = estado.entries.filter(e => e.direccion === dir);
   if (!coincidencias.length) return null;
-  const pool = coincidencias.some(e => !e.inactive) ? coincidencias.filter(e => !e.inactive) : coincidencias;
-  return pool.reduce((a, b) => (b.id > a.id ? b : a));
+  const candidatos = coincidencias.some(e => !e.inactive) ? coincidencias.filter(e => !e.inactive) : coincidencias;
+  return candidatos.reduce((a, b) => (b.id > a.id ? b : a));
 }
 
-export const obtenerAumentos          = (list, m, y) => D.obtenerAumentos(list, m, y, estado.marks);
+export const obtenerAumentos          = (lista, m, y) => D.obtenerAumentos(lista, m, y, estado.marks);
 
 export const obtenerFechaVenc          = e => D.obtenerFechaVenc(e, estado.marks);
 
-export const obtenerVencimientos      = (list, m, y) => D.obtenerVencimientos(list, m, y, estado.marks);
+export const obtenerVencimientos      = (lista, m, y) => D.obtenerVencimientos(lista, m, y, estado.marks);
 
-export const obtenerVencidosAtrasados = (list, m, y) => D.obtenerVencidosAtrasados(list, m, y, estado.marks);
+export const obtenerVencidosAtrasados = (lista, m, y) => D.obtenerVencidosAtrasados(lista, m, y, estado.marks);
 
 export const esAumentoResuelto = (e, m, y) => D.esAumentoResuelto(e, m, y, estado.marks);
 

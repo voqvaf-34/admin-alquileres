@@ -83,22 +83,22 @@ export function marcaASettings({ nombre = '', color = '', color2 = '', logo = ''
   };
 }
 
-export function leerMarca(settings = {}) {
+export function leerMarca(ajustes = {}) {
   const k = CLAVES_MARCA;
-  const nombre = String(settings[k.nombre] || '').trim() || MARCA_PREDETERMINADA.nombre;
-  const color  = esColor(settings[k.color]) ? settings[k.color].trim().toUpperCase() : MARCA_PREDETERMINADA.color;
-  const color2 = esColor(settings[k.color2]) ? settings[k.color2].trim().toUpperCase() : '';
-  const logo   = LOGO_RE.test(settings[k.logo] || '') ? settings[k.logo] : '';
-  const tema   = TEMAS[settings[k.tema]] ? settings[k.tema] : MARCA_PREDETERMINADA.tema;
-  const fuente = FUENTES[settings[k.fuente]] ? settings[k.fuente] : MARCA_PREDETERMINADA.fuente;
+  const nombre = String(ajustes[k.nombre] || '').trim() || MARCA_PREDETERMINADA.nombre;
+  const color  = esColor(ajustes[k.color]) ? ajustes[k.color].trim().toUpperCase() : MARCA_PREDETERMINADA.color;
+  const color2 = esColor(ajustes[k.color2]) ? ajustes[k.color2].trim().toUpperCase() : '';
+  const logo   = LOGO_RE.test(ajustes[k.logo] || '') ? ajustes[k.logo] : '';
+  const tema   = TEMAS[ajustes[k.tema]] ? ajustes[k.tema] : MARCA_PREDETERMINADA.tema;
+  const fuente = FUENTES[ajustes[k.fuente]] ? ajustes[k.fuente] : MARCA_PREDETERMINADA.fuente;
   // Icono: si el elegido ya no se puede usar (logo o imagen borrados) vuelve al prediseñado.
-  const imagen = ICONO_RE.test(settings[k.iconoImagen] || '') ? settings[k.iconoImagen] : '';
-  let tipo = ICONO_TIPOS.includes(settings[k.iconoTipo]) ? settings[k.iconoTipo] : 'app';
+  const imagen = ICONO_RE.test(ajustes[k.iconoImagen] || '') ? ajustes[k.iconoImagen] : '';
+  let tipo = ICONO_TIPOS.includes(ajustes[k.iconoTipo]) ? ajustes[k.iconoTipo] : 'app';
   if ((tipo === 'logo' && !logo) || (tipo === 'imagen' && !imagen)) tipo = 'app';
   const icono = {
     tipo, imagen,
-    diseno: ICONOS_APP[settings[k.iconoDiseno]] ? settings[k.iconoDiseno] : MARCA_PREDETERMINADA.icono.diseno,
-    color: esColor(settings[k.iconoColor]) ? settings[k.iconoColor].trim().toUpperCase() : '',
+    diseno: ICONOS_APP[ajustes[k.iconoDiseno]] ? ajustes[k.iconoDiseno] : MARCA_PREDETERMINADA.icono.diseno,
+    color: esColor(ajustes[k.iconoColor]) ? ajustes[k.iconoColor].trim().toUpperCase() : '',
   };
   return { nombre, color, color2, logo, tema, fuente, icono };
 }
@@ -144,16 +144,16 @@ function legibleSobre(rgb, fondo, hacia) {
 // - tinte*: fondos del tema "Con mi color"
 export function paleta(color, color2 = '') {
   const base = esColor(color) ? color.toUpperCase() : MARCA_PREDETERMINADA.color;
-  const sec  = esColor(color2) ? color2.toUpperCase() : base;
-  const rgb = hexARgb(base), rgb2 = hexARgb(sec);
-  const headerInk = tintaSobre(base), secOn = tintaSobre(sec);
-  const accentDark = rgbAHex(mezclar(rgb, 0.08)), secDark = rgbAHex(mezclar(rgb2, 0.08));
+  const seccion  = esColor(color2) ? color2.toUpperCase() : base;
+  const rgb = hexARgb(base), rgb2 = hexARgb(seccion);
+  const tintaCabecera = tintaSobre(base), seccionActiva = tintaSobre(seccion);
+  const acentoOscuro = rgbAHex(mezclar(rgb, 0.08)), seccionOscura = rgbAHex(mezclar(rgb2, 0.08));
   return {
-    header: base, headerInk, headerFg: headerInk === '#FFFFFF' ? '255,255,255' : '26,26,26',
+    header: base, headerInk: tintaCabecera, headerFg: tintaCabecera === '#FFFFFF' ? '255,255,255' : '26,26,26',
     accent: base, accentRgb: rgb.join(','), accentInk: rgbAHex(legibleSobre(rgb, CLARO_MAS_OSCURO, -1)),
-    accentDark, accentDarkRgb: hexARgb(accentDark).join(','), accentInkDark: rgbAHex(legibleSobre(rgb, OSCURO_MAS_CLARO, 1)),
-    sec, secRgb: rgb2.join(','), secOn, secInk: rgbAHex(legibleSobre(rgb2, CLARO_MAS_OSCURO, -1)),
-    secDark, secDarkRgb: hexARgb(secDark).join(','), secInkDark: rgbAHex(legibleSobre(rgb2, OSCURO_MAS_CLARO, 1)),
+    accentDark: acentoOscuro, accentDarkRgb: hexARgb(acentoOscuro).join(','), accentInkDark: rgbAHex(legibleSobre(rgb, OSCURO_MAS_CLARO, 1)),
+    sec: seccion, secRgb: rgb2.join(','), secOn: seccionActiva, secInk: rgbAHex(legibleSobre(rgb2, CLARO_MAS_OSCURO, -1)),
+    secDark: seccionOscura, secDarkRgb: hexARgb(seccionOscura).join(','), secInkDark: rgbAHex(legibleSobre(rgb2, OSCURO_MAS_CLARO, 1)),
     tinteBg: rgbAHex(mezclar(rgb, 0.93)), tinteSurface: rgbAHex(mezclar(rgb, 0.985)),
     tinteBgDark: rgbAHex(mezclar(rgb, -0.9)), tintePanelDark: rgbAHex(mezclar(rgb, -0.84)),
   };

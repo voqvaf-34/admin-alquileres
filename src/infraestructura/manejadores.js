@@ -38,19 +38,19 @@ function avisarDeshacer() {
 }
 
 // Envuelve cada handler para devolver {ok, data} / {ok:false, error} al renderer.
-function manejar(channel, fn) {
-  ipcMain.handle(channel, async (_evt, ...args) => {
-    const label = ETIQUETAS_DESHACER[channel];
-    const pushed = label && ctx.store ? ctx.store.puntoDeControl(label, !UNDO_SEPARADOS.has(channel)) : false;
+function manejar(canal, fn) {
+  ipcMain.handle(canal, async (_evt, ...args) => {
+    const etiqueta = ETIQUETAS_DESHACER[canal];
+    const agregado = etiqueta && ctx.store ? ctx.store.puntoDeControl(etiqueta, !UNDO_SEPARADOS.has(canal)) : false;
     try {
-      const data = await fn(...args);
-      if (data === null && pushed) ctx.store.descartarPuntoDeControl();       // dialogo cancelado: no hubo cambio
-      if (label) avisarDeshacer();
-      return { ok: true, data };
+      const datos = await fn(...args);
+      if (datos === null && agregado) ctx.store.descartarPuntoDeControl();       // dialogo cancelado: no hubo cambio
+      if (etiqueta) avisarDeshacer();
+      return { ok: true, data: datos };
     } catch (e) {
-      if (pushed) ctx.store.descartarPuntoDeControl();
-      if (label) avisarDeshacer();
-      console.error(`[${channel}]`, e);
+      if (agregado) ctx.store.descartarPuntoDeControl();
+      if (etiqueta) avisarDeshacer();
+      console.error(`[${canal}]`, e);
       return { ok: false, error: e.message || String(e) };
     }
   });
@@ -65,7 +65,7 @@ function registrarManejadoresComunes() {
   manejar('owner:docPreview',     (id) => vistaPreviaDoc(id));
   manejar('owner:openDoc',        (id) => shell.openPath(archivoDoc(id).p));
   manejar('data:exportCsv',       () => exportarCsv());
-  manejar('window:titleBarColor', (c, ink) => ventana.ponerColorBarraTitulo(c, ink));
+  manejar('window:titleBarColor', (c, tinta) => ventana.ponerColorBarraTitulo(c, tinta));
   manejar('window:icon',          (png) => ventana.ponerIconoApp(png));
   manejar('window:zoom',          (f) => ventana.ponerZoom(f));
 }
@@ -76,25 +76,25 @@ function registrarManejadores() {
   // Planillas: elegir el archivo y reemplazar todo (al empezar o con la app en uso), o sumarla a
   // lo que ya hay. null = se cancelo el dialogo.
   const elegirPlanilla = async () => {
-    const defaultPath = rutasExcelPredeterminadas().find(p => { try { return fs.existsSync(p); } catch (_) { return false; } });
+    const rutaPredeterminada = rutasExcelPredeterminadas().find(p => { try { return fs.existsSync(p); } catch (_) { return false; } });
     const res = await dialog.showOpenDialog(ctx.win, {
-      title: 'Seleccionar planilla de alquileres', defaultPath, properties: ['openFile'],
+      title: 'Seleccionar planilla de alquileres', defaultPath: rutaPredeterminada, properties: ['openFile'],
       filters: [{ name: 'Planillas', extensions: EXTENSIONES_PLANILLA }],
     });
     return res.canceled || !res.filePaths[0] ? null : res.filePaths[0];
   };
-  const reemplazarCon = file => (file ? { counts: estadoApp.importarDesde(file), state: estadoApp.state() } : null);
+  const reemplazarCon = archivo => (archivo ? { counts: estadoApp.importarDesde(archivo), state: estadoApp.state() } : null);
 
   manejar('import:pick',     async () => reemplazarCon(await elegirPlanilla()));
   manejar('import:replace',  async () => reemplazarCon(await elegirPlanilla()));
-  manejar('import:fromPath', (filePath) => {
-    const ext = typeof filePath === 'string' && path.extname(filePath).slice(1).toLowerCase();
+  manejar('import:fromPath', (rutaArchivo) => {
+    const ext = typeof rutaArchivo === 'string' && path.extname(rutaArchivo).slice(1).toLowerCase();
     if (!EXTENSIONES_PLANILLA.includes(ext)) throw new Error('Archivo no valido.');
-    return reemplazarCon(filePath);
+    return reemplazarCon(rutaArchivo);
   });
   manejar('import:add', async () => {
-    const file = await elegirPlanilla();
-    return file ? { result: estadoApp.agregarDesde(file), state: estadoApp.state() } : null;
+    const archivo = await elegirPlanilla();
+    return archivo ? { result: estadoApp.agregarDesde(archivo), state: estadoApp.state() } : null;
   });
   manejar('import:demo', () => estadoApp.cargarDemo());
   manejar('import:template', async () => {
@@ -117,16 +117,16 @@ function registrarManejadores() {
     return estadoApp.state();
   });
 
-  manejar('undo:undo',   () => { const label = ctx.store.deshacerCambio(); avisarDeshacer(); return { label, state: estadoApp.state() }; });
-  manejar('undo:redo',   () => { const label = ctx.store.rehacerCambio(); avisarDeshacer(); return { label, state: estadoApp.state() }; });
+  manejar('undo:undo',   () => { const etiqueta = ctx.store.deshacerCambio(); avisarDeshacer(); return { label: etiqueta, state: estadoApp.state() }; });
+  manejar('undo:redo',   () => { const etiqueta = ctx.store.rehacerCambio(); avisarDeshacer(); return { label: etiqueta, state: estadoApp.state() }; });
 
   // Alta/edicion: ademas del contrato se vinculan los propietarios escritos en el modal.
-  const saveWithOwners = (saved, c) => {
-    if (c.propietario != null) ctx.store.vincularPropietariosDesdeTexto(saved.id, c.propietario, c.telProp, c.mailProp, claveNombre);
-    return { contract: saved, owners: ctx.store.listarPropietarios(), contractOwners: ctx.store.listarPropietariosDeContratos() };
+  const guardarConPropietarios = (guardado, c) => {
+    if (c.propietario != null) ctx.store.vincularPropietariosDesdeTexto(guardado.id, c.propietario, c.telProp, c.mailProp, claveNombre);
+    return { contract: guardado, owners: ctx.store.listarPropietarios(), contractOwners: ctx.store.listarPropietariosDeContratos() };
   };
-  manejar('contract:add',        (c)         => { const x = D.normalizarContrato(c); return saveWithOwners(ctx.store.agregarContrato(x), x); });
-  manejar('contract:update',     (id, c)     => { const x = D.normalizarContrato(c); return saveWithOwners(ctx.store.editarContrato(id, x), x); });
+  manejar('contract:add',        (c)         => { const x = D.normalizarContrato(c); return guardarConPropietarios(ctx.store.agregarContrato(x), x); });
+  manejar('contract:update',     (id, c)     => { const x = D.normalizarContrato(c); return guardarConPropietarios(ctx.store.editarContrato(id, x), x); });
   manejar('contract:patch',      (id, f)     => ctx.store.modificarContrato(id, f));
   manejar('contract:inactivate', (id)        => ctx.store.marcarInactivo(id));
 
@@ -142,27 +142,27 @@ function registrarManejadores() {
     return { settings: ctx.store.obtenerAjustes() };
   });
 
-  const ownersState = () => ({
+  const estadoPropietarios = () => ({
     owners: ctx.store.listarPropietarios(), contacts: ctx.store.listarContactos(), contractOwners: ctx.store.listarPropietariosDeContratos(),
     ownerDocs: ctx.store.listarDocsPropietarios(), ownerAccounts: ctx.store.listarCuentasPropietarios(),
   });
   // El propietario se guarda junto con su contacto (nuevo, existente editado o ninguno).
   manejar('owner:save', (o) => {
-    let contactId = null;
+    let idContacto = null;
     const c = o.contact || { mode: 'none' };
     if (c.mode === 'new' || c.mode === 'existing') {
-      contactId = ctx.store.guardarContacto({ id: c.mode === 'existing' ? c.id : null, nombre: D.mayusculasIniciales(c.nombre), rol: c.rol,
+      idContacto = ctx.store.guardarContacto({ id: c.mode === 'existing' ? c.id : null, nombre: D.mayusculasIniciales(c.nombre), rol: c.rol,
         telefono: c.telefono, mail: c.mail, notas: c.notas });
     }
-    ctx.store.guardarPropietario({ ...o, nombre: D.mayusculasIniciales(o.nombre), contactId });
-    return ownersState();
+    ctx.store.guardarPropietario({ ...o, nombre: D.mayusculasIniciales(o.nombre), contactId: idContacto });
+    return estadoPropietarios();
   });
-  manejar('owner:delete',   (id)                  => { ctx.store.borrarPropietario(id); return ownersState(); });
-  manejar('owner:merge',    (keep, drop)          => { ctx.store.unificarPropietarios(keep, drop); return ownersState(); });
-  manejar('owner:account',  (ownerId, dir, cuenta) => { ctx.store.ponerCuentaPropietario(ownerId, dir, cuenta); return ownersState(); });
-  manejar('owner:addDocs',  async (ownerId)       => { await elegirDocsPropietario(ownerId); return ownersState(); });
-  manejar('owner:deleteDoc', (id)                 => { ctx.store.borrarDocPropietario(id); return ownersState(); });
-  manejar('contract:setOwners', (id, ids)         => { ctx.store.asignarPropietariosContrato(id, ids); return ownersState(); });
+  manejar('owner:delete',   (id)                  => { ctx.store.borrarPropietario(id); return estadoPropietarios(); });
+  manejar('owner:merge',    (conservar, quitar)          => { ctx.store.unificarPropietarios(conservar, quitar); return estadoPropietarios(); });
+  manejar('owner:account',  (idPropietario, dir, cuenta) => { ctx.store.ponerCuentaPropietario(idPropietario, dir, cuenta); return estadoPropietarios(); });
+  manejar('owner:addDocs',  async (idPropietario)       => { await elegirDocsPropietario(idPropietario); return estadoPropietarios(); });
+  manejar('owner:deleteDoc', (id)                 => { ctx.store.borrarDocPropietario(id); return estadoPropietarios(); });
+  manejar('contract:setOwners', (id, ids)         => { ctx.store.asignarPropietariosContrato(id, ids); return estadoPropietarios(); });
 
   manejar('data:openFolder', () => shell.openPath(app.getPath('userData')));
   manejar('data:backup',     () => ctx.store.respaldar('manual'));

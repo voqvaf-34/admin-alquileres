@@ -56,15 +56,15 @@ export function dibujar() {
   document.getElementById('file-info').textContent = `${document.body.classList.contains('viewer') ? 'Base compartida' : 'Base local'} -- ${activos} activos / ${estado.entries.length} total`;
 
   // Visibilidad de paneles segun tab
-  const isDB     = estado.activeTab === 'basedatos';
-  const isAdmin  = estado.activeTab === 'administraciones';
-  const isOwners = estado.activeTab === 'propietarios';
-  const isPanel  = isDB || isAdmin || isOwners;
-  document.getElementById('content').style.display      = isPanel  ? 'none'  : 'block';
-  document.getElementById('db-panel').style.display     = isDB     ? 'block' : 'none';
-  document.getElementById('admin-panel').style.display  = isAdmin  ? 'block' : 'none';
-  document.getElementById('owners-panel').style.display = isOwners ? 'block' : 'none';
-  document.getElementById('op-controls').style.display  = isPanel  ? 'none'  : 'flex';
+  const esBase     = estado.activeTab === 'basedatos';
+  const esAdmin  = estado.activeTab === 'administraciones';
+  const esPropietarios = estado.activeTab === 'propietarios';
+  const esPanel  = esBase || esAdmin || esPropietarios;
+  document.getElementById('content').style.display      = esPanel  ? 'none'  : 'block';
+  document.getElementById('db-panel').style.display     = esBase     ? 'block' : 'none';
+  document.getElementById('admin-panel').style.display  = esAdmin  ? 'block' : 'none';
+  document.getElementById('owners-panel').style.display = esPropietarios ? 'block' : 'none';
+  document.getElementById('op-controls').style.display  = esPanel  ? 'none'  : 'flex';
   document.getElementById('ipc-group').hidden = estado.activeTab !== 'aumentos';   // el IPC solo aplica a aumentos
 
   // Aumentos y Renovaciones muestran un circulito (como una notificacion) con lo que falta hacer;
@@ -74,22 +74,22 @@ export function dibujar() {
   pintarNovedades();   // Visor: lo nuevo desde la ultima vez que se entro a cada pestaña
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===estado.activeTab));
 
-  if (isDB) {
+  if (esBase) {
     dibujarTablaBase();
     return;
   }
-  if (isAdmin) {
+  if (esAdmin) {
     dibujarTablaAdmins();
     return;
   }
-  if (isOwners) {
+  if (esPropietarios) {
     dibujarPanelPropietarios();
     return;
   }
 
-  const content = document.getElementById('content');
-  if (estado.activeTab === 'aumentos') dibujarAumentos(content);
-  else dibujarRenovaciones(content);
+  const contenido = document.getElementById('content');
+  if (estado.activeTab === 'aumentos') dibujarAumentos(contenido);
+  else dibujarRenovaciones(contenido);
 }
 
 export function mostrarApp() {
@@ -140,9 +140,9 @@ async function cargarEstado() {
   }
 }
 
-async function ejecutarImportacion(promise) {
+async function ejecutarImportacion(promesa) {
   try {
-    const res = await promise;
+    const res = await promesa;
     if (!res) return false;                         // dialogo cancelado
     aplicarEstado(res.state);
     estado.expandedRows.clear();
@@ -159,28 +159,28 @@ async function ejecutarImportacion(promise) {
 
 export const elegirImportacion     = () => ejecutarImportacion(call('elegirImportacion'));
 
-export const importarDesdeArchivo = file => {
+export const importarDesdeArchivo = archivo => {
   document.getElementById('drop-label').textContent = 'Importando...';
-  return ejecutarImportacion(call('importarDesdeArchivo', file));
+  return ejecutarImportacion(call('importarDesdeArchivo', archivo));
 };
 
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
   // Meses del selector operativo
-  const selMonthEl = document.getElementById('sel-month');
-  NOMBRES_MESES.slice(1).forEach((name,i) => {
-    const o=document.createElement('option'); o.value=i+1; o.textContent=name;
-    if(i+1===estado.selMonth) o.selected=true; selMonthEl.appendChild(o);
+  const elMesElegido = document.getElementById('sel-month');
+  NOMBRES_MESES.slice(1).forEach((nombre,i) => {
+    const o=document.createElement('option'); o.value=i+1; o.textContent=nombre;
+    if(i+1===estado.selMonth) o.selected=true; elMesElegido.appendChild(o);
   });
-  selMonthEl.addEventListener('change', e => { estado.selMonth=+e.target.value; dibujar(); });
+  elMesElegido.addEventListener('change', e => { estado.selMonth=+e.target.value; dibujar(); });
 
-  const selYearEl = document.getElementById('sel-year');
-  const curYear = new Date().getFullYear();
-  Array.from({ length: 7 }, (_, i) => curYear - 2 + i).forEach(y => {
+  const elAnioElegido = document.getElementById('sel-year');
+  const anioActual = new Date().getFullYear();
+  Array.from({ length: 7 }, (_, i) => anioActual - 2 + i).forEach(y => {
     const o=document.createElement('option'); o.value=y; o.textContent=y;
-    if(y===estado.selYear) o.selected=true; selYearEl.appendChild(o);
+    if(y===estado.selYear) o.selected=true; elAnioElegido.appendChild(o);
   });
-  selYearEl.addEventListener('change', e => { estado.selYear=+e.target.value; dibujar(); });
+  elAnioElegido.addEventListener('change', e => { estado.selYear=+e.target.value; dibujar(); });
 
   document.getElementById('inp-ipc').addEventListener('input', e => { estado.ipc=parseFloat(e.target.value)||0; dibujar(); });
   document.getElementById('inp-ipc').addEventListener('change', () => { call('guardarAjuste', 'ipc', estado.ipc).catch(() => {}); });

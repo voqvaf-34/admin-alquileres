@@ -13,16 +13,16 @@ import { filaContacto } from './propietarios.js';
 function baseFiltrada() {
   if (!estado.entries) return [];
   // ninguno seleccionado = mostrar todos; uno seleccionado = filtrar
-  let list = (!estado.dbShowActive && !estado.dbShowInactive)
+  let lista = (!estado.dbShowActive && !estado.dbShowInactive)
     ? estado.entries
     : estado.entries.filter(e => e.inactive ? estado.dbShowInactive : estado.dbShowActive);
   if (estado.dbFilterYear > 0)
-    list = list.filter(e => e.fechaInicio && e.fechaInicio.getFullYear() === estado.dbFilterYear);
+    lista = lista.filter(e => e.fechaInicio && e.fechaInicio.getFullYear() === estado.dbFilterYear);
   if (estado.dbFilterMonth > 0)
-    list = list.filter(e => e.fechaInicio && e.fechaInicio.getMonth() + 1 === estado.dbFilterMonth);
+    lista = lista.filter(e => e.fechaInicio && e.fechaInicio.getMonth() + 1 === estado.dbFilterMonth);
   if (estado.dbSearchText.trim()) {
     const q = normalizar(estado.dbSearchText);
-    list = list.filter(e =>
+    lista = lista.filter(e =>
       normalizar(e.direccion).includes(q) ||
       normalizar(e.propietario).includes(q) ||
       normalizar(e.inquilino).includes(q) ||
@@ -34,17 +34,17 @@ function baseFiltrada() {
       normalizar(e.remitente).includes(q)
     );
   }
-  return list;
+  return lista;
 }
 
 // Genera la fila separadora de grupo
-function filaSeparadoraBase(label, count) {
+function filaSeparadoraBase(etiqueta, cantidad) {
   return `<tr class="db-sep-row">
     <td colspan="5">
       <div class="db-sep-inner">
-        <span class="db-sep-label">${label}</span>
+        <span class="db-sep-label">${etiqueta}</span>
         <span class="db-sep-line"></span>
-        <span class="db-sep-count">${count}</span>
+        <span class="db-sep-count">${cantidad}</span>
       </div>
     </td>
   </tr>`;
@@ -52,22 +52,22 @@ function filaSeparadoraBase(label, count) {
 
 export function dibujarTablaBase() {
   if (!estado.entries) return;
-  const filtered = baseFiltrada();
+  const filtrados = baseFiltrada();
   const porDireccion = D.indicePorDireccion(estado.entries);   // una vez por dibujo, no por fila
   // Ordenar cronologicamente por fecha de inicio (null al final)
-  const sorted = filtered.slice().sort((a, b) => {
+  const ordenados = filtrados.slice().sort((a, b) => {
     const fa = a.fechaInicio ? a.fechaInicio.getTime() : Infinity;
     const fb = b.fechaInicio ? b.fechaInicio.getTime() : Infinity;
     return fa - fb;
   });
 
-  const countEl = document.getElementById('db-count');
-  if (countEl) countEl.textContent = `${sorted.length} / ${estado.entries.length} registros`;
+  const elCantidad = document.getElementById('db-count');
+  if (elCantidad) elCantidad.textContent = `${ordenados.length} / ${estado.entries.length} registros`;
 
   const tbody = document.getElementById('db-tbody');
   if (!tbody) return;
 
-  if (sorted.length === 0) {
+  if (ordenados.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty">Sin registros que coincidan.</td></tr>`;
     return;
   }
@@ -77,62 +77,62 @@ export function dibujarTablaBase() {
   // Filtro solo ano    -> agrupar por MES dentro de ese ano
   // Filtro solo mes    -> agrupar por ANO (solo meses coincidentes)
   // Filtro ano + mes   -> sin separadores
-  const hasYear  = estado.dbFilterYear  > 0;
-  const hasMes   = estado.dbFilterMonth > 0;
-  let groupBy = 'none';
-  if      (!hasYear && !hasMes) groupBy = 'year';
-  else if ( hasYear && !hasMes) groupBy = 'month';
-  else if (!hasYear &&  hasMes) groupBy = 'year';
+  const tieneAnio  = estado.dbFilterYear  > 0;
+  const tieneMes   = estado.dbFilterMonth > 0;
+  let agruparPor = 'none';
+  if      (!tieneAnio && !tieneMes) agruparPor = 'year';
+  else if ( tieneAnio && !tieneMes) agruparPor = 'month';
+  else if (!tieneAnio &&  tieneMes) agruparPor = 'year';
   // hasYear && hasMes -> 'none'
 
   // Visor: lo nuevo va arriba de todo (grupo "Nuevos") mientras se este en la pestaña
-  const nuevos = sorted.filter(e => esNuevo('basedatos', e.id));
-  const resto  = nuevos.length ? sorted.filter(e => !esNuevo('basedatos', e.id)) : sorted;
+  const nuevos = ordenados.filter(e => esNuevo('basedatos', e.id));
+  const resto  = nuevos.length ? ordenados.filter(e => !esNuevo('basedatos', e.id)) : ordenados;
 
   // Pre-calcular tamanos de grupo para el contador
-  const groupCount = new Map();
-  if (groupBy !== 'none') {
+  const cantidadGrupo = new Map();
+  if (agruparPor !== 'none') {
     for (const e of resto) {
-      const k = groupKey(e, groupBy);
-      groupCount.set(k, (groupCount.get(k) || 0) + 1);
+      const k = groupKey(e, agruparPor);
+      cantidadGrupo.set(k, (cantidadGrupo.get(k) || 0) + 1);
     }
   }
 
-  function groupKey(e, mode) {
+  function groupKey(e, modo) {
     if (!e.fechaInicio) return '__sin_fecha__';
-    return mode === 'year'
+    return modo === 'year'
       ? String(e.fechaInicio.getFullYear())
       : String(e.fechaInicio.getMonth()); // 0-11
   }
-  function groupLabel(key, mode) {
-    if (key === '__sin_fecha__') return 'Sin fecha';
-    return mode === 'year' ? key : NOMBRES_MESES[+key + 1];
+  function groupLabel(clave, modo) {
+    if (clave === '__sin_fecha__') return 'Sin fecha';
+    return modo === 'year' ? clave : NOMBRES_MESES[+clave + 1];
   }
 
   // Fila principal (+ detalle si esta abierta; si no, se arma al abrirla)
   const fila = e => {
-    const isExp = estado.expandedRows.has(e.id);
-    return `<tr class="db-row${isExp ? ' expanded' : ''}${e.inactive ? ' db-row-inactive' : ''}" data-id="${e.id}">
+    const estaAbierto = estado.expandedRows.has(e.id);
+    return `<tr class="db-row${estaAbierto ? ' expanded' : ''}${e.inactive ? ' db-row-inactive' : ''}" data-id="${e.id}">
       <td class="db-dir">${esc(e.direccion)}${e.inactive ? `<span class="inactive-badge">INACTIVO</span>` : ''}${insigniaGarantia(e)}${e.remitente ? `<span class="delegado-badge" style="margin-left:8px;font-size:10px" title="Aumentos los hace ${esc(e.remitente)}">&#8618; ${esc(e.remitente)}</span>` : ''}</td>
       <td>${formatearNombres(e.propietario)}</td>
       <td>${formatearNombres(e.inquilino)}</td>
       <td style="white-space:nowrap;color:var(--dim)">${formatearFecha(e.fechaInicio)}</td>
       <td class="db-chevron">${puntoNuevo('basedatos', e.id)}&#9658;</td>
-    </tr>` + (isExp ? filaDetalle(e, porDireccion) : '');
+    </tr>` + (estaAbierto ? filaDetalle(e, porDireccion) : '');
   };
 
   let html = nuevos.length
     ? filaSeparadoraBase('Nuevos', nuevos.length + (nuevos.length === 1 ? ' contrato' : ' contratos')) + nuevos.map(fila).join('')
     : '';
-  let lastKey = Symbol(); // garantiza que el primer grupo siempre inserta separador
+  let ultimaClave = Symbol(); // garantiza que el primer grupo siempre inserta separador
   for (const e of resto) {
     // ── separador de grupo ──
-    if (groupBy !== 'none') {
-      const k = groupKey(e, groupBy);
-      if (k !== lastKey) {
-        lastKey = k;
-        const lbl = groupLabel(k, groupBy);
-        const cnt = groupCount.get(k) || 0;
+    if (agruparPor !== 'none') {
+      const k = groupKey(e, agruparPor);
+      if (k !== ultimaClave) {
+        ultimaClave = k;
+        const lbl = groupLabel(k, agruparPor);
+        const cnt = cantidadGrupo.get(k) || 0;
         html += filaSeparadoraBase(lbl, cnt + (cnt === 1 ? ' contrato' : ' contratos'));
       }
     }
@@ -218,12 +218,12 @@ function filaDetalle(e, porDireccion) {
 export function llenarAniosBase() {
   const sel = document.getElementById('db-year');
   if (!sel || !estado.entries) return;
-  const years = [...new Set(
+  const anios = [...new Set(
     estado.entries.filter(e => e.fechaInicio).map(e => e.fechaInicio.getFullYear())
   )].sort();
   // Limpiar y repoblar (conservar "Todos")
   sel.innerHTML = '<option value="0">Todos</option>';
-  years.forEach(y => {
+  anios.forEach(y => {
     const o = document.createElement('option');
     o.value = y; o.textContent = y;
     if (y === estado.dbFilterYear) o.selected = true;
@@ -277,22 +277,22 @@ export function iniciar() {
     }
   });
   document.getElementById('db-tbody').addEventListener('click', async e => {
-    const byId = id => estado.entries && estado.entries.find(en => en.id === id);
+    const porId = id => estado.entries && estado.entries.find(en => en.id === id);
 
     // ── Editar alquiler ──
-    const editBtn = e.target.closest('[data-edit-row]');
-    if (editBtn) {
+    const btnEditar = e.target.closest('[data-edit-row]');
+    if (btnEditar) {
       e.stopPropagation();
-      const entry = byId(+editBtn.dataset.editRow);
-      if (entry) mostrarModalEdicion(entry);
+      const entrada = porId(+btnEditar.dataset.editRow);
+      if (entrada) mostrarModalEdicion(entrada);
       return;
     }
 
     // ── Marcar inactivo ──
-    const delBtn = e.target.closest('[data-delete-row]');
-    if (delBtn) {
+    const btnBorrar = e.target.closest('[data-delete-row]');
+    if (btnBorrar) {
       e.stopPropagation();
-      await borrarEntrada(+delBtn.dataset.deleteRow, delBtn.dataset.deleteDir);
+      await borrarEntrada(+btnBorrar.dataset.deleteRow, btnBorrar.dataset.deleteDir);
       return;
     }
 
@@ -318,23 +318,23 @@ export function iniciar() {
 
     // ── Linea de tiempo ──
     const tlBtn = e.target.closest('[data-timeline]');
-    if (tlBtn) { e.stopPropagation(); mostrarLineaTiempo(byId(+tlBtn.dataset.timeline)); return; }
+    if (tlBtn) { e.stopPropagation(); mostrarLineaTiempo(porId(+tlBtn.dataset.timeline)); return; }
 
     // ── Comentarios como viñetas: agregar, corregir, borrar ──
     // Los indices son sobre la lista completa (incluye las notas de renovacion, que no se muestran).
     const notaSec = e.target.closest('.nota-edit-section');
-    const openNew = (sec, text, idx) => {
-      const box = sec.querySelector('.nota-new'), ta = box.querySelector('textarea');
-      box.hidden = false; sec.querySelector('.nota-bar').hidden = true;
-      ta.value = text || ''; ta.dataset.i = idx == null ? '' : idx; ta.focus();
+    const abrirNuevo = (seccion, texto, idx) => {
+      const caja = seccion.querySelector('.nota-new'), ta = caja.querySelector('textarea');
+      caja.hidden = false; seccion.querySelector('.nota-bar').hidden = true;
+      ta.value = texto || ''; ta.dataset.i = idx == null ? '' : idx; ta.focus();
     };
-    if (e.target.closest('[data-nota-add]')) { e.stopPropagation(); openNew(notaSec); return; }
+    if (e.target.closest('[data-nota-add]')) { e.stopPropagation(); abrirNuevo(notaSec); return; }
     const notaEdit = e.target.closest('[data-nota-edit]');
     if (notaEdit) {
       e.stopPropagation();
       if (document.body.classList.contains('viewer')) return;
-      const entry = byId(+notaEdit.dataset.notaEdit);
-      openNew(notaSec, D.separarNotas(entry.notas)[+notaEdit.dataset.i], +notaEdit.dataset.i);
+      const entrada = porId(+notaEdit.dataset.notaEdit);
+      abrirNuevo(notaSec, D.separarNotas(entrada.notas)[+notaEdit.dataset.i], +notaEdit.dataset.i);
       return;
     }
     if (e.target.closest('[data-nota-cancel]')) {
@@ -345,42 +345,42 @@ export function iniciar() {
     const notaDel = e.target.closest('[data-nota-del]');
     if (notaDel) {
       e.stopPropagation();
-      const entry = byId(+notaDel.dataset.notaDel);
-      const list = D.separarNotas(entry.notas);
-      if (!confirm(`¿Borrar este comentario?\n\n${list[+notaDel.dataset.i]}`)) return;
-      list.splice(+notaDel.dataset.i, 1);
-      if (await guardarNotas(entry, list.join(' | '), '&#10003; Comentario borrado')) dibujarTablaBase();
+      const entrada = porId(+notaDel.dataset.notaDel);
+      const lista = D.separarNotas(entrada.notas);
+      if (!confirm(`¿Borrar este comentario?\n\n${lista[+notaDel.dataset.i]}`)) return;
+      lista.splice(+notaDel.dataset.i, 1);
+      if (await guardarNotas(entrada, lista.join(' | '), '&#10003; Comentario borrado')) dibujarTablaBase();
       return;
     }
-    const notaBtn = e.target.closest('[data-nota-row]');
-    if (notaBtn) {
+    const btnNota = e.target.closest('[data-nota-row]');
+    if (btnNota) {
       e.stopPropagation();
-      const entry = byId(+notaBtn.dataset.notaRow);
-      if (!entry) return;
-      const ta = notaBtn.closest('.nota-edit-section').querySelector('.nota-textarea');
+      const entrada = porId(+btnNota.dataset.notaRow);
+      if (!entrada) return;
+      const ta = btnNota.closest('.nota-edit-section').querySelector('.nota-textarea');
       const txt = ta.value.replace(/\s*\n+\s*/g, ' ').replace(/\s*\|\s*/g, ' - ').trim();
-      const list = D.separarNotas(entry.notas);
-      if (ta.dataset.i !== '') { if (txt) list[+ta.dataset.i] = txt; else list.splice(+ta.dataset.i, 1); }
-      else if (txt) list.push(txt);
-      if (await guardarNotas(entry, list.join(' | '), '&#10003; Comentario guardado')) dibujarTablaBase();
+      const lista = D.separarNotas(entrada.notas);
+      if (ta.dataset.i !== '') { if (txt) lista[+ta.dataset.i] = txt; else lista.splice(+ta.dataset.i, 1); }
+      else if (txt) lista.push(txt);
+      if (await guardarNotas(entrada, lista.join(' | '), '&#10003; Comentario guardado')) dibujarTablaBase();
       return;
     }
 
     // ── Toggle acordeon (no si el click fue dentro de los comentarios) ──
     if (notaSec) return;
-    const row = e.target.closest('.db-row');
-    if (!row) return;
-    const id = +row.dataset.id;
-    const detRow = document.querySelector(`.db-detail-row[data-detail-id="${id}"]`);
+    const fila = e.target.closest('.db-row');
+    if (!fila) return;
+    const id = +fila.dataset.id;
+    const filaDet = document.querySelector(`.db-detail-row[data-detail-id="${id}"]`);
     if (estado.expandedRows.has(id)) {
       estado.expandedRows.delete(id);
-      row.classList.remove('expanded');
-      if (detRow) detRow.remove();
+      fila.classList.remove('expanded');
+      if (filaDet) filaDet.remove();
     } else {
       estado.expandedRows.add(id);
-      row.classList.add('expanded');
-      const entry = byId(id);
-      if (!detRow && entry) row.insertAdjacentHTML('afterend', filaDetalle(entry, D.indicePorDireccion(estado.entries)));
+      fila.classList.add('expanded');
+      const entrada = porId(id);
+      if (!filaDet && entrada) fila.insertAdjacentHTML('afterend', filaDetalle(entrada, D.indicePorDireccion(estado.entries)));
     }
   });
 }

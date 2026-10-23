@@ -14,11 +14,11 @@ const RANGOS = {
 
 let css = '/* Generado por scripts/fuentes.js: tipografias empaquetadas con la app (licencia OFL). */\n';
 for (const [id, familia] of Object.entries(FUENTES)) {
-  const pkg = path.join(ROOT, 'node_modules', '@fontsource', id);
-  fs.copyFileSync(path.join(pkg, 'LICENSE'), path.join(DEST, `LICENSE-${familia}.txt`));
+  const paquete = path.join(ROOT, 'node_modules', '@fontsource', id);
+  fs.copyFileSync(path.join(paquete, 'LICENSE'), path.join(DEST, `LICENSE-${familia}.txt`));
   for (const peso of [400, 500, 700]) for (const [sub, rango] of Object.entries(RANGOS)) {
     const archivo = `${id}-${sub}-${peso}-normal.woff2`;
-    fs.copyFileSync(path.join(pkg, 'files', archivo), path.join(DEST, archivo));
+    fs.copyFileSync(path.join(paquete, 'files', archivo), path.join(DEST, archivo));
     css += `@font-face { font-family:'${familia}'; font-weight:${peso}; font-display:swap; src:url('recursos/fonts/${archivo}') format('woff2'); unicode-range:${rango}; }\n`;
   }
 }

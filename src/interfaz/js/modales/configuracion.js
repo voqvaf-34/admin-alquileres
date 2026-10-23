@@ -50,14 +50,14 @@ function mostrarPestana(id) {
 }
 
 // ── Vista previa y controles ──
-function pintarColor(picker, valor, mismo) {
-  const box = document.querySelector(`[data-color-picker="${picker}"]`);
-  box.querySelector('.cfg-color').value = valor.toLowerCase();
-  const hex = box.querySelector('.cfg-color-hex');
+function pintarColor(selector, valor, mismo) {
+  const caja = document.querySelector(`[data-color-picker="${selector}"]`);
+  caja.querySelector('.cfg-color').value = valor.toLowerCase();
+  const hex = caja.querySelector('.cfg-color-hex');
   if (document.activeElement !== hex) hex.value = mismo ? '' : valor;
   hex.placeholder = mismo ? valor : '';
   hex.classList.remove('invalido');
-  box.querySelectorAll('.cfg-swatch').forEach(b => b.classList.toggle('on', !mismo && b.dataset.color === valor));
+  caja.querySelectorAll('.cfg-swatch').forEach(b => b.classList.toggle('on', !mismo && b.dataset.color === valor));
 }
 
 function pintarBorrador() {
@@ -129,10 +129,10 @@ function armarIcono() {
   $('cfg-iconoColor-mismo').addEventListener('click', () => { borrador.iconoColor = ''; pintarBorrador(); });
   $('cfg-icono-elegir').addEventListener('click', () => $('cfg-icono-file').click());
   $('cfg-icono-file').addEventListener('change', async e => {
-    const file = e.target.files[0]; e.target.value = '';
-    if (!file) { if (!borrador.iconoImagen) { borrador.iconoTipo = 'app'; pintarBorrador(); } return; }
+    const archivo = e.target.files[0]; e.target.value = '';
+    if (!archivo) { if (!borrador.iconoImagen) { borrador.iconoTipo = 'app'; pintarBorrador(); } return; }
     try {
-      borrador.iconoImagen = await imagenCuadrada(await leerComoDataURL(file));
+      borrador.iconoImagen = await imagenCuadrada(await leerComoDataURL(archivo));
       borrador.iconoTipo = 'imagen';
     } catch (_) { mostrarAviso('No se pudo leer la imagen.', 'err'); }
     pintarBorrador();
@@ -189,18 +189,18 @@ function armarApariencia() {
   $('cfg-cancelar').addEventListener('click', deshacerPreferencias);
   document.querySelector('#modal-config .modal-x').addEventListener('click', deshacerPreferencias);
 
-  document.querySelectorAll('[data-color-picker] .cfg-sugeridos').forEach(box => {
-    box.innerHTML = COLORES_SUGERIDOS.map(c =>
+  document.querySelectorAll('[data-color-picker] .cfg-sugeridos').forEach(caja => {
+    caja.innerHTML = COLORES_SUGERIDOS.map(c =>
       `<button type="button" class="cfg-swatch" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('');
   });
-  document.querySelectorAll('[data-color-picker]').forEach(box => {
-    const campo = box.dataset.colorPicker;
-    box.addEventListener('click', e => {
+  document.querySelectorAll('[data-color-picker]').forEach(caja => {
+    const campo = caja.dataset.colorPicker;
+    caja.addEventListener('click', e => {
       const b = e.target.closest('.cfg-swatch'); if (!b) return;
       borrador[campo] = b.dataset.color; pintarBorrador();
     });
-    box.querySelector('.cfg-color').addEventListener('input', e => { borrador[campo] = e.target.value.toUpperCase(); pintarBorrador(); });
-    const hex = box.querySelector('.cfg-color-hex');
+    caja.querySelector('.cfg-color').addEventListener('input', e => { borrador[campo] = e.target.value.toUpperCase(); pintarBorrador(); });
+    const hex = caja.querySelector('.cfg-color-hex');
     hex.addEventListener('input', e => {
       let v = e.target.value.trim(); if (v && v[0] !== '#') v = '#' + v;
       if (esColor(v)) { borrador[campo] = v.toUpperCase(); pintarBorrador(); }
@@ -240,14 +240,14 @@ function armarApariencia() {
 const areaMensaje = id => document.querySelector(`[data-msg="${id}"] textarea`);
 
 function pintarEjemplo(id) {
-  const box = document.querySelector(`[data-msg="${id}"]`);
+  const caja = document.querySelector(`[data-msg="${id}"]`);
   const texto = areaMensaje(id).value;
   const nombre = leerMarca({ marcaNombre: borrador.nombre }).nombre;
   const datos = Object.fromEntries(Object.entries({ inmobiliaria: nombre, ...EJEMPLO }).map(([k, v]) => [k, `<b>${esc(v)}</b>`]));
-  box.querySelector('.cfg-ejemplo').innerHTML = 'Ejemplo: ' + rellenar(esc(texto), datos);
+  caja.querySelector('.cfg-ejemplo').innerHTML = 'Ejemplo: ' + rellenar(esc(texto), datos);
   const malas = variablesDesconocidas(id, texto);
-  box.querySelector('.cfg-aviso').textContent = malas.length ? `Este mensaje no conoce: ${malas.map(v => `{${v}}`).join(', ')}` : '';
-  box.querySelector('.cfg-restaurar').disabled = texto.trim() === PLANTILLAS[id].texto;
+  caja.querySelector('.cfg-aviso').textContent = malas.length ? `Este mensaje no conoce: ${malas.map(v => `{${v}}`).join(', ')}` : '';
+  caja.querySelector('.cfg-restaurar').disabled = texto.trim() === PLANTILLAS[id].texto;
 }
 
 function armarMensajes() {
@@ -264,8 +264,8 @@ function armarMensajes() {
     </details>`).join('');
   $('cfg-mensajes').addEventListener('input', e => { const b = e.target.closest('[data-msg]'); if (b) pintarEjemplo(b.dataset.msg); });
   $('cfg-mensajes').addEventListener('click', e => {
-    const box = e.target.closest('[data-msg]'); if (!box) return;
-    const ta = box.querySelector('textarea'), id = box.dataset.msg;
+    const caja = e.target.closest('[data-msg]'); if (!caja) return;
+    const ta = caja.querySelector('textarea'), id = caja.dataset.msg;
     const v = e.target.closest('.cfg-var');
     if (v) {
       const ins = `{${v.dataset.var}}`, a = ta.selectionStart, z = ta.selectionEnd;
@@ -341,9 +341,9 @@ function terminarAsistente() {
 }
 
 // Achica la imagen para que la base no crezca de mas (el logo se guarda dentro de la base).
-async function leerLogo(file) {
-  const url = await leerComoDataURL(file);
-  if (file.type === 'image/svg+xml') {
+async function leerLogo(archivo) {
+  const url = await leerComoDataURL(archivo);
+  if (archivo.type === 'image/svg+xml') {
     if (url.length > LOGO_MAX_BYTES) throw new Error('El SVG es demasiado grande.');
     return url;
   }
@@ -352,8 +352,8 @@ async function leerLogo(file) {
   const c = document.createElement('canvas');
   c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
   c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-  const out = c.toDataURL('image/png');
-  return out.length > LOGO_MAX_BYTES ? c.toDataURL('image/webp', 0.9) : out;
+  const salida = c.toDataURL('image/png');
+  return salida.length > LOGO_MAX_BYTES ? c.toDataURL('image/webp', 0.9) : salida;
 }
 
 async function guardar() {
@@ -382,9 +382,9 @@ export function iniciar() {
 
   $('cfg-logo-elegir').addEventListener('click', () => $('cfg-logo-file').click());
   $('cfg-logo-file').addEventListener('change', async e => {
-    const file = e.target.files[0]; e.target.value = '';
-    if (!file) return;
-    try { borrador.logo = await leerLogo(file); pintarBorrador(); }
+    const archivo = e.target.files[0]; e.target.value = '';
+    if (!archivo) return;
+    try { borrador.logo = await leerLogo(archivo); pintarBorrador(); }
     catch (err) { mostrarAviso(esc(err.message), 'err'); }
   });
   $('cfg-logo-quitar').addEventListener('click', () => { borrador.logo = ''; if (borrador.iconoTipo === 'logo') borrador.iconoTipo = 'app'; pintarBorrador(); });

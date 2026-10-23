@@ -14,54 +14,54 @@ const { MetodosMarcas } = require('./marcas');
 const { MetodosPropietarios } = require('./propietarios');
 
 class BaseDatos {
-  static async open(filePath, opts = {}) {
+  static async open(rutaArchivo, opciones = {}) {
     const SQL = await initSqlJs({
       wasmBinary: fs.readFileSync(require.resolve('sql.js/dist/sql-wasm.wasm')),
     });
-    const exists = fs.existsSync(filePath);
-    if (opts.readOnly && !exists) throw new Error('No se encontro la base compartida en ' + filePath);
-    const db = exists ? new SQL.Database(fs.readFileSync(filePath)) : new SQL.Database();
-    const store = new BaseDatos(db, filePath, opts);
+    const existe = fs.existsSync(rutaArchivo);
+    if (opciones.readOnly && !existe) throw new Error('No se encontro la base compartida en ' + rutaArchivo);
+    const db = existe ? new SQL.Database(fs.readFileSync(rutaArchivo)) : new SQL.Database();
+    const store = new BaseDatos(db, rutaArchivo, opciones);
     store.SQL = SQL;
     db.run('PRAGMA foreign_keys = ON;');
     db.exec(ESQUEMA);
     store.agregarColumnasFaltantes();
-    if (!exists) store.persistir();
+    if (!existe) store.persistir();
     return store;
   }
 
-  constructor(db, filePath, opts) {
+  constructor(db, rutaArchivo, opciones) {
     this.db = db;
-    this.filePath = filePath;
-    this.backupDir = opts.backupDir || path.join(path.dirname(filePath), 'backups');
-    this.maxBackups = opts.maxBackups || 20;
+    this.filePath = rutaArchivo;
+    this.backupDir = opciones.backupDir || path.join(path.dirname(rutaArchivo), 'backups');
+    this.maxBackups = opciones.maxBackups || 20;
     this.undoStack = [];
     this.redoStack = [];
     // Modo visor: la base se lee de la carpeta compartida y nunca se escribe.
-    this.readOnly = !!opts.readOnly;
+    this.readOnly = !!opciones.readOnly;
     this.onPersist = null;
     this.saveStatus = { ok: true, at: null, error: null };
   }
 
   agregarColumnasFaltantes() {
-    let changed = false;
-    for (const [table, col, def] of COLUMNAS_AGREGADAS) {
-      const cols = this.consultar(`PRAGMA table_info(${table})`).map(r => r.name);
-      if (!cols.includes(col)) { this.db.run(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`); changed = true; }
+    let cambiado = false;
+    for (const [tabla, col, def] of COLUMNAS_AGREGADAS) {
+      const cols = this.consultar(`PRAGMA table_info(${tabla})`).map(r => r.name);
+      if (!cols.includes(col)) { this.db.run(`ALTER TABLE ${tabla} ADD COLUMN ${col} ${def}`); cambiado = true; }
     }
-    if (changed) this.persistir();
+    if (cambiado) this.persistir();
   }
 
   // ── infraestructura ──────────────────────────────────────────────────────
   persistir() {
     if (this.readOnly) return;
-    const data = Buffer.from(this.db.export());
+    const datos = Buffer.from(this.db.export());
     // sql.js reinicia la conexion en export() y se pierden los PRAGMA.
     this.db.run('PRAGMA foreign_keys = ON;');
     const tmp  = this.filePath + '.tmp';
     try {
       fs.mkdirSync(path.dirname(this.filePath), { recursive: true });
-      fs.writeFileSync(tmp, data);
+      fs.writeFileSync(tmp, datos);
       fs.renameSync(tmp, this.filePath);
       this.saveStatus = { ok: true, at: new Date().toISOString(), error: null };
     } catch (e) {
@@ -71,14 +71,14 @@ class BaseDatos {
     if (this.onPersist) this.onPersist();
   }
 
-  respaldar(tag) {
+  respaldar(etiqueta) {
     if (this.readOnly || !fs.existsSync(this.filePath)) return null;
     fs.mkdirSync(this.backupDir, { recursive: true });
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const dest  = path.join(this.backupDir, `alquileres-${stamp}${tag ? '-' + tag : ''}.sqlite`);
+    const marcaTiempo = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const dest  = path.join(this.backupDir, `alquileres-${marcaTiempo}${etiqueta ? '-' + etiqueta : ''}.sqlite`);
     fs.copyFileSync(this.filePath, dest);
-    const files = fs.readdirSync(this.backupDir).filter(f => f.endsWith('.sqlite')).sort();
-    for (const f of files.slice(0, Math.max(0, files.length - this.maxBackups))) {
+    const archivos = fs.readdirSync(this.backupDir).filter(f => f.endsWith('.sqlite')).sort();
+    for (const f of archivos.slice(0, Math.max(0, archivos.length - this.maxBackups))) {
       try { fs.unlinkSync(path.join(this.backupDir, f)); } catch (_) {}
     }
     return dest;
@@ -88,9 +88,9 @@ class BaseDatos {
     const st = this.db.prepare(sql);
     try {
       st.bind(params);
-      const rows = [];
-      while (st.step()) rows.push(st.getAsObject());
-      return rows;
+      const filas = [];
+      while (st.step()) filas.push(st.getAsObject());
+      return filas;
     } finally { st.free(); }
   }
 

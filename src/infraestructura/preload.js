@@ -5,7 +5,7 @@ const call = (ch, ...args) => ipcRenderer.invoke(ch, ...args);
 contextBridge.exposeInMainWorld('api', {
   obtenerEstado:        ()        => call('state:get'),
   elegirImportacion:      ()        => call('import:pick'),
-  importarDesdeArchivo:  (file)    => call('import:fromPath', webUtils.getPathForFile(file)),
+  importarDesdeArchivo:  (archivo)    => call('import:fromPath', webUtils.getPathForFile(archivo)),
   agregarContrato:     (c)       => call('contract:add', c),
   editarContrato:  (id, c)   => call('contract:update', id, c),
   modificarContrato:   (id, f)   => call('contract:patch', id, f),
@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld('api', {
   guardarMarcas:       (m)       => call('marks:save', m),
   guardarAjuste:      (k, v)    => call('setting:set', k, v),
   guardarConfig:      (c)       => call('config:save', c),
-  ponerColorBarraTitulo: (c, ink) => call('window:titleBarColor', c, ink),
+  ponerColorBarraTitulo: (c, tinta) => call('window:titleBarColor', c, tinta),
   ponerIconoApp:      (png)     => call('window:icon', png),
   ponerZoom:         (f)       => call('window:zoom', f),
   consultarIPC:        ()        => call('ipc:fetch'),

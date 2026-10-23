@@ -36,7 +36,7 @@ export function datosDemo(hoy = new Date()) {
     };
   };
 
-  const contracts = [
+  const contratos = [
     // Aumentan este mes (aniversario del inicio).
     C('Torre Ceibo - Av. Italia 2875 U403',        'ana',   28500, enMes(hoy, 1, 5),  '2 AÑOS', { notas: 'Paga por transferencia | Mascota permitida' }),
     C('Torre Ceibo - Av. Italia 2875 U702',        'ana',   31000, enMes(hoy, 2, 12), '3 AÑOS'),
@@ -77,11 +77,11 @@ export function datosDemo(hoy = new Date()) {
   ];
 
   // Marca de renovacion del apto ya renovado: nuevo contrato desde el vencimiento, por 2 anios.
-  const renovado = contracts.find(c => c.direccion === 'Edificio Araza - Bv. Artigas 1610 U1002');
+  const renovado = contratos.find(c => c.direccion === 'Edificio Araza - Bv. Artigas 1610 U1002');
   const vencio = desde(hoy, 0, -120);
   const marks = {
     [`v|${renovado.direccion}`]: { date: formatearFecha(desde(hoy, 0, -125)), nuevaInicio: formatearFecha(vencio), renewYears: 2 },
   };
 
-  return { contracts, admins, marks };
+  return { contracts: contratos, admins, marks };
 }

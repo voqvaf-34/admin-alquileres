@@ -9,12 +9,12 @@ export const NOMBRES_MESES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio
 // Importes en pesos ($) o dolares (US$) segun la moneda del alquiler.
 export function formatearDinero(n, moneda) { return (moneda === 'USD' ? 'US$ ' : '$') + Math.round(n).toLocaleString('es-UY'); }
 
-export function mesesAtras(date) {
-  const now = new Date();
-  const diff = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
-  if (diff >= 24) return `hace ${Math.floor(diff/12)} años`;
-  if (diff >= 12) return `hace 1 año`;
-  return `hace ${diff} mes${diff !== 1 ? 'es' : ''}`;
+export function mesesAtras(fecha) {
+  const ahora = new Date();
+  const diferencia = (ahora.getFullYear() - fecha.getFullYear()) * 12 + (ahora.getMonth() - fecha.getMonth());
+  if (diferencia >= 24) return `hace ${Math.floor(diferencia/12)} años`;
+  if (diferencia >= 12) return `hace 1 año`;
+  return `hace ${diferencia} mes${diferencia !== 1 ? 'es' : ''}`;
 }
 
 export function formatearIPC(v) { return v.toFixed(2).replace('.', ',') + '%'; }
@@ -32,22 +32,22 @@ const esNada = t => !t || /^[-xX\s]*$/.test(t);
 
 export function enlaceTelefono(raw) {
   if (esNada(raw)) return NADA;
-  const out = Separadores.telefonos(raw).filter(p => !esNada(p)).map(part => {
-    const numero = D.numeroWhatsApp(part);
-    return numero ? enlaceWhatsApp(numero, esc(part)) : `<span class="tel">${esc(part)}</span>`;
+  const salida = Separadores.telefonos(raw).filter(p => !esNada(p)).map(parte => {
+    const numero = D.numeroWhatsApp(parte);
+    return numero ? enlaceWhatsApp(numero, esc(parte)) : `<span class="tel">${esc(parte)}</span>`;
   });
-  return out.length ? out.join(SEP) : NADA;
+  return salida.length ? salida.join(SEP) : NADA;
 }
 
 export function formatearNombres(raw) {
-  const out = Separadores.personas(raw || '').map(esc);
-  return out.length ? out.join(SEP) : NADA;
+  const salida = Separadores.personas(raw || '').map(esc);
+  return salida.length ? salida.join(SEP) : NADA;
 }
 
 export function formatearMails(raw) {
-  const out = Separadores.mails(raw || '').map(m => m.includes('@')
+  const salida = Separadores.mails(raw || '').map(m => m.includes('@')
     ? `<a class="mail-val" href="mailto:${esc(m)}">${esc(m)}</a>` : `<span class="mail-val">${esc(m)}</span>`);
-  return out.length ? out.join(SEP) : NADA;
+  return salida.length ? salida.join(SEP) : NADA;
 }
 
 // Texto libre de telefonos (admin.) -- cada telefono separado; los numeros pasan a WhatsApp
@@ -64,13 +64,13 @@ export function enlazarMailsEnTexto(raw) { return formatearMails(raw); }
 
 // Comentarios en las tarjetas: uno por renglon (sin las notas de renovacion).
 export function formatearNotas(e) {
-  const list = D.comentarios(e);
-  return list.length ? `<div class="card-nota">${list.map(n => `<div class="nota-item">${esc(n)}</div>`).join('')}</div>` : '';
+  const lista = D.comentarios(e);
+  return lista.length ? `<div class="card-nota">${lista.map(n => `<div class="nota-item">${esc(n)}</div>`).join('')}</div>` : '';
 }
 
 export function formatearEdificios(raw) {
-  const out = Separadores.edificios(raw || '').map(esc);
-  return out.length ? out.join(SEP) : NADA;
+  const salida = Separadores.edificios(raw || '').map(esc);
+  return salida.length ? salida.join(SEP) : NADA;
 }
 
 // Rojo si el vencimiento es urgente, amarillo si no (la regla esta en dominios/vencimientos.js).

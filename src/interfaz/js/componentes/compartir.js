@@ -10,8 +10,8 @@ let infoCompartir = null;
 export function pintarCompartir(st) {
   if (!st) return;
   infoCompartir = st;
-  const dot = document.getElementById('share-dot');
-  dot.className = 'share-dot ' + (!st.dir ? 'off' : st.error ? 'err' : st.pending ? 'pending' : 'ok');
+  const punto = document.getElementById('share-dot');
+  punto.className = 'share-dot ' + (!st.dir ? 'off' : st.error ? 'err' : st.pending ? 'pending' : 'ok');
   document.getElementById('btn-share').title = !st.dir ? 'No se comparte con el Visor'
     : st.error ? st.error : st.lastPublished ? `Compartido ${formatearHora(st.lastPublished)} en ${st.dir}` : 'Publicando...';
   document.getElementById('share-dir').textContent = st.dir || 'No se comparte (desactivado).';
@@ -98,9 +98,9 @@ export function iniciar() {
   });
 
   window.api.alCambiarGuardado(st => {
-    const wasOk = !document.getElementById('save-ind').classList.contains('err');
+    const estabaBien = !document.getElementById('save-ind').classList.contains('err');
     pintarGuardado(st);
-    if (st && st.ok === false && wasOk) mostrarAviso('Error al guardar: ' + esc(st.error || ''), 'err');
+    if (st && st.ok === false && estabaBien) mostrarAviso('Error al guardar: ' + esc(st.error || ''), 'err');
   });
 
   document.getElementById('btn-menu-share').addEventListener('click', () => document.getElementById('btn-share').click());

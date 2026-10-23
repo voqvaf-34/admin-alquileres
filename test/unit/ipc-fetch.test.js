@@ -2,7 +2,7 @@ const test   = require('node:test');
 const assert = require('node:assert/strict');
 const { consultarUltimoIPC } = require('../../src/infraestructura/ine-ipc');
 
-const res = (status, body) => ({ ok: status === 200, status, text: async () => body });
+const res = (estadoActual, cuerpo) => ({ ok: estadoActual === 200, status: estadoActual, text: async () => cuerpo });
 
 test('usa el mes publicado si la pagina existe', async () => {
   const urls = [];

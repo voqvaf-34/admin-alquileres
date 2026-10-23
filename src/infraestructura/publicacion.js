@@ -8,7 +8,7 @@ const { rutaBase, carpetaDocs } = require('./rutas');
 // (y un respaldo extra). Si la carpeta no esta disponible, se reintenta sola.
 const estadoCompartido = { lastPublished: null, error: null, pending: false };
 
-let publishTimer = null, retryTimer = null;
+let temporizadorPublicar = null, temporizadorReintento = null;
 
 function carpetaCompartida() {
   if (process.env.ADMIN_ALQ_SHARED_DIR) return process.env.ADMIN_ALQ_SHARED_DIR;
@@ -26,17 +26,17 @@ function avisarCompartir() {
 }
 
 function publicarAhora() {
-  clearTimeout(publishTimer); publishTimer = null;
+  clearTimeout(temporizadorPublicar); temporizadorPublicar = null;
   const dir = carpetaCompartida();
   if (!dir) { estadoCompartido.pending = false; avisarCompartir(); return; }
   try {
     const info = share.publicar({ dbFile: rutaBase(), carpetaDocs: carpetaDocs(), sharedDir: dir, by: process.env.USERNAME });
     Object.assign(estadoCompartido, { lastPublished: info.publicado, error: null, pending: false });
-    clearInterval(retryTimer); retryTimer = null;
+    clearInterval(temporizadorReintento); temporizadorReintento = null;
   } catch (e) {
     Object.assign(estadoCompartido, { error: e.code === 'ENOENT' || e.code === 'EPERM' || e.code === 'EACCES' || e.code === 'EBUSY'
       ? 'Carpeta compartida no disponible (¿la PC está apagada?). Se reintenta sola.' : e.message, pending: true });
-    if (!retryTimer) retryTimer = setInterval(publicarAhora, 60000);
+    if (!temporizadorReintento) temporizadorReintento = setInterval(publicarAhora, 60000);
   }
   avisarCompartir();
 }
@@ -44,8 +44,8 @@ function publicarAhora() {
 function conectarCompartir() {
   ctx.store.onPersist = () => {
     estadoCompartido.pending = true;
-    clearTimeout(publishTimer);
-    publishTimer = setTimeout(publicarAhora, 1500);
+    clearTimeout(temporizadorPublicar);
+    temporizadorPublicar = setTimeout(publicarAhora, 1500);
   };
   setTimeout(publicarAhora, 2000);
 }

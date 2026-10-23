@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const { lanzar, carpetaTemporal, captura } = require('./helpers');
 
 test('datos de ejemplo: cargar y recorrer las pestañas', { timeout: 90000 }, async () => {
-  const { app, page, errors } = await lanzar(carpetaTemporal());
+  const { app, page, errors: errores } = await lanzar(carpetaTemporal());
   try {
     await page.waitForSelector('#upload-screen', { state: 'visible' });
     await page.click('#btn-start-demo');
@@ -15,8 +15,8 @@ test('datos de ejemplo: cargar y recorrer las pestañas', { timeout: 90000 }, as
 
     await page.click('#tab-propietarios');
     await page.waitForSelector('#owners-panel', { state: 'visible' });
-    const owners = await page.evaluate(() => app.estado.owners.map(o => o.nombre));
-    assert.ok(owners.includes('Carla Mendez') && owners.includes('Diego Mendez'), 'copropietarios separados');
+    const propietarios = await page.evaluate(() => app.estado.owners.map(o => o.nombre));
+    assert.ok(propietarios.includes('Carla Mendez') && propietarios.includes('Diego Mendez'), 'copropietarios separados');
     await captura(page, '21-demo-propietarios');
 
     await page.click('#tab-aumentos');
@@ -37,6 +37,6 @@ test('datos de ejemplo: cargar y recorrer las pestañas', { timeout: 90000 }, as
     await page.waitForSelector('#admin-panel', { state: 'visible' });
     assert.match(await page.textContent('#admin-panel'), /Gestión Edificios Norte/);
     await captura(page, '24-demo-administraciones');
-    assert.deepEqual(errors, []);
+    assert.deepEqual(errores, []);
   } finally { await app.close(); }
 });
