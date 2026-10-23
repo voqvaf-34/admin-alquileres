@@ -4,6 +4,7 @@
   "version": "0.7.0",
   "description": "Gestion de alquileres para inmobiliarias: contratos, propietarios, aumentos por IPC y renovaciones.",
   "author": "Pablo Rodriguez",
+  "license": "CC-BY-NC-SA-4.0",
   "private": true,
   "main": "src/infraestructura/principal.js",
   "scripts": {
@@ -24,7 +25,9 @@
     },
     "files": [
       "src/**/*",
-      "package.json"
+      "package.json",
+      "LICENSE",
+      "LICENCIAS-DE-TERCEROS.md"
     ],
     "win": {
       "target": "nsis",

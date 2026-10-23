@@ -99,3 +99,25 @@ npm run capturas     # regenera las capturas de este README
 ```
 
 Pensada para inmobiliarias de Uruguay: aumentos por IPC del INE, pesos y dólares, teléfonos uruguayos para WhatsApp.
+
+## Licencia
+
+© 2026 Pablo Rodriguez. Este proyecto se distribuye bajo la licencia
+[Creative Commons Atribución-NoComercial-CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es).
+El texto completo está en [LICENSE](LICENSE).
+
+[![CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es)
+
+En resumen, podés:
+
+- **Compartir**: copiar y redistribuir el material en cualquier medio o formato.
+- **Adaptar**: modificarlo y crear a partir de él.
+
+Siempre que:
+
+- **Atribución**: menciones al autor, incluyas un enlace a la licencia e indiques si hiciste cambios.
+- **No comercial**: no lo uses con fines comerciales (por ejemplo, venderlo o cobrar por usarlo).
+- **Compartir igual**: si lo modificás o creás algo a partir de él, lo distribuyas bajo esta misma licencia.
+
+Este resumen no reemplaza al texto legal. Los componentes de terceros que incluye la app mantienen sus propias
+licencias: ver [LICENCIAS-DE-TERCEROS.md](LICENCIAS-DE-TERCEROS.md).
