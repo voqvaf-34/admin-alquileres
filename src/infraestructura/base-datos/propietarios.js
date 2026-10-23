@@ -1,5 +1,5 @@
 // Propietarios, contactos, documentos, cuentas de cobro y vinculos con los alquileres.
-const { nameKey } = require('../../dominios/index.js');
+const { claveNombre } = require('../../dominios/index.js');
 const { s } = require('./util');
 class MetodosPropietarios {
   // ── propietarios y contactos ─────────────────────────────────────────────
@@ -102,14 +102,14 @@ class MetodosPropietarios {
 
   // Vincula un contrato a partir del texto del modal ("A / B"): reutiliza propietarios
   // existentes por nombre y crea los que falten (con tel/mail si es uno solo).
-  linkOwnersFromText(contractId, text, telefono, mail, nameKey) {
-    this.transaction(() => this._linkOwnersFromText(contractId, text, telefono, mail, nameKey));
+  linkOwnersFromText(contractId, text, telefono, mail, claveNombre) {
+    this.transaction(() => this._linkOwnersFromText(contractId, text, telefono, mail, claveNombre));
   }
-  _linkOwnersFromText(contractId, text, telefono, mail, nameKey) {
+  _linkOwnersFromText(contractId, text, telefono, mail, claveNombre) {
     const names = String(text || '').split(/\s*\/{1,}\s*/).map(x => x.trim()).filter(Boolean);
     const existing = this.listOwners();
     const ids = names.map(n => {
-      const found = existing.find(o => nameKey(o.nombre) === nameKey(n));
+      const found = existing.find(o => claveNombre(o.nombre) === claveNombre(n));
       if (found) {
         if (names.length === 1 && (!found.telefono || !found.mail)) {
           this.db.run('UPDATE owners SET telefono=?, mail=? WHERE id=?',
@@ -127,7 +127,7 @@ class MetodosPropietarios {
   // Aplica el plan del unificador (reemplaza propietarios, contactos y vinculos).
   applyOwnersPlan(plan) {
     // Los datos cargados a mano (cedula, documentos, cuentas...) se conservan por nombre.
-    const prevOwners = new Map(this.all('SELECT * FROM owners').map(o => [nameKey(o.nombre), o]));
+    const prevOwners = new Map(this.all('SELECT * FROM owners').map(o => [claveNombre(o.nombre), o]));
     const prevDocs = this.all('SELECT * FROM owner_docs');
     const prevAccounts = this.all('SELECT * FROM owner_accounts');
     return this.transaction(() => {
@@ -150,7 +150,7 @@ class MetodosPropietarios {
         this.db.run('INSERT OR IGNORE INTO contract_owners (contract_id, owner_id, orden) VALUES (?,?,?)',
           [l.contractId, ownerIds.get(l.ownerKey), l.orden]);
       }
-      const newIdByName = new Map(plan.owners.map(o => [nameKey(o.nombre), ownerIds.get(o.key)]));
+      const newIdByName = new Map(plan.owners.map(o => [claveNombre(o.nombre), ownerIds.get(o.key)]));
       const oldToNew = new Map();
       for (const [k, old] of prevOwners) {
         const nid = newIdByName.get(k);

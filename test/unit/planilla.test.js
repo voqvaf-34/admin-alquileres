@@ -22,11 +22,11 @@ test('planilla: encabezados en cualquier orden, con o sin tildes y mayusculas', 
 });
 
 test('planilla: fechas, importes y moneda en distintos formatos', () => {
-  assert.equal(D.toISODate(D.leerFecha('05/03/2025')), '2025-03-05');
-  assert.equal(D.toISODate(D.leerFecha('5-3-25')), '2025-03-05');
-  assert.equal(D.toISODate(D.leerFecha('2025-03-05')), '2025-03-05');
-  assert.equal(D.toISODate(D.leerFecha('11/2025')), '2025-11-01');
-  assert.equal(D.toISODate(D.leerFecha(45721)), '2025-03-05');   // numero de serie de Excel
+  assert.equal(D.aFechaISO(D.leerFecha('05/03/2025')), '2025-03-05');
+  assert.equal(D.aFechaISO(D.leerFecha('5-3-25')), '2025-03-05');
+  assert.equal(D.aFechaISO(D.leerFecha('2025-03-05')), '2025-03-05');
+  assert.equal(D.aFechaISO(D.leerFecha('11/2025')), '2025-11-01');
+  assert.equal(D.aFechaISO(D.leerFecha(45721)), '2025-03-05');   // numero de serie de Excel
   assert.equal(D.leerFecha('pronto'), null);
   for (const v of ['USD', 'u$s', 'U$S', 'Dólares', 'us$']) assert.equal(D.leerMoneda(v), 'USD', v);
   for (const v of ['UYU', '$', 'pesos']) assert.equal(D.leerMoneda(v), 'UYU', v);

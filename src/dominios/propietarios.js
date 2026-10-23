@@ -1,44 +1,43 @@
 // Convierte los campos de texto libre propietario/telefono/mail de los contratos en
 // propietarios y contactos unificados. Es una funcion pura: devuelve un plan que la
 // base aplica despues.
-import { key as nameKey } from './texto.js';
-export { nameKey };
-const digitsOf = s => String(s || '').replace(/\D/g, '').replace(/^598/, '').replace(/^0/, '');
-const PLACEHOLDER = /^[-xX\s.]*$/;
-const SPLIT = /\s*\/{1,}\s*/;
+import { claveNombre } from './texto.js';
+const digitosDe = s => String(s || '').replace(/\D/g, '').replace(/^598/, '').replace(/^0/, '');
+const MARCADOR_VACIO = /^[-xX\s.]*$/;
+const SEPARADOR = /\s*\/{1,}\s*/;
 const CAMBIO = /\/{2,}\s*CAMBIO\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\s*-+>\s*/i;
 
-function splitParts(s) {
-  return String(s || '').split(SPLIT).map(x => x.trim()).filter(x => x && !PLACEHOLDER.test(x));
+function separarPartes(s) {
+  return String(s || '').split(SEPARADOR).map(x => x.trim()).filter(x => x && !MARCADOR_VACIO.test(x));
 }
-function cleanMail(s) {
-  return splitParts(s).flatMap(x => x.split(/[\s;,]+/)).map(x => x.toLowerCase()).filter(x => x.includes('@'));
+function limpiarMail(s) {
+  return separarPartes(s).flatMap(x => x.split(/[\s;,]+/)).map(x => x.toLowerCase()).filter(x => x.includes('@'));
 }
 
-export function unifyOwners(contracts, rules = {}) {
+export function planUnificarPropietarios(contracts, rules = {}) {
   const contactsCfg = (rules.contacts || []).map(c => ({ ...c, re: c.suffixPattern ? new RegExp(c.suffixPattern, 'i') : null }));
   const aliasMap = new Map();
   for (const [canon, variants] of Object.entries(rules.aliases || {})) {
-    aliasMap.set(nameKey(canon), canon);
-    for (const v of variants) aliasMap.set(nameKey(v), canon);
+    aliasMap.set(claveNombre(canon), canon);
+    for (const v of variants) aliasMap.set(claveNombre(v), canon);
   }
-  const fixes = new Map((rules.phoneFixes || []).map(f => [nameKey(f.owner), new Set(f.removeDigits.map(digitsOf))]));
-  const overrides = new Map(Object.entries(rules.overrides || {}).map(([k, v]) => [nameKey(k), v]));
+  const fixes = new Map((rules.phoneFixes || []).map(f => [claveNombre(f.owner), new Set(f.removeDigits.map(digitosDe))]));
+  const overrides = new Map(Object.entries(rules.overrides || {}).map(([k, v]) => [claveNombre(k), v]));
   const contactPhone = new Map();   // digitos -> contacto
   const contactMail  = new Map();
   for (const c of contactsCfg) {
-    (c.phones || []).forEach(p => contactPhone.set(digitsOf(p), c));
+    (c.phones || []).forEach(p => contactPhone.set(digitosDe(p), c));
     (c.mails || []).forEach(m => contactMail.set(m.toLowerCase(), c));
   }
 
-  const owners = new Map();          // nameKey canonico -> owner acumulado
+  const owners = new Map();          // claveNombre canonico -> owner acumulado
   const links  = [];
   const review = [];
 
   const getOwner = (displayName) => {
-    const canon = aliasMap.get(nameKey(displayName));
+    const canon = aliasMap.get(claveNombre(displayName));
     const name  = canon || displayName.replace(/\s+/g, ' ').trim();
-    const key   = nameKey(name);
+    const key   = claveNombre(name);
     if (!owners.has(key)) owners.set(key, { key, nombre: name, fixedName: !!canon, variants: new Set(), phones: [], mails: [], notes: new Set(), contacts: new Map() });
     const o = owners.get(key);
     o.variants.add(displayName.trim());
@@ -52,20 +51,20 @@ export function unifyOwners(contracts, rules = {}) {
     let prop = String(c.propietario || '').trim(), tel = String(c.telProp || ''), mail = String(c.mailProp || '');
     // Sin nombre pero con telefono o mail del dueno: "Propietario de <apto>".
     let sinNombre = false;
-    if (!prop || PLACEHOLDER.test(prop)) {
-      const hasTel = splitParts(tel).some(p => digitsOf(p).length >= 7);
-      if (!hasTel && !cleanMail(mail).length) continue;
+    if (!prop || MARCADOR_VACIO.test(prop)) {
+      const hasTel = separarPartes(tel).some(p => digitosDe(p).length >= 7);
+      if (!hasTel && !limpiarMail(mail).length) continue;
       prop = `Propietario de ${c.direccion}`;
       sinNombre = true;
     }
 
     // Definicion explicita para casos que no se pueden deducir del texto.
-    const ov = overrides.get(nameKey(prop));
+    const ov = overrides.get(claveNombre(prop));
     if (ov) {
       const cc = ov.contact ? contactsCfg.find(x => x.key === ov.contact) : null;
       (ov.owners || []).forEach((spec, i) => {
         const o = getOwner(spec.nombre);
-        if (spec.telefono) o.phones.push({ raw: spec.telefono, digits: digitsOf(spec.telefono), active: !c.inactive });
+        if (spec.telefono) o.phones.push({ raw: spec.telefono, digits: digitosDe(spec.telefono), active: !c.inactive });
         if (spec.mail) o.mails.push(spec.mail.toLowerCase());
         if (cc) o.contacts.set(cc.key, (o.contacts.get(cc.key) || 0) + 1);
         links.push({ contractId: c.id, ownerKey: o.key, orden: i });
@@ -91,19 +90,19 @@ export function unifyOwners(contracts, rules = {}) {
     }
 
     // Telefonos y mails: los del contacto no son del propietario.
-    let phoneParts = splitParts(tel).filter(p => digitsOf(p).length >= 7);
-    let mails = cleanMail(mail);
-    for (const p of phoneParts) { const cc = contactPhone.get(digitsOf(p)); if (cc && (!contact || contact === cc)) contact = contact || cc; }
+    let phoneParts = separarPartes(tel).filter(p => digitosDe(p).length >= 7);
+    let mails = limpiarMail(mail);
+    for (const p of phoneParts) { const cc = contactPhone.get(digitosDe(p)); if (cc && (!contact || contact === cc)) contact = contact || cc; }
     for (const m of mails)      { const cc = contactMail.get(m);          if (cc && (!contact || contact === cc)) contact = contact || cc; }
 
     // Copropietarios: "A / B" son dos propietarios, salvo que el texto completo sea un alias.
-    const names = (sinNombre || aliasMap.has(nameKey(prop))) ? [prop] : splitParts(prop);
+    const names = (sinNombre || aliasMap.has(claveNombre(prop))) ? [prop] : separarPartes(prop);
     if (!names.length) continue;
     // Si el contacto es el propio dueno (ej. un contacto que tambien es dueno de aptos), no es contacto.
-    if (contact && names.some(n => nameKey(n) === nameKey(contact.nombre))) contact = null;
+    if (contact && names.some(n => claveNombre(n) === claveNombre(contact.nombre))) contact = null;
     if (contact) {
-      const cd = new Set((contact.phones || []).map(digitsOf)), cm = new Set((contact.mails || []).map(m => m.toLowerCase()));
-      phoneParts = phoneParts.filter(p => !cd.has(digitsOf(p)));
+      const cd = new Set((contact.phones || []).map(digitosDe)), cm = new Set((contact.mails || []).map(m => m.toLowerCase()));
+      phoneParts = phoneParts.filter(p => !cd.has(digitosDe(p)));
       mails = mails.filter(m => !cm.has(m));
     }
     const matchByIndex = names.length > 1 && phoneParts.length === names.length;
@@ -114,8 +113,8 @@ export function unifyOwners(contracts, rules = {}) {
 
     // Con varios propietarios, cada mail va a quien aparezca en el (ej. juanperez@... -> Juan Perez).
     const mailOwner = mails.map(m => {
-      const local = nameKey(m.split('@')[0]).replace(/ /g, '');
-      const idx = names.findIndex(n => nameKey(n).split(' ').filter(t => t.length > 3).some(t => local.includes(t)));
+      const local = claveNombre(m.split('@')[0]).replace(/ /g, '');
+      const idx = names.findIndex(n => claveNombre(n).split(' ').filter(t => t.length > 3).some(t => local.includes(t)));
       return idx >= 0 ? idx : 0;
     });
 
@@ -124,7 +123,7 @@ export function unifyOwners(contracts, rules = {}) {
       const ph = matchByIndex ? [phoneParts[i]] : (i === 0 ? phoneParts : []);
       const ml = mailByIndex ? [mails[i]] : mails.filter((_, k) => mailOwner[k] === i);
       const fix = fixes.get(o.key);
-      for (const p of ph) if (!(fix && fix.has(digitsOf(p)))) o.phones.push({ raw: p, digits: digitsOf(p), active: !c.inactive });
+      for (const p of ph) if (!(fix && fix.has(digitosDe(p)))) o.phones.push({ raw: p, digits: digitosDe(p), active: !c.inactive });
       for (const m of ml) o.mails.push(m);
       if (historyNote) o.notes.add(historyNote);
       if (contact) o.contacts.set(contact.key, (o.contacts.get(contact.key) || 0) + 1);
@@ -142,7 +141,7 @@ export function unifyOwners(contracts, rules = {}) {
     if (rules.ownerNotes && rules.ownerNotes[o.nombre]) notes.unshift(rules.ownerNotes[o.nombre]);
     if (uniq.length > 1) notes.push(`Otros telefonos: ${uniq.slice(1).map(u => u.raw).join(' / ')}`);
     if (mailsU.length > 1) notes.push(`Otros mails: ${mailsU.slice(1).join(' / ')}`);
-    const variants = [...o.variants].filter(v => nameKey(v) !== nameKey(o.nombre));
+    const variants = [...o.variants].filter(v => claveNombre(v) !== claveNombre(o.nombre));
     if (variants.length) notes.push(`Tambien escrito como: ${variants.join(' | ')}`);
     const contactKey = [...o.contacts.entries()].sort((a, b) => b[1] - a[1])[0];
     return {

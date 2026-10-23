@@ -1,6 +1,6 @@
 // Fechas: lectura (Excel, ISO, dd/mm/aaaa) y formato.
 
-export const MONTH_MAP = {
+export const MAPA_MESES = {
   ENERO:1, FEBRERO:2, FEBREREREO:2, MARZO:3, ABRIL:4, MAYO:5, JUNIO:6,
   JULIO:7, AGOSTO:8, SETIEMBRE:9, SEPTIEMBRE:9, OCTUBRE:10, NOVIEMBRE:11, DICIEMBRE:12,
 };
@@ -8,24 +8,24 @@ export const MONTH_MAP = {
 export const MES_ES = ['','enero','febrero','marzo','abril','mayo','junio',
   'julio','agosto','setiembre','octubre','noviembre','diciembre'];
 
-export function excelDate(serial) {
+export function fechaExcel(serial) {
   if (!serial || typeof serial !== 'number' || serial < 30000) return null;
   const d = new Date((serial - 25569) * 86400000);
   if (isNaN(d.getTime())) return null;
   return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
-export function fmtDate(d) {
+export function formatearFecha(d) {
   if (!d) return '-';
   return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
 }
 
-export function toISODate(d) {
+export function aFechaISO(d) {
   if (!d) return null;
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-export function parseISO(str) {
+export function interpretarISO(str) {
   if (!str) return null;
   const p = String(str).split('-');
   if (p.length !== 3) return null;
@@ -33,14 +33,14 @@ export function parseISO(str) {
   return isNaN(d.getTime()) ? null : d;
 }
 
-export function parseDMY(str) {
+export function interpretarDMA(str) {
   if (!str) return null;
   const p = String(str).split('/');
   if (p.length !== 3) return null;
   return new Date(+p[2], +p[1]-1, +p[0]);
 }
 
-export function parseMonthYear(str) {
+export function interpretarMesAnio(str) {
   const m = String(str).trim().match(/^(\d{1,2})\/(\d{2,4})$/);
   if (!m) return null;
   const month = parseInt(m[1], 10) - 1;

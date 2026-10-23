@@ -1,9 +1,9 @@
 // Pestaña Aumentos: que alquileres aumentan en el mes, tarjetas y acciones (enviado, no aumenta).
 import * as D from '../../../dominios/index.js';
-import { aumKey, fmtDate, naKey } from '../../../dominios/index.js';
+import { claveAumento, formatearFecha, claveNoAumenta } from '../../../dominios/index.js';
 import { render } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { appendNote, entryByDir, getAumentos, isAumentoResuelto, saveIncrease, saveMarks, saveNotes } from '../nucleo/datos.js';
+import { appendNote, entryByDir, obtenerAumentos, esAumentoResuelto, saveIncrease, saveMarks, saveNotes } from '../nucleo/datos.js';
 import { copyToClipboard, esc, showToast } from '../nucleo/dom.js';
 import { estado, replaceEntry } from '../nucleo/estado.js';
 import { MONTH_NAMES, fmtIPC, fmtMoney, fmtNames, fmtNotas } from '../nucleo/formato.js';
@@ -14,9 +14,9 @@ import { datosPersonas, filtroResueltos, mesSiguiente, pendientes } from './tarj
 const aumAbiertos = new Set();   // claves de marca de las tarjetas resueltas desplegadas
 
 function cardAumentoCompact(e, m, y) {
-  const key  = aumKey(e, m, y);
+  const key  = claveAumento(e, m, y);
   const mk   = estado.marks[key];
-  const naKy = naKey(e, m, y);
+  const naKy = claveNoAumenta(e, m, y);
   const naMk = estado.marks[naKy];
   if (!mk && !naMk) return '';
   const k = mk ? key : naKy;
@@ -52,8 +52,8 @@ function cardAumentoCompact(e, m, y) {
 
 function footerAumento(e, m, y, ipcVal) {
   const nuevo    = D.nuevoImporte(e.importe, ipcVal);
-  const key      = aumKey(e, m, y);
-  const naKy     = naKey(e, m, y);
+  const key      = claveAumento(e, m, y);
+  const naKy     = claveNoAumenta(e, m, y);
   const mk       = estado.marks[key];
   const naMk     = estado.marks[naKy];
   const ipcStr   = fmtIPC(ipcVal);
@@ -66,7 +66,7 @@ function footerAumento(e, m, y, ipcVal) {
     </div>`;
   }
 
-  const { inquilino: msgInq, propietario: msgProp } = D.increaseMessages({ settings: estado.appSettings, contrato: e, porcentaje: ipcStr, nuevoImporte: nuevoStr });
+  const { inquilino: msgInq, propietario: msgProp } = D.mensajesAumento({ settings: estado.appSettings, contrato: e, porcentaje: ipcStr, nuevoImporte: nuevoStr });
 
   const copyBtns = `
     <button class="copy-btn" data-copy="${esc(msgInq)}"  title="Copiar mensaje inquilino">&#8663; Inq</button>
@@ -116,9 +116,9 @@ function cardAumento(e, m, y, ipcVal) {
   const nuevo  = D.nuevoImporte(e.importe, ipcVal);
   const diff   = nuevo - e.importe;
   const years  = y - e.fechaInicio.getFullYear();
-  const cardKey = aumKey(e, m, y);
+  const cardKey = claveAumento(e, m, y);
   const mk     = estado.marks[cardKey];
-  const naMk   = estado.marks[naKey(e, m, y)];
+  const naMk   = estado.marks[claveNoAumenta(e, m, y)];
   const isDel  = Boolean(D.gestionadoPor(e));
   const borderColor = mk ? 'var(--green)' : naMk ? 'rgba(150,150,150,0.3)' : isDel ? 'var(--amber)' : D.comentarios(e).length ? 'var(--orange)' : 'rgba(var(--accent-rgb),0.3)';
   return `
@@ -137,7 +137,7 @@ function cardAumento(e, m, y, ipcVal) {
         </div>
       </div>
       ${datosPersonas(e, { conMail: true })}
-      <div class="card-meta">Inicio: ${fmtDate(e.fechaInicio)}${e.ultimoAumento ? ` &middot; Ultimo aumento: ${fmtDate(e.ultimoAumento)}` : ''} &middot; Contrato: ${esc(e.contratoStr||'-')}</div>
+      <div class="card-meta">Inicio: ${formatearFecha(e.fechaInicio)}${e.ultimoAumento ? ` &middot; Ultimo aumento: ${formatearFecha(e.ultimoAumento)}` : ''} &middot; Contrato: ${esc(e.contratoStr||'-')}</div>
       ${fmtNotas(e)}
       ${footerAumento(e, m, y, ipcVal)}
     </div>`;
@@ -145,21 +145,21 @@ function cardAumento(e, m, y, ipcVal) {
 
 // Aumentos del mes elegido que faltan resolver (el circulito de la pestaña).
 export function contarPendientesAumentos() {
-  return getAumentos(estado.entries, estado.selMonth, estado.selYear)
-    .filter(e => !isAumentoResuelto(e, estado.selMonth, estado.selYear)).length;
+  return obtenerAumentos(estado.entries, estado.selMonth, estado.selYear)
+    .filter(e => !esAumentoResuelto(e, estado.selMonth, estado.selYear)).length;
 }
 
 // Lista del mes elegido y del siguiente, con el filtro de resueltos.
 export function renderAumentos(content) {
   const { m: nxM, y: nxY } = mesSiguiente(estado.selMonth, estado.selYear);
-  const aumentos     = getAumentos(estado.entries, estado.selMonth, estado.selYear);
-  const aumentosProx = getAumentos(estado.entries, nxM, nxY);
+  const aumentos     = obtenerAumentos(estado.entries, estado.selMonth, estado.selYear);
+  const aumentosProx = obtenerAumentos(estado.entries, nxM, nxY);
   const filtro = filtroResueltos();
   const showPend = filtro.pendientes, showResv = filtro.resueltos;
-  const aumPend  = aumentos.filter(e => !isAumentoResuelto(e, estado.selMonth, estado.selYear));
-  const aumResv  = aumentos.filter(e =>  isAumentoResuelto(e, estado.selMonth, estado.selYear));
-  const proxPend = aumentosProx.filter(e => !isAumentoResuelto(e, nxM, nxY));
-  const proxResv = aumentosProx.filter(e =>  isAumentoResuelto(e, nxM, nxY));
+  const aumPend  = aumentos.filter(e => !esAumentoResuelto(e, estado.selMonth, estado.selYear));
+  const aumResv  = aumentos.filter(e =>  esAumentoResuelto(e, estado.selMonth, estado.selYear));
+  const proxPend = aumentosProx.filter(e => !esAumentoResuelto(e, nxM, nxY));
+  const proxResv = aumentosProx.filter(e =>  esAumentoResuelto(e, nxM, nxY));
 
   let h = `<div class="sec-title">${MONTH_NAMES[estado.selMonth]} ${estado.selYear}</div>`;
   const visibleAum  = (showPend ? aumPend  : []).concat(showResv ? aumResv  : []);
@@ -185,9 +185,9 @@ async function marcarAumentoEnviado(key) {
   if (!entry) return;
   const today     = new Date();
   const newAmount = D.nuevoImporte(entry.importe, estado.ipc);
-  const prev = { importeAnterior: entry.importe, ultimoAumentoAnterior: D.toISODate(entry.ultimoAumento) };
+  const prev = { importeAnterior: entry.importe, ultimoAumentoAnterior: D.aFechaISO(entry.ultimoAumento) };
   if (await saveIncrease(entry, newAmount, today)) {
-    estado.marks[key] = { date: fmtDate(today), importeNuevo: newAmount, ipc: estado.ipc, ...prev };
+    estado.marks[key] = { date: formatearFecha(today), importeNuevo: newAmount, ipc: estado.ipc, ...prev };
     await saveMarks();
   }
 }
@@ -270,7 +270,7 @@ export function iniciar() {
       const descEl = document.getElementById('inp-na-desc');
       const desc   = descEl ? descEl.value.trim() : '';
       const entry  = entryByDir(naKy.split('|')[1]);   // na|dir|m|y
-      estado.marks[naKy]  = { date: fmtDate(new Date()), desc };
+      estado.marks[naKy]  = { date: formatearFecha(new Date()), desc };
       saveMarks();
       pendientes.noAumenta = null;
       if (entry && desc) await saveNotes(entry, appendNote(entry, `NO AUMENTA: ${desc}`));

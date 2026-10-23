@@ -10,7 +10,7 @@ function cartera(hoy) {
   // Lo mismo que hace la migracion de garantias: CGN/ANDA pasan del remitente a la garantia.
   const entries = contracts.map((c, i) => {
     const g = ['CGN', 'ANDA'].includes(c.remitente) ? c.remitente : '';
-    return D.hydrateContract({ ...c, id: i + 1, garantia: g, remitente: g ? '' : c.remitente });
+    return D.hidratarContrato({ ...c, id: i + 1, garantia: g, remitente: g ? '' : c.remitente });
   });
   return { entries, admins, marks };
 }
@@ -20,11 +20,11 @@ for (const hoy of DIAS) {
     const { entries, admins, marks } = cartera(hoy);
     const m = hoy.getMonth() + 1, y = hoy.getFullYear();
     const nxM = m === 12 ? 1 : m + 1, nxY = m === 12 ? y + 1 : y;
-    assert.ok(D.getAumentos(entries, m, y, marks).length >= 5, 'aumentos del mes');
-    assert.ok(D.getAumentos(entries, nxM, nxY, marks).length >= 2, 'aumentos del mes que viene');
-    const venc = D.getVencimientos(entries, m, y, marks).map(e => e.direccion);
+    assert.ok(D.obtenerAumentos(entries, m, y, marks).length >= 5, 'aumentos del mes');
+    assert.ok(D.obtenerAumentos(entries, nxM, nxY, marks).length >= 2, 'aumentos del mes que viene');
+    const venc = D.obtenerVencimientos(entries, m, y, marks).map(e => e.direccion);
     assert.deepEqual(venc.sort(), ['Maldonado 1580 U2', 'Mirador del Parque - Av. Rivera 3300 U604', 'Torre Ceibo - Av. Italia 2875 U1104']);
-    assert.deepEqual(D.getVencidosAtrasados(entries, m, y, marks).map(e => e.direccion), ['Residencial Guayabo - Guayabo 1850 U7']);
+    assert.deepEqual(D.obtenerVencidosAtrasados(entries, m, y, marks).map(e => e.direccion), ['Residencial Guayabo - Guayabo 1850 U7']);
     assert.equal(entries.filter(e => D.gestionadoPor(e)).length, 3, 'dos garantias y un tercero');
     assert.deepEqual(entries.map(e => e.remitente).filter(Boolean), ['Gestora Norte'], 'el delegado sin el prefijo de la planilla vieja');
     assert.equal(entries.filter(e => e.inactive).length, 2);
@@ -36,15 +36,15 @@ test('datos de ejemplo: el apto renovado tiene linea de tiempo y no figura como 
   const hoy = new Date(2026, 9, 21);
   const { entries, marks } = cartera(hoy);
   const e = entries.find(x => x.direccion === 'Edificio Araza - Bv. Artigas 1610 U1002');
-  const venc = D.getVencDate(e, marks);
+  const venc = D.obtenerFechaVenc(e, marks);
   assert.ok(venc > hoy, 'el nuevo vencimiento es a futuro');
-  assert.deepEqual(D.timeline(e, marks, entries).map(p => p.tipo), ['inicio', 'renov', 'proximo', 'hoy']);
+  assert.deepEqual(D.lineaTiempo(e, marks, entries).map(p => p.tipo), ['inicio', 'renov', 'proximo', 'hoy']);
 });
 
 test('datos de ejemplo: direcciones ya normalizadas, montos en pesos y en dolares, sin datos reales', () => {
   const { contracts } = D.datosDemo(new Date(2026, 9, 21));
   for (const c of contracts) {
-    assert.equal(D.normalizeAddress(c.direccion, { buildings: [], overrides: {} }).direccion, c.direccion);
+    assert.equal(D.normalizarDireccion(c.direccion, { buildings: [], overrides: {} }).direccion, c.direccion);
     assert.match(c.mailProp, /@example\.com$/);
     assert.match(c.telProp, /^091 000 \d{3}$/);
   }

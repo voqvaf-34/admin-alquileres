@@ -1,6 +1,6 @@
 // Importes de alquiler.
 
-export function parseUYAmount(v) {
+export function interpretarImporteUY(v) {
   if (typeof v === 'number') return v > 0 ? v : null;
   if (typeof v === 'string') {
     const n = parseFloat(v.replace(/[$\s.]/g, '').replace(',', '.'));

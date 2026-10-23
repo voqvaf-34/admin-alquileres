@@ -1,6 +1,6 @@
 // Normalizacion de datos (direcciones, propietarios, limpieza, garantias, moneda), una vez por version.
 const D = require('../dominios/index.js');
-const { normalizeAddress, unifyOwners } = require('../dominios/index.js');
+const { normalizarDireccion, planUnificarPropietarios } = require('../dominios/index.js');
 const { ctx } = require('./contexto');
 const { ADDRESS_RULES, ADDRESS_VERSION, CLEANUP_VERSION, GARANTIA_VERSION, MONEDA_VERSION, OWNERS_VERSION, OWNER_RULES } = require('./config');
 
@@ -8,13 +8,13 @@ const { ADDRESS_RULES, ADDRESS_VERSION, CLEANUP_VERSION, GARANTIA_VERSION, MONED
 function ensureAddresses(force) {
   if (!force && ctx.store.getSettings().addressVersion === ADDRESS_VERSION) return 0;
   const list = ctx.store.listContracts().map(c => {
-    const a = normalizeAddress(c.direccionOriginal || c.direccion, ADDRESS_RULES);
+    const a = normalizarDireccion(c.direccionOriginal || c.direccion, ADDRESS_RULES);
     return { id: c.id, edificio: a.edificio, calle: a.calle, unidad: a.unidad, direccion: a.direccion };
   });
   if (list.length) {
     ctx.store.backup('pre-direcciones');
     ctx.store.applyAddresses(list);
-    ctx.store.setTenantNames(ctx.store.listContracts().map(c => ({ id: c.id, inquilino: D.titleCase(c.inquilino) })));
+    ctx.store.setTenantNames(ctx.store.listContracts().map(c => ({ id: c.id, inquilino: D.mayusculasIniciales(c.inquilino) })));
   }
   ctx.store.setSetting('addressVersion', ADDRESS_VERSION);
   return list.length;
@@ -24,9 +24,9 @@ function ensureAddresses(force) {
 function ensureOwners(force) {
   if (!force && ctx.store.getSettings().ownersVersion === OWNERS_VERSION) return null;
   ctx.store.backup('pre-propietarios');
-  const plan = unifyOwners(ctx.store.listContracts(), OWNER_RULES);
-  plan.owners.forEach(o => { o.nombre = D.titleCase(o.nombre); });
-  plan.contacts.forEach(c => { c.nombre = D.titleCase(c.nombre); });
+  const plan = planUnificarPropietarios(ctx.store.listContracts(), OWNER_RULES);
+  plan.owners.forEach(o => { o.nombre = D.mayusculasIniciales(o.nombre); });
+  plan.contacts.forEach(c => { c.nombre = D.mayusculasIniciales(c.nombre); });
   const res = ctx.store.applyOwnersPlan(plan);
   ctx.store.setSetting('ownersVersion', OWNERS_VERSION);
   ctx.store.setSetting('ownersReview', JSON.stringify(plan.review));
@@ -46,7 +46,7 @@ function ensureCleanup(force) {
 function ensureGarantias(force) {
   if (!force && ctx.store.getSettings().garantiaVersion === GARANTIA_VERSION) return;
   ctx.store.backup('pre-garantias');
-  ctx.store.migrateGarantias(D.titleCase);
+  ctx.store.migrateGarantias(D.mayusculasIniciales);
   ctx.store.setSetting('garantiaVersion', GARANTIA_VERSION);
 }
 

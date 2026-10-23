@@ -51,7 +51,7 @@ function addFrom(filePath) {
   if (!data.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
   const clasico = data.formato === 'clasico';
   ctx.store.backup('pre-agregar');
-  const res = ctx.store.addImported({ contracts: data.contracts.map(c => D.prepararImportado(c, { reglasDirecciones: ADDRESS_RULES, clasico })), admins: data.admins }, D.nameKey);
+  const res = ctx.store.addImported({ contracts: data.contracts.map(c => D.prepararImportado(c, { reglasDirecciones: ADDRESS_RULES, clasico })), admins: data.admins }, D.claveNombre);
   ctx.store.setSetting('initialized', '1');
   return res;
 }

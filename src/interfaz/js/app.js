@@ -13,7 +13,7 @@ import * as modales from './nucleo/modales.js';
 import * as aumentos from './vistas/aumentos.js';
 import * as renovaciones from './vistas/renovaciones.js';
 import * as propietarios from './vistas/propietarios.js';
-import { Splitters } from '../../dominios/index.js';
+import { Separadores } from '../../dominios/index.js';
 import { bindAutocomplete } from './componentes/autocompletado.js';
 import { pintarAviso } from './componentes/avisos.js';
 import { aplicarMarca } from './componentes/marca.js';
@@ -33,7 +33,7 @@ import { contarPendientesRenovaciones, renderRenovaciones } from './vistas/renov
 import { renderOwnersPanel } from './vistas/propietarios.js';
 
 export function applyState(st) {
-  estado.entries  = st.contracts.map(D.hydrateContract);
+  estado.entries  = st.contracts.map(D.hidratarContrato);
   estado.admins   = st.admins;
   estado.marks    = st.marks || {};
   estado.appSettings = st.settings || {};
@@ -242,5 +242,5 @@ loadState();
 
 // Acceso de solo lectura al estado para revisar la app desde la consola y para las pruebas
 // automaticas (antes eran variables globales).
-window.app = Object.freeze({ estado, saveNotes, renderDBTable, entryByDir, colorPorDias, vencColor, Splitters });
+window.app = Object.freeze({ estado, saveNotes, renderDBTable, entryByDir, colorPorDias, vencColor, Separadores });
 

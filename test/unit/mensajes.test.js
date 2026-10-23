@@ -6,15 +6,15 @@ const contrato = { direccion: 'Torre Ceibo - Av. Italia 875 U403', inquilino: 'B
 
 test('mensajes: usan el nombre de la inmobiliaria de la configuracion', () => {
   const settings = { marcaNombre: 'Inmobiliaria del Sur' };
-  assert.match(D.renewalMessage(new Date(2026, 10, 1), { settings }), /^Hola! Te escribo desde Inmobiliaria del Sur\./);
-  const m = D.increaseMessages({ settings, contrato, porcentaje: '3,16%', nuevoImporte: '$ 25.790' });
+  assert.match(D.mensajeRenovacion(new Date(2026, 10, 1), { settings }), /^Hola! Te escribo desde Inmobiliaria del Sur\./);
+  const m = D.mensajesAumento({ settings, contrato, porcentaje: '3,16%', nuevoImporte: '$ 25.790' });
   assert.match(m.inquilino, /desde Inmobiliaria del Sur\..*es de 3,16% quedando en \$ 25\.790/);
   assert.match(m.propietario, /de Torre Ceibo - Av\. Italia 875 U403\./);
 });
 
 test('mensajes: plantilla propia con variables', () => {
   const settings = { msgRenovacion: 'Hola {inquilino}, tu contrato de {direccion} vence el {vencimiento}. {inmobiliaria}' };
-  assert.equal(D.renewalMessage(new Date(2026, 10, 1), { settings, contrato }),
+  assert.equal(D.mensajeRenovacion(new Date(2026, 10, 1), { settings, contrato }),
     'Hola Beto Gomez, tu contrato de Torre Ceibo - Av. Italia 875 U403 vence el 01/11/2026. Mi Inmobiliaria');
 });
 

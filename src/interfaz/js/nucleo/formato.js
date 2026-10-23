@@ -1,6 +1,6 @@
 // Formatos para mostrar: importes, telefonos con WhatsApp, mails, listas, dias que faltan.
 import * as D from '../../../dominios/index.js';
-import { Splitters } from '../../../dominios/index.js';
+import { Separadores } from '../../../dominios/index.js';
 import { esc } from './dom.js';
 
 export const MONTH_NAMES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -32,7 +32,7 @@ const isNada = t => !t || /^[-xX\s]*$/.test(t);
 
 export function telLink(raw) {
   if (isNada(raw)) return NADA;
-  const out = Splitters.telefonos(raw).filter(p => !isNada(p)).map(part => {
+  const out = Separadores.telefonos(raw).filter(p => !isNada(p)).map(part => {
     const numero = D.numeroWhatsApp(part);
     return numero ? enlaceWhatsApp(numero, esc(part)) : `<span class="tel">${esc(part)}</span>`;
   });
@@ -40,12 +40,12 @@ export function telLink(raw) {
 }
 
 export function fmtNames(raw) {
-  const out = Splitters.personas(raw || '').map(esc);
+  const out = Separadores.personas(raw || '').map(esc);
   return out.length ? out.join(SEP) : NADA;
 }
 
 export function fmtMails(raw) {
-  const out = Splitters.mails(raw || '').map(m => m.includes('@')
+  const out = Separadores.mails(raw || '').map(m => m.includes('@')
     ? `<a class="mail-val" href="mailto:${esc(m)}">${esc(m)}</a>` : `<span class="mail-val">${esc(m)}</span>`);
   return out.length ? out.join(SEP) : NADA;
 }
@@ -54,7 +54,7 @@ export function fmtMails(raw) {
 // preservando las etiquetas ("Emergencias: ...").
 export function linkPhonesInText(raw) {
   if (isNada(raw)) return NADA;
-  return Splitters.telefonos(raw).map(p => esc(p).replace(/\d[\d\s]{6,}\d/g, m => {
+  return Separadores.telefonos(raw).map(p => esc(p).replace(/\d[\d\s]{6,}\d/g, m => {
     const numero = D.numeroWhatsApp(m);
     return numero ? enlaceWhatsApp(numero, m) : m;
   })).join(SEP);
@@ -69,7 +69,7 @@ export function fmtNotas(e) {
 }
 
 export function fmtEdificios(raw) {
-  const out = Splitters.edificios(raw || '').map(esc);
+  const out = Separadores.edificios(raw || '').map(esc);
   return out.length ? out.join(SEP) : NADA;
 }
 

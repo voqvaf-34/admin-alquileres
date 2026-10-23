@@ -1,6 +1,6 @@
 // Autocompletado del formulario de alquiler.
 import * as D from '../../../dominios/index.js';
-import { Splitters, norm } from '../../../dominios/index.js';
+import { Separadores, normalizar } from '../../../dominios/index.js';
 import { chipFields, setMoneda } from '../modales/alquiler.js';
 import { estado } from '../nucleo/estado.js';
 
@@ -32,10 +32,10 @@ function acShow(inputEl, suggestions) {
   _acItems = suggestions;
   _acIdx   = -1;
 
-  const q = norm(inputEl.value.trim());
+  const q = normalizar(inputEl.value.trim());
   el.innerHTML = suggestions.map((s, i) => {
     const safe  = s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const start = norm(safe).indexOf(q);
+    const start = normalizar(safe).indexOf(q);
     const hi = (start >= 0 && q.length)
       ? safe.slice(0, start) + '<mark>' + safe.slice(start, start + q.length) + '</mark>' + safe.slice(start + q.length)
       : safe;
@@ -68,7 +68,7 @@ function acSelect(value) {
     const base = inputId.replace('-entry', '');
     chipFields[base].add(value);                                 // cada valor elegido es una viñeta
     // tel/mail se completan con el primer nombre; con un segundo nombre no se pisan.
-    if ((base === 'm-prop' || base === 'm-inq') && Splitters.personas(document.getElementById(base).value).length === 1) {
+    if ((base === 'm-prop' || base === 'm-inq') && Separadores.personas(document.getElementById(base).value).length === 1) {
       if (inputId === 'm-inq-entry') acFillFromInq(value); else acFillFromProp(value);
     }
     acHide();
@@ -99,10 +99,10 @@ function acPickAddress(value) {
 export function updateAddrPreview() {
   const N = D;
   const u = document.getElementById('m-unidad').value.trim();
-  const txt = N.formatAddress({
-    edificio: N.titleCase(document.getElementById('m-edificio').value),
-    calle:    N.titleCase(document.getElementById('m-calle').value),
-    unidad:   /^\d/.test(u) ? u.toUpperCase() : N.titleCase(u),
+  const txt = N.formatearDireccion({
+    edificio: N.mayusculasIniciales(document.getElementById('m-edificio').value),
+    calle:    N.mayusculasIniciales(document.getElementById('m-calle').value),
+    unidad:   /^\d/.test(u) ? u.toUpperCase() : N.mayusculasIniciales(u),
   });
   document.getElementById('m-dir-preview').textContent = txt || '—';
 }
@@ -134,7 +134,7 @@ function acFillFromProp(prop) {
 
 function acFillFromInq(inq) {
   if (!estado.entries) return;
-  const matches = estado.entries.filter(e => e.inquilino === inq || Splitters.personas(e.inquilino).includes(inq));
+  const matches = estado.entries.filter(e => e.inquilino === inq || Separadores.personas(e.inquilino).includes(inq));
   if (!matches.length) return;
   const e = matches.reduce((a, b) => (b.id > a.id ? b : a));
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
@@ -172,16 +172,16 @@ export function bindAutocomplete() {
 
     inp.addEventListener('input', () => {
       if (!estado.entries) { acHide(); return; }
-      const q = norm(inp.value.trim());
+      const q = normalizar(inp.value.trim());
       if (!q) { acHide(); return; }
       const source = id === 'm-prop-entry' ? estado.owners.map(o => o.nombre)
-        : id === 'm-inq-entry' ? estado.entries.flatMap(e => Splitters.personas(e.inquilino))
-        : /^m-tel-/.test(id) ? estado.entries.flatMap(e => Splitters.telefonos(getter(e) || ''))
-        : /^m-mail-/.test(id) ? estado.entries.flatMap(e => Splitters.mails(getter(e) || ''))
+        : id === 'm-inq-entry' ? estado.entries.flatMap(e => Separadores.personas(e.inquilino))
+        : /^m-tel-/.test(id) ? estado.entries.flatMap(e => Separadores.telefonos(getter(e) || ''))
+        : /^m-mail-/.test(id) ? estado.entries.flatMap(e => Separadores.mails(getter(e) || ''))
         : id === 'm-edificio' ? [...estado.entries.map(e => e.direccion), ...estado.entries.map(getter)]
         : estado.entries.map(getter);
       const unique = [...new Set(source.filter(v => v && v.trim()))];
-      const matches = unique.filter(v => norm(v).includes(q)).slice(0, 12);
+      const matches = unique.filter(v => normalizar(v).includes(q)).slice(0, 12);
       acShow(inp, matches);
     });
 

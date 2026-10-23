@@ -1,6 +1,6 @@
 // Formulario de alquiler (alta / edicion): viñetas, garantia, moneda, campos plegables.
 import * as D from '../../../dominios/index.js';
-import { Splitters } from '../../../dominios/index.js';
+import { Separadores } from '../../../dominios/index.js';
 import { render } from '../app.js';
 import { _acIdx, _acItems, updateAddrPreview } from '../componentes/autocompletado.js';
 import { makeChips, makePicker } from '../componentes/vinetas.js';
@@ -99,7 +99,7 @@ function setDuracionOption(value) {
 function garantiaOptions() {
   let extra = [];
   try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
-  const all = [...D.GARANTIAS_DEFAULT, ...extra, ...estado.entries.map(e => e.garantia)].filter(Boolean);
+  const all = [...D.GARANTIAS_PREDETERMINADAS, ...extra, ...estado.entries.map(e => e.garantia)].filter(Boolean);
   const seen = new Set();
   return all.filter(g => { const k = g.toUpperCase(); if (seen.has(k)) return false; seen.add(k); return true; });
 }
@@ -174,8 +174,8 @@ async function submitAddEntry() {
     importeBase: importe,
     contratoStr: document.getElementById('m-duracion').value  || '',
     fechaInicio: document.getElementById('m-fecha').value     || null,  // "YYYY-MM-DD"
-    notas:       [...(editingEntry ? D.splitNotas(editingEntry.notas).filter(D.parseRenewalNote) : []),
-                  ...D.splitNotas(document.getElementById('m-notas').value)].join(' | '),
+    notas:       [...(editingEntry ? D.separarNotas(editingEntry.notas).filter(D.interpretarNotaRenovacion) : []),
+                  ...D.separarNotas(document.getElementById('m-notas').value)].join(' | '),
     garantia:    document.getElementById('m-garantia').value,
     moneda:      document.getElementById('m-moneda').value,
     remitente:   document.getElementById('m-remitente').value.trim(),
@@ -225,7 +225,7 @@ export function iniciar() {
   document.getElementById('m-remitente').addEventListener('input', updateGestionHint);
 
   // Campos con viñetas (deben existir antes del autocompletado)
-  const S = Splitters, busy = () => _acIdx >= 0 && _acItems.length > 0;
+  const S = Separadores, busy = () => _acIdx >= 0 && _acItems.length > 0;
   chipFields['m-adm-edificios'] = makeChips('m-adm-edificios', { split: S.edificios, join: a => a.join('; '), placeholder: 'Nombre del edificio + Enter', addLabel: 'Edificio' });
   chipFields['m-adm-telefono']  = makeChips('m-adm-telefono',  { split: S.telefonos, join: a => a.join('; '), placeholder: 'Teléfono + Enter', addLabel: 'Teléfono' });
   chipFields['m-adm-mail']      = makeChips('m-adm-mail',      { split: S.mails,     join: a => a.join('; '), placeholder: 'Mail + Enter', addLabel: 'Mail' });

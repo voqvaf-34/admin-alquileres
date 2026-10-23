@@ -1,6 +1,6 @@
 // Pestaña Propietarios: tabla, detalle, ficha, documentos, unificar.
 import { nuevosPrimero, puntoNuevo } from '../componentes/novedades.js';
-import { Splitters, norm } from '../../../dominios/index.js';
+import { Separadores, normalizar } from '../../../dominios/index.js';
 import { render } from '../app.js';
 import { makeChips } from '../componentes/vinetas.js';
 import { call } from '../nucleo/api.js';
@@ -10,7 +10,7 @@ import { fmtMails, telLink } from '../nucleo/formato.js';
 import { closeModal, openModal } from '../nucleo/modales.js';
 
 // Usa el estado global de app.js (entries, owners, contacts, contractOwners, ownerDocs,
-// ownerAccounts) y sus helpers (call, esc, norm, telLink, showToast, render, applyOwners).
+// ownerAccounts) y sus helpers (call, esc, normalizar, telLink, showToast, render, applyOwners).
 let ownersSearch     = '';
 
 let ownersOnlyActive = false;
@@ -71,14 +71,14 @@ function missingContractData(o) {
 
 export function renderOwnersPanel() {
   const byOwner = contractsByOwner();
-  const q = norm(ownersSearch.trim());
+  const q = normalizar(ownersSearch.trim());
   const qDigits = q.replace(/\D/g, '');
   const list = estado.owners.filter(o => {
     const apts = byOwner.get(o.id) || [];
     if (ownersOnlyActive && !apts.some(e => !e.inactive)) return false;
     if (!q) return true;
     const c = o.contactId ? contactById(o.contactId) : null;
-    const hay = [o.nombre, o.telefono, o.mail, o.cedula, o.domicilio, o.notas, c && c.nombre, ...apts.map(e => e.direccion)].map(norm).join(' ');
+    const hay = [o.nombre, o.telefono, o.mail, o.cedula, o.domicilio, o.notas, c && c.nombre, ...apts.map(e => e.direccion)].map(normalizar).join(' ');
     return hay.includes(q) || (qDigits.length >= 4 && [o.telefono, o.cedula].some(v => (v || '').replace(/\D/g, '').includes(qDigits)));
   });
   document.getElementById('owners-count').textContent = `${list.length} / ${estado.owners.length} propietarios`;
@@ -233,9 +233,9 @@ function showMergeModal(keepId) {
 }
 
 function renderMergeResults() {
-  const q = norm(val('m-merge-search'));
+  const q = normalizar(val('m-merge-search'));
   const byOwner = contractsByOwner();
-  const list = estado.owners.filter(o => o.id !== mergeKeepId && (!q || norm(o.nombre).includes(q))).slice(0, 40);
+  const list = estado.owners.filter(o => o.id !== mergeKeepId && (!q || normalizar(o.nombre).includes(q))).slice(0, 40);
   document.getElementById('merge-results').innerHTML = list.map(o =>
     `<div class="merge-item${o.id === mergeDropId ? ' selected' : ''}" data-merge-pick="${o.id}">${esc(o.nombre)}<small>${esc(o.telefono || '')} &middot; ${ownerUnits(byOwner.get(o.id) || []).length} aptos</small></div>`
   ).join('') || '<div class="merge-item" style="color:var(--dim);cursor:default">Sin resultados</div>';
@@ -370,6 +370,6 @@ export function iniciar() {
   // Celulares y mails de la ficha y del contacto, como viñetas.
   for (const [id, kind, lbl, ph] of [['m-own-tel', 'telefonos', 'Celular', '09X XXX XXX'], ['m-own-mail', 'mails', 'Mail', 'mail@ejemplo.com'],
                                      ['m-con-tel', 'telefonos', 'Teléfono', '09X XXX XXX'], ['m-con-mail', 'mails', 'Mail', 'mail@ejemplo.com']]) {
-    makeChips(id, { split: Splitters[kind], join: a => a.join(' / '), placeholder: ph, addLabel: lbl });
+    makeChips(id, { split: Separadores[kind], join: a => a.join(' / '), placeholder: ph, addLabel: lbl });
   }
 }

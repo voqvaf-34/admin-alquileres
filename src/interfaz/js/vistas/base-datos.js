@@ -1,7 +1,7 @@
 // Pestaña Base de Datos: filtros, tabla, detalle y comentarios.
 import { esNuevo, puntoNuevo } from '../componentes/novedades.js';
 import * as D from '../../../dominios/index.js';
-import { fmtDate, norm, parseDMY, vncKey, vncKeyR } from '../../../dominios/index.js';
+import { formatearFecha, normalizar, interpretarDMA, claveVenc, claveVencRenovado } from '../../../dominios/index.js';
 import { deleteEntry, showEditModal } from '../modales/alquiler.js';
 import { showTimeline } from '../modales/linea-tiempo.js';
 import { saveMarks, saveNotes } from '../nucleo/datos.js';
@@ -21,17 +21,17 @@ function getDBFiltered() {
   if (estado.dbFilterMonth > 0)
     list = list.filter(e => e.fechaInicio && e.fechaInicio.getMonth() + 1 === estado.dbFilterMonth);
   if (estado.dbSearchText.trim()) {
-    const q = norm(estado.dbSearchText);
+    const q = normalizar(estado.dbSearchText);
     list = list.filter(e =>
-      norm(e.direccion).includes(q) ||
-      norm(e.propietario).includes(q) ||
-      norm(e.inquilino).includes(q) ||
+      normalizar(e.direccion).includes(q) ||
+      normalizar(e.propietario).includes(q) ||
+      normalizar(e.inquilino).includes(q) ||
       (e.telProp||'').includes(q) ||
       (e.telInq||'').includes(q) ||
-      norm(e.mailProp).includes(q) ||
-      norm(e.mailInq).includes(q) ||
-      norm(e.garantia).includes(q) ||
-      norm(e.remitente).includes(q)
+      normalizar(e.mailProp).includes(q) ||
+      normalizar(e.mailInq).includes(q) ||
+      normalizar(e.garantia).includes(q) ||
+      normalizar(e.remitente).includes(q)
     );
   }
   return list;
@@ -116,7 +116,7 @@ export function renderDBTable() {
       <td class="db-dir">${esc(e.direccion)}${e.inactive ? `<span class="inactive-badge">INACTIVO</span>` : ''}${garantiaBadge(e)}${e.remitente ? `<span class="delegado-badge" style="margin-left:8px;font-size:10px" title="Aumentos los hace ${esc(e.remitente)}">&#8618; ${esc(e.remitente)}</span>` : ''}</td>
       <td>${fmtNames(e.propietario)}</td>
       <td>${fmtNames(e.inquilino)}</td>
-      <td style="white-space:nowrap;color:var(--dim)">${fmtDate(e.fechaInicio)}</td>
+      <td style="white-space:nowrap;color:var(--dim)">${formatearFecha(e.fechaInicio)}</td>
       <td class="db-chevron">${puntoNuevo('basedatos', e.id)}&#9658;</td>
     </tr>` + (isExp ? filaDetalle(e, porDireccion) : '');
   };
@@ -144,8 +144,8 @@ export function renderDBTable() {
 
 // Recuadro verde "Renovado el ..." (o "2a renovacion") con su boton para desmarcar.
 function insigniaRenovacion(e, dir) {
-  const mkV  = estado.marks[vncKey(e)];
-  const mkVR = estado.marks[vncKeyR(e)];
+  const mkV  = estado.marks[claveVenc(e)];
+  const mkVR = estado.marks[claveVencRenovado(e)];
   if (mkVR) {
     return `<div class="renov-badge">
       <span>&#10003; 2a renovacion el ${mkVR.date}${mkVR.nuevaInicio ? ` &middot; Nuevo inicio: ${mkVR.nuevaInicio} &middot; ${mkVR.renewYears}a` : ''}</span>
@@ -155,10 +155,10 @@ function insigniaRenovacion(e, dir) {
   if (!mkV) return '';
   // Si el vencimiento de la renovacion ya paso, avisar
   let vencNote = '';
-  const ni = mkV.nuevaInicio && mkV.renewYears && parseDMY(mkV.nuevaInicio);
+  const ni = mkV.nuevaInicio && mkV.renewYears && interpretarDMA(mkV.nuevaInicio);
   if (ni) {
     const nvDate = new Date(ni.getFullYear() + mkV.renewYears, ni.getMonth(), Math.min(ni.getDate(), 28));
-    if (nvDate <= new Date()) vencNote = `<span style="color:var(--amber)"> &middot; &#9888; Venc. renovacion: ${fmtDate(nvDate)}</span>`;
+    if (nvDate <= new Date()) vencNote = `<span style="color:var(--amber)"> &middot; &#9888; Venc. renovacion: ${formatearFecha(nvDate)}</span>`;
   }
   return `<div class="renov-badge">
     <span>&#10003; Renovado el ${mkV.date}${mkV.nuevaInicio ? ` &middot; Inicio: ${mkV.nuevaInicio} &middot; ${mkV.renewYears}a` : ''}${vencNote}</span>
@@ -174,7 +174,7 @@ function filaDetalle(e, porDireccion) {
         <div class="db-detail-inner">
           <div class="db-detail-grid">
             <div><span class="lbl">Alquiler: </span><strong>${fmtMoney(e.importe, e.moneda)}</strong></div>
-            <div><span class="lbl">Ult. aumento: </span>${e.ultimoAumento ? fmtDate(e.ultimoAumento) : '<span style="color:var(--dim)">-</span>'}</div>
+            <div><span class="lbl">Ult. aumento: </span>${e.ultimoAumento ? formatearFecha(e.ultimoAumento) : '<span style="color:var(--dim)">-</span>'}</div>
             <div><span class="lbl">Contrato: </span>${esc(e.contratoStr||'-')}</div>
             <div><span class="lbl">Garantía: </span>${e.garantia ? esc(e.garantia) : '<span class="missing">sin cargar</span>'}</div>
             <div><span class="lbl">Aumentos: </span>${D.gestionadoPor(e) ? esc(D.gestionadoPor(e)) : 'La inmobiliaria'}</div>
@@ -190,7 +190,7 @@ function filaDetalle(e, porDireccion) {
           ${e.direccionOriginal && e.direccionOriginal !== e.direccion ? `<div style="margin-top:8px;font-size:11px;color:var(--dim)">Registrado originalmente como: ${esc(e.direccionOriginal)}</div>` : ''}
           <div class="nota-edit-section">
             <span class="nota-label">Comentarios</span>
-            <div class="notas-list">${D.splitNotas(e.notas).map((n, i) => D.parseRenewalNote(n) ? '' : `
+            <div class="notas-list">${D.separarNotas(e.notas).map((n, i) => D.interpretarNotaRenovacion(n) ? '' : `
               <div class="nota-chip"><span class="nota-txt" data-nota-edit="${e.id}" data-i="${i}" title="Clic para corregir">${esc(n)}</span><button class="chip-x" data-nota-del="${e.id}" data-i="${i}" title="Borrar comentario">&times;</button></div>`).join('')}
             </div>
             <div class="nota-bar">
@@ -334,7 +334,7 @@ export function iniciar() {
       e.stopPropagation();
       if (document.body.classList.contains('viewer')) return;
       const entry = byId(+notaEdit.dataset.notaEdit);
-      openNew(notaSec, D.splitNotas(entry.notas)[+notaEdit.dataset.i], +notaEdit.dataset.i);
+      openNew(notaSec, D.separarNotas(entry.notas)[+notaEdit.dataset.i], +notaEdit.dataset.i);
       return;
     }
     if (e.target.closest('[data-nota-cancel]')) {
@@ -346,7 +346,7 @@ export function iniciar() {
     if (notaDel) {
       e.stopPropagation();
       const entry = byId(+notaDel.dataset.notaDel);
-      const list = D.splitNotas(entry.notas);
+      const list = D.separarNotas(entry.notas);
       if (!confirm(`¿Borrar este comentario?\n\n${list[+notaDel.dataset.i]}`)) return;
       list.splice(+notaDel.dataset.i, 1);
       if (await saveNotes(entry, list.join(' | '), '&#10003; Comentario borrado')) renderDBTable();
@@ -359,7 +359,7 @@ export function iniciar() {
       if (!entry) return;
       const ta = notaBtn.closest('.nota-edit-section').querySelector('.nota-textarea');
       const txt = ta.value.replace(/\s*\n+\s*/g, ' ').replace(/\s*\|\s*/g, ' - ').trim();
-      const list = D.splitNotas(entry.notas);
+      const list = D.separarNotas(entry.notas);
       if (ta.dataset.i !== '') { if (txt) list[+ta.dataset.i] = txt; else list.splice(+ta.dataset.i, 1); }
       else if (txt) list.push(txt);
       if (await saveNotes(entry, list.join(' | '), '&#10003; Comentario guardado')) renderDBTable();

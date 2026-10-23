@@ -23,13 +23,13 @@ export function applyOwners(st) {
   if (st.contractOwners) estado.contractOwners = st.contractOwners;
   if (st.ownerDocs)      estado.ownerDocs = st.ownerDocs;
   if (st.ownerAccounts)  estado.ownerAccounts = st.ownerAccounts;
-  if (estado.entries) D.attachOwners(estado.entries, estado.owners, estado.contacts, estado.contractOwners);
+  if (estado.entries) D.adjuntarPropietarios(estado.entries, estado.owners, estado.contacts, estado.contractOwners);
 }
 
 export function replaceEntry(raw) {
-  const h = D.hydrateContract(raw);
+  const h = D.hidratarContrato(raw);
   const i = estado.entries.findIndex(e => e.id === h.id);
   if (i >= 0) estado.entries[i] = h; else estado.entries.push(h);
-  D.attachOwners([h], estado.owners, estado.contacts, estado.contractOwners);
+  D.adjuntarPropietarios([h], estado.owners, estado.contacts, estado.contractOwners);
   return h;
 }

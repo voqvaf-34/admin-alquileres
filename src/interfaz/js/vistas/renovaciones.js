@@ -1,19 +1,19 @@
 // Pestaña Renovaciones: contratos que vencen, tarjetas y acciones (renovado, no renueva).
 import * as D from '../../../dominios/index.js';
-import { fmtDate, nrKey, parseDMY, parseISO, realDuration, vncKey, vncKeyR } from '../../../dominios/index.js';
+import { formatearFecha, claveNoRenueva, interpretarDMA, interpretarISO, duracionReal, claveVenc, claveVencRenovado } from '../../../dominios/index.js';
 import { render } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { appendNote, entryByDir, getVencDate, getVencidosAtrasados, getVencimientos, isVencResuelto, saveMarks, saveNotes, saveRenewal, vencColor, vencRenewalMsg } from '../nucleo/datos.js';
+import { appendNote, entryByDir, obtenerFechaVenc, obtenerVencidosAtrasados, obtenerVencimientos, esVencResuelto, saveMarks, saveNotes, saveRenewal, vencColor, vencRenewalMsg } from '../nucleo/datos.js';
 import { copyToClipboard, esc, showToast } from '../nucleo/dom.js';
 import { estado, replaceEntry } from '../nucleo/estado.js';
 import { MONTH_NAMES, diasFaltan, fmtMoney, fmtNotas, monthsAgo } from '../nucleo/formato.js';
 import { datosPersonas, filtroResueltos, mesSiguiente, pendientes } from './tarjetas.js';
 
 function cardVencCompact(e) {
-  const mk = estado.marks[vncKey(e)];
+  const mk = estado.marks[claveVenc(e)];
   const isRenCycle = !!(mk && mk.nuevaInicio && mk.renewYears);
-  const activeMk = isRenCycle ? estado.marks[vncKeyR(e)] : mk;
-  const nrMk = estado.marks[nrKey(e)];
+  const activeMk = isRenCycle ? estado.marks[claveVencRenovado(e)] : mk;
+  const nrMk = estado.marks[claveNoRenueva(e)];
   if (activeMk) {
     const undoAttr = isRenCycle ? `data-un-ren-r="${esc(e.direccion)}"` : `data-un-ren="${esc(e.direccion)}"`;
     return `<div class="card card-compact" style="border-left:3px solid var(--green)">
@@ -55,9 +55,9 @@ function _vencInputs(defaultYears, confirmAttr, dirEsc) {
 }
 
 function footerVenc(e) {
-  const mk          = estado.marks[vncKey(e)];
+  const mk          = estado.marks[claveVenc(e)];
   const isRenCycle  = !!(mk && mk.nuevaInicio && mk.renewYears); // ya fue renovado -> ciclo post-renovacion
-  const mkR         = estado.marks[vncKeyR(e)];                          // mark del ciclo post-renovacion
+  const mkR         = estado.marks[claveVencRenovado(e)];                          // mark del ciclo post-renovacion
 
   // ── CICLO POST-RENOVACION ─────────────────────────────────────────────────
   if (isRenCycle) {
@@ -66,10 +66,10 @@ function footerVenc(e) {
       const renewYearsR = mkR.renewYears || 2;
       let nuevaInfoR = '';
       if (mkR.nuevaInicio) {
-        const ni2 = parseDMY(mkR.nuevaInicio);
+        const ni2 = interpretarDMA(mkR.nuevaInicio);
         if (ni2) {
           const nv2 = new Date(ni2.getFullYear() + renewYearsR, ni2.getMonth(), Math.min(ni2.getDate(), 28));
-          nuevaInfoR = `<span class="change-tag">${mk.renewYears}a &rarr; ${renewYearsR}a &middot; Nuevo venc: ${fmtDate(nv2)}</span>`;
+          nuevaInfoR = `<span class="change-tag">${mk.renewYears}a &rarr; ${renewYearsR}a &middot; Nuevo venc: ${formatearFecha(nv2)}</span>`;
         }
       }
       return `<div class="card-footer">
@@ -84,8 +84,8 @@ function footerVenc(e) {
       return _vencInputs(mk.renewYears || 2, 'data-vconf-r', esc(e.direccion));
     }
     // Mostrar historial de 1er renovacion + boton para marcar 2da
-    const ni = parseDMY(mk.nuevaInicio);
-    const nvDate = ni ? fmtDate(new Date(ni.getFullYear()+mk.renewYears, ni.getMonth(), Math.min(ni.getDate(),28))) : '-';
+    const ni = interpretarDMA(mk.nuevaInicio);
+    const nvDate = ni ? formatearFecha(new Date(ni.getFullYear()+mk.renewYears, ni.getMonth(), Math.min(ni.getDate(),28))) : '-';
     return `<div class="card-footer" style="flex-direction:column;align-items:flex-start;gap:6px">
       <div style="font-size:11px;color:var(--amber)">
         Renovado el ${mk.date} &middot; Inicio: ${mk.nuevaInicio} &middot; ${mk.renewYears}a &middot; Vence: ${nvDate}
@@ -99,13 +99,13 @@ function footerVenc(e) {
 
   // ── CICLO ORIGINAL ─────────────────────────────────────────────────────────
   if (mk) {
-    const renewYears = mk.renewYears || realDuration(e.contratoDuracion) || 2;
+    const renewYears = mk.renewYears || duracionReal(e.contratoDuracion) || 2;
     let nuevaInfo = '';
     if (mk.nuevaInicio) {
-      const ni = parseDMY(mk.nuevaInicio);
+      const ni = interpretarDMA(mk.nuevaInicio);
       if (ni) {
         const nv = new Date(ni.getFullYear() + renewYears, ni.getMonth(), Math.min(ni.getDate(), 28));
-        nuevaInfo = `<span class="change-tag">Inicio: ${mk.nuevaInicio} &middot; ${renewYears}a &middot; Prox.venc: ${fmtDate(nv)}</span>`;
+        nuevaInfo = `<span class="change-tag">Inicio: ${mk.nuevaInicio} &middot; ${renewYears}a &middot; Prox.venc: ${formatearFecha(nv)}</span>`;
       }
     }
     return `<div class="card-footer">
@@ -116,7 +116,7 @@ function footerVenc(e) {
   }
 
   // ── NO RENUEVA ──────────────────────────────────────────────────────────────
-  const nrMk = estado.marks[nrKey(e)];
+  const nrMk = estado.marks[claveNoRenueva(e)];
   if (nrMk && D.noRenuevaVigente(e, estado.marks)) {
     return `<div class="card-footer">
       <span style="font-size:12px;color:var(--dim)">&#10005; No renueva${nrMk.sigueActivo ? ' (sigue activo)' : ''}${nrMk.desc ? ' &mdash; ' + esc(nrMk.desc) : ''} <span style="font-size:10px;color:var(--dim)">${nrMk.date}</span></span>
@@ -138,7 +138,7 @@ function footerVenc(e) {
     </div>`;
   }
 
-  const defaultYears = realDuration(e.contratoDuracion) || 2;
+  const defaultYears = duracionReal(e.contratoDuracion) || 2;
   if (pendientes.venc === e.direccion) {
     return _vencInputs(defaultYears, 'data-vconf', esc(e.direccion));
   }
@@ -152,14 +152,14 @@ function footerVenc(e) {
 
 function cardVenc(e, color, overdue) {
   color = color || vencColor(e);
-  const mk          = estado.marks[vncKey(e)];
-  const mkR         = estado.marks[vncKeyR(e)];
+  const mk          = estado.marks[claveVenc(e)];
+  const mkR         = estado.marks[claveVencRenovado(e)];
   const isRenCycle  = !!(mk && mk.nuevaInicio && mk.renewYears);
-  const vd          = getVencDate(e) || new Date(0);
+  const vd          = obtenerFechaVenc(e) || new Date(0);
   const activeMk    = isRenCycle ? mkR : mk;
-  const nrMkC       = estado.marks[nrKey(e)];
+  const nrMkC       = estado.marks[claveNoRenueva(e)];
   const bcolor      = activeMk ? 'var(--green)' : nrMkC ? 'rgba(150,150,150,0.3)' : color;
-  const inicioLabel = `Inicio original: ${fmtDate(e.fechaInicio)}`;
+  const inicioLabel = `Inicio original: ${formatearFecha(e.fechaInicio)}`;
   const overdueTag  = overdue
     ? `<span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:color-mix(in srgb, var(--red) 75%, var(--text));background:rgba(var(--red-rgb),0.12);border:1px solid rgba(var(--red-rgb),0.3);border-radius:3px;padding:1px 6px;margin-left:6px;vertical-align:middle">VENCIDO ${monthsAgo(vd)}</span>`
     : '';
@@ -167,7 +167,7 @@ function cardVenc(e, color, overdue) {
     <div class="card" style="border-left:3px solid ${bcolor}${nrMkC ? ';filter:grayscale(1)' : ''}">
       <div class="card-top">
         <span style="color:${bcolor};font-weight:600">${esc(e.direccion)}${overdueTag}</span>
-        <span class="badge" style="background:color-mix(in srgb, ${color} 13%, transparent);color:color-mix(in srgb, ${color} 75%, var(--text))">Vence ${fmtDate(vd)}${diasFaltan(vd)}</span>
+        <span class="badge" style="background:color-mix(in srgb, ${color} 13%, transparent);color:color-mix(in srgb, ${color} 75%, var(--text))">Vence ${formatearFecha(vd)}${diasFaltan(vd)}</span>
       </div>
       ${datosPersonas(e)}
       <div class="card-meta">${inicioLabel} &middot; Contrato: ${esc(e.contratoStr||'-')} &middot; Alquiler: ${fmtMoney(e.importe, e.moneda)}</div>
@@ -185,7 +185,7 @@ function _readVencInputs(defaultYears) {
   const yearsEl = document.getElementById('inp-venc-years');
   const descEl  = document.getElementById('inp-venc-desc');
   const dateV   = inp ? inp.value : '';
-  const d       = dateV ? parseISO(dateV) : null;
+  const d       = dateV ? interpretarISO(dateV) : null;
   const years   = yearsEl ? +yearsEl.value : defaultYears;
   const desc    = descEl ? descEl.value.trim() : '';
   return { d, years, desc };
@@ -193,23 +193,23 @@ function _readVencInputs(defaultYears) {
 
 // Renovaciones del mes elegido (ventana de 45 dias) que faltan resolver (el circulito de la pestaña).
 export function contarPendientesRenovaciones() {
-  return getVencimientos(estado.entries, estado.selMonth, estado.selYear).filter(e => !isVencResuelto(e)).length;
+  return obtenerVencimientos(estado.entries, estado.selMonth, estado.selYear).filter(e => !esVencResuelto(e)).length;
 }
 
 // Vencidos sin resolver, el mes elegido y el siguiente, con el filtro de resueltos.
 export function renderRenovaciones(content) {
   const { m: nxM, y: nxY } = mesSiguiente(estado.selMonth, estado.selYear);
-  const vencimientos  = getVencimientos(estado.entries, estado.selMonth, estado.selYear);
+  const vencimientos  = obtenerVencimientos(estado.entries, estado.selMonth, estado.selYear);
   // "Proximo" solo con los que no aparecen ya en el mes elegido (la ventana de 45 dias se superpone).
   const vencIds       = new Set(vencimientos.map(e => e.id));
-  const vencProx      = getVencimientos(estado.entries, nxM, nxY).filter(e => !vencIds.has(e.id));
-  const vencAtrasados = getVencidosAtrasados(estado.entries, estado.selMonth, estado.selYear);
+  const vencProx      = obtenerVencimientos(estado.entries, nxM, nxY).filter(e => !vencIds.has(e.id));
+  const vencAtrasados = obtenerVencidosAtrasados(estado.entries, estado.selMonth, estado.selYear);
   const filtro = filtroResueltos();
   const showPend = filtro.pendientes, showResv = filtro.resueltos;
-  const vencPend = vencimientos.filter(e => !isVencResuelto(e));
-  const vencResv = vencimientos.filter(e =>  isVencResuelto(e));
-  const proxPend = vencProx.filter(e => !isVencResuelto(e));
-  const proxResv = vencProx.filter(e =>  isVencResuelto(e));
+  const vencPend = vencimientos.filter(e => !esVencResuelto(e));
+  const vencResv = vencimientos.filter(e =>  esVencResuelto(e));
+  const proxPend = vencProx.filter(e => !esVencResuelto(e));
+  const proxResv = vencProx.filter(e =>  esVencResuelto(e));
 
   let h = '';
   if (showPend && vencAtrasados.length > 0) {
@@ -258,8 +258,8 @@ export function iniciar() {
       const desc   = descEl ? descEl.value.trim() : '';
       const sigue  = !!(document.getElementById('inp-nr-sigue') || {}).checked;
       const entry  = entryByDir(dir);
-      const vd     = entry ? getVencDate(entry) : null;
-      estado.marks[`nr|${dir}`] = { date: fmtDate(new Date()), desc, sigueActivo: sigue, hasta: vd ? D.toISODate(vd) : '' };
+      const vd     = entry ? obtenerFechaVenc(entry) : null;
+      estado.marks[`nr|${dir}`] = { date: formatearFecha(new Date()), desc, sigueActivo: sigue, hasta: vd ? D.aFechaISO(vd) : '' };
       await saveMarks();
       pendientes.noRenueva = null;
       if (entry && desc) await saveNotes(entry, appendNote(entry, `NO RENUEVA${sigue ? ' (sigue en el apto)' : ''}: ${desc}`));
@@ -306,10 +306,10 @@ export function iniciar() {
     if (vconf) {
       const dir    = vconf.dataset.vconf;
       const entry  = entryByDir(dir);
-      const defY   = entry ? (realDuration(entry.contratoDuracion) || 2) : 2;
+      const defY   = entry ? (duracionReal(entry.contratoDuracion) || 2) : 2;
       const { d, years, desc } = _readVencInputs(defY);
       delete estado.marks[`nr|${dir}`];   // si no habia renovado pero seguia, ahora renovo
-      estado.marks[`v|${dir}`] = { date: fmtDate(new Date()), nuevaInicio: d ? fmtDate(d) : '', renewYears: years };
+      estado.marks[`v|${dir}`] = { date: formatearFecha(new Date()), nuevaInicio: d ? formatearFecha(d) : '', renewYears: years };
       saveMarks();
       pendientes.venc  = null;
       if (entry) await saveRenewal(entry, years, desc);
@@ -322,11 +322,11 @@ export function iniciar() {
     if (vconfR) {
       const dir    = vconfR.dataset.vconfR;
       const entry  = entryByDir(dir);
-      const mkPrev = estado.marks[vncKey({ direccion: dir })];
+      const mkPrev = estado.marks[claveVenc({ direccion: dir })];
       const defY   = mkPrev ? (mkPrev.renewYears || 2) : 2;
       const { d, years, desc } = _readVencInputs(defY);
       delete estado.marks[`nr|${dir}`];
-      estado.marks[`vr|${dir}`] = { date: fmtDate(new Date()), nuevaInicio: d ? fmtDate(d) : '', renewYears: years };
+      estado.marks[`vr|${dir}`] = { date: formatearFecha(new Date()), nuevaInicio: d ? formatearFecha(d) : '', renewYears: years };
       saveMarks();
       pendientes.venc  = null;
       if (entry) await saveRenewal(entry, years, desc);

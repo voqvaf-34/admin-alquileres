@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { fetchLatestIPC } = require('./ine-ipc');
 const D = require('../dominios/index.js');
-const { nameKey } = D;
+const { claveNombre } = D;
 const { ctx } = require('./contexto');
 const { ADDRESS_VERSION, CLEANUP_VERSION, DEFAULT_SHARED_DIR, GARANTIA_VERSION, MONEDA_VERSION, OWNERS_VERSION, defaultExcelPaths } = require('./config');
 const { exportCsv } = require('./csv');
@@ -122,7 +122,7 @@ function registerHandlers() {
 
   // Alta/edicion: ademas del contrato se vinculan los propietarios escritos en el modal.
   const saveWithOwners = (saved, c) => {
-    if (c.propietario != null) ctx.store.linkOwnersFromText(saved.id, c.propietario, c.telProp, c.mailProp, nameKey);
+    if (c.propietario != null) ctx.store.linkOwnersFromText(saved.id, c.propietario, c.telProp, c.mailProp, claveNombre);
     return { contract: saved, owners: ctx.store.listOwners(), contractOwners: ctx.store.listContractOwners() };
   };
   handle('contract:add',        (c)         => { const x = D.normalizarContrato(c); return saveWithOwners(ctx.store.addContract(x), x); });
@@ -151,10 +151,10 @@ function registerHandlers() {
     let contactId = null;
     const c = o.contact || { mode: 'none' };
     if (c.mode === 'new' || c.mode === 'existing') {
-      contactId = ctx.store.saveContact({ id: c.mode === 'existing' ? c.id : null, nombre: D.titleCase(c.nombre), rol: c.rol,
+      contactId = ctx.store.saveContact({ id: c.mode === 'existing' ? c.id : null, nombre: D.mayusculasIniciales(c.nombre), rol: c.rol,
         telefono: c.telefono, mail: c.mail, notas: c.notas });
     }
-    ctx.store.saveOwner({ ...o, nombre: D.titleCase(o.nombre), contactId });
+    ctx.store.saveOwner({ ...o, nombre: D.mayusculasIniciales(o.nombre), contactId });
     return ownersState();
   });
   handle('owner:delete',   (id)                  => { ctx.store.deleteOwner(id); return ownersState(); });

@@ -1,8 +1,8 @@
 // Importacion desde una planilla con encabezados (Excel o CSV): que columna es cada dato.
 // Los encabezados se reconocen sin importar mayusculas, tildes ni el orden de las columnas.
-import { excelDate, parseDMY, parseMonthYear, toISODate } from './fechas.js';
-import { parseUYAmount } from './importes.js';
-import { norm } from './texto.js';
+import { fechaExcel, interpretarDMA, interpretarMesAnio, aFechaISO } from './fechas.js';
+import { interpretarImporteUY } from './importes.js';
+import { normalizar } from './texto.js';
 
 // campo: dato del contrato; titulo: encabezado de la planilla modelo; alias: otros nombres aceptados.
 export const COLUMNAS_ALQUILERES = [
@@ -32,7 +32,7 @@ export const COLUMNAS_ADMINISTRACIONES = [
   { campo: 'mail',      titulo: 'Mail',           alias: ['mail', 'mails', 'email', 'correo'] },
 ];
 
-const limpiarTitulo = v => norm(String(v ?? '')).replace(/[^a-z0-9]+/g, ' ').trim();
+const limpiarTitulo = v => normalizar(String(v ?? '')).replace(/[^a-z0-9]+/g, ' ').trim();
 
 // Busca la fila de encabezados (entre las primeras 10) y devuelve { fila, columnas: {campo: indice} }
 // o null si no hay una fila con todas las columnas obligatorias.
@@ -50,23 +50,23 @@ export function detectarEncabezados(filas, columnas = COLUMNAS_ALQUILERES) {
   return null;
 }
 
-const texto = v => (v == null ? '' : v instanceof Date ? toISODate(v) : String(v).trim());
+const texto = v => (v == null ? '' : v instanceof Date ? aFechaISO(v) : String(v).trim());
 
 // Fecha desde Excel (numero de serie o Date) o texto "dd/mm/aaaa", "aaaa-mm-dd", "mm/aaaa".
 export function leerFecha(v) {
   if (v instanceof Date) return isNaN(v) ? null : new Date(v.getFullYear(), v.getMonth(), v.getDate());
-  if (typeof v === 'number') return excelDate(v);
+  if (typeof v === 'number') return fechaExcel(v);
   const s = texto(v);
   if (!s) return null;
   let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
   m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/);
-  if (m) return parseDMY(`${m[1]}/${m[2]}/${m[3].length === 2 ? '20' + m[3] : m[3]}`);
-  return parseMonthYear(s);
+  if (m) return interpretarDMA(`${m[1]}/${m[2]}/${m[3].length === 2 ? '20' + m[3] : m[3]}`);
+  return interpretarMesAnio(s);
 }
 
 export function leerMoneda(v) {
-  const s = norm(texto(v)).replace(/[\s.]/g, '');
+  const s = normalizar(texto(v)).replace(/[\s.]/g, '');
   if (!s) return '';
   return /^(usd|us\$|u\$s|u\$d|dolar|dolares|uss)$/.test(s) ? 'USD' : 'UYU';
 }
@@ -77,9 +77,9 @@ const INACTIVO = /^(inactivo|inactiva|no|baja|finalizado|terminado)$/;
 export function filaAContrato(fila, columnas, sourceRow) {
   const get = campo => (campo in columnas ? fila[columnas[campo]] : null);
   const direccion = texto(get('direccion'));
-  const importe = parseUYAmount(get('importe'));
+  const importe = interpretarImporteUY(get('importe'));
   if (!direccion || !importe) return null;
-  const inicial = parseUYAmount(get('importeBase'));
+  const inicial = interpretarImporteUY(get('importeBase'));
   return {
     sourceRow,
     direccion,
@@ -89,16 +89,16 @@ export function filaAContrato(fila, columnas, sourceRow) {
     importeBase:   inicial || importe,
     importe,
     moneda:        leerMoneda(get('moneda')),
-    ultimoAumento: toISODate(leerFecha(get('ultimoAumento'))),
+    ultimoAumento: aFechaISO(leerFecha(get('ultimoAumento'))),
     remitente:     texto(get('remitente')),
     garantia:      texto(get('garantia')),
     contratoStr:   texto(get('contratoStr')),
-    fechaInicio:   toISODate(leerFecha(get('fechaInicio'))),
+    fechaInicio:   aFechaISO(leerFecha(get('fechaInicio'))),
     inquilino:     texto(get('inquilino')),
     telInq:        texto(get('telInq')),
     mailInq:       texto(get('mailInq')),
     notas:         texto(get('notas')),
-    inactive:      INACTIVO.test(norm(texto(get('estado')))),
+    inactive:      INACTIVO.test(normalizar(texto(get('estado')))),
   };
 }
 

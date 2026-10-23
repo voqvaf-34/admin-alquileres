@@ -1,6 +1,6 @@
 // Textos que se copian para mandar a inquilinos y propietarios. Cada uno es una plantilla
 // editable en Configuracion, con variables entre llaves: {inmobiliaria}, {vencimiento}...
-import { fmtDate } from './fechas.js';
+import { formatearFecha } from './fechas.js';
 import { leerMarca } from './marca.js';
 
 export const PLANTILLAS = {
@@ -57,14 +57,14 @@ const datosContrato = (settings, e = {}) => ({
   direccion: e.direccion || '', inquilino: e.inquilino || '', propietario: e.propietario || '',
 });
 
-export function renewalMessage(vencDate, { settings = {}, contrato } = {}) {
+export function mensajeRenovacion(vencDate, { settings = {}, contrato } = {}) {
   return rellenar(textoPlantilla(settings, 'renovacion'), {
-    ...datosContrato(settings, contrato), vencimiento: vencDate ? fmtDate(vencDate) : '?',
+    ...datosContrato(settings, contrato), vencimiento: vencDate ? formatearFecha(vencDate) : '?',
   });
 }
 
 // porcentaje y nuevoImporte llegan ya formateados para mostrar ("3,16%", "$ 25.790").
-export function increaseMessages({ settings = {}, contrato, porcentaje, nuevoImporte }) {
+export function mensajesAumento({ settings = {}, contrato, porcentaje, nuevoImporte }) {
   const datos = { ...datosContrato(settings, contrato), porcentaje, nuevo_importe: nuevoImporte };
   return {
     inquilino:   rellenar(textoPlantilla(settings, 'aumentoInquilino'), datos),

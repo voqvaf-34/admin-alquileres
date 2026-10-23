@@ -5,8 +5,8 @@ const D      = require('../../src/dominios/index.js');
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 
 test('marca: sin configuracion usa nombre y color por defecto', () => {
-  assert.deepEqual(D.leerMarca({}), D.MARCA_DEFAULT);
-  assert.deepEqual(D.leerMarca({ marcaNombre: '  ', marcaColor: 'rojo', marcaLogo: 'http://x/logo.png' }), D.MARCA_DEFAULT);
+  assert.deepEqual(D.leerMarca({}), D.MARCA_PREDETERMINADA);
+  assert.deepEqual(D.leerMarca({ marcaNombre: '  ', marcaColor: 'rojo', marcaLogo: 'http://x/logo.png' }), D.MARCA_PREDETERMINADA);
 });
 
 test('marca: lee nombre, colores (en mayusculas), logo, tema, tipografia e icono guardados', () => {
@@ -41,7 +41,7 @@ test('marca: valida lo que se guarda desde Configuracion', () => {
   assert.throws(() => D.marcaASettings({ nombre: 'x', color: 'azul' }), /Color/);
   assert.throws(() => D.marcaASettings({ nombre: 'x'.repeat(61), color: '#000000' }), /60/);
   assert.throws(() => D.marcaASettings({ nombre: 'x', color: '#000000', logo: 'data:text/html;base64,PGI+' }), /imagen/);
-  assert.throws(() => D.marcaASettings({ nombre: 'x', color: '#000000', logo: 'data:image/png;base64,' + 'A'.repeat(D.LOGO_MAX_CHARS) }), /grande/);
+  assert.throws(() => D.marcaASettings({ nombre: 'x', color: '#000000', logo: 'data:image/png;base64,' + 'A'.repeat(D.LOGO_MAX_CARACTERES) }), /grande/);
 });
 
 test('paleta: texto de la barra blanco u oscuro segun el color (contraste 4.5)', () => {
@@ -67,7 +67,7 @@ test('paleta: los textos de acento se leen sobre fondo claro y oscuro (contraste
 });
 
 test('paleta: color invalido cae al de por defecto', () => {
-  assert.deepEqual(D.paleta('nada'), D.paleta(D.MARCA_DEFAULT.color));
+  assert.deepEqual(D.paleta('nada'), D.paleta(D.MARCA_PREDETERMINADA.color));
 });
 
 test('paleta: color secundario (o el principal si no hay) legible en claro y oscuro', () => {
@@ -89,5 +89,5 @@ test('paleta: tema "Con mi color" tiñe los fondos con el color de la marca', ()
 test('temas y tipografias: todos tienen nombre; las fuentes tienen respaldo', () => {
   for (const t of Object.values(D.TEMAS)) assert.ok(t.nombre);
   for (const f of Object.values(D.FUENTES)) assert.match(f.css, /(sans-serif|serif)$/);
-  assert.ok(D.TEMAS[D.MARCA_DEFAULT.tema] && D.FUENTES[D.MARCA_DEFAULT.fuente]);
+  assert.ok(D.TEMAS[D.MARCA_PREDETERMINADA.tema] && D.FUENTES[D.MARCA_PREDETERMINADA.fuente]);
 });

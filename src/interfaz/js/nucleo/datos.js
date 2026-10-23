@@ -19,7 +19,7 @@ export function saveMarks() {
 export async function saveIncrease(entry, newAmount, date) {
   try {
     const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    replaceEntry(await call('patchContract', entry.id, { importe: newAmount, ultimoAumento: D.toISODate(firstOfMonth) }));
+    replaceEntry(await call('patchContract', entry.id, { importe: newAmount, ultimoAumento: D.aFechaISO(firstOfMonth) }));
     showToast('&#10003; Aumento guardado', 'ok');
     return true;
   } catch (err) {
@@ -61,19 +61,19 @@ export function entryByDir(dir) {
   return pool.reduce((a, b) => (b.id > a.id ? b : a));
 }
 
-export const getAumentos          = (list, m, y) => D.getAumentos(list, m, y, estado.marks);
+export const obtenerAumentos          = (list, m, y) => D.obtenerAumentos(list, m, y, estado.marks);
 
-export const getVencDate          = e => D.getVencDate(e, estado.marks);
+export const obtenerFechaVenc          = e => D.obtenerFechaVenc(e, estado.marks);
 
-export const getVencimientos      = (list, m, y) => D.getVencimientos(list, m, y, estado.marks);
+export const obtenerVencimientos      = (list, m, y) => D.obtenerVencimientos(list, m, y, estado.marks);
 
-export const getVencidosAtrasados = (list, m, y) => D.getVencidosAtrasados(list, m, y, estado.marks);
+export const obtenerVencidosAtrasados = (list, m, y) => D.obtenerVencidosAtrasados(list, m, y, estado.marks);
 
-export const isAumentoResuelto = (e, m, y) => D.isAumentoResuelto(e, m, y, estado.marks);
+export const esAumentoResuelto = (e, m, y) => D.esAumentoResuelto(e, m, y, estado.marks);
 
-export const isVencResuelto    = e => D.isVencResuelto(e, estado.marks);
+export const esVencResuelto    = e => D.esVencResuelto(e, estado.marks);
 
-export const vencRenewalMsg = e => D.renewalMessage(getVencDate(e), { settings: estado.appSettings, contrato: e });
+export const vencRenewalMsg = e => D.mensajeRenovacion(obtenerFechaVenc(e), { settings: estado.appSettings, contrato: e });
 
 // Amarillo si faltan mas de 10 dias para el vencimiento; rojo si faltan 10 o menos (o ya vencio).
-export function vencColor(e) { return colorPorDias(getVencDate(e)); }
+export function vencColor(e) { return colorPorDias(obtenerFechaVenc(e)); }

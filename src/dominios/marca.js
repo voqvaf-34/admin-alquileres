@@ -4,13 +4,13 @@
 // color2 vacio = el mismo que el principal.
 // icono: tipo 'app' (diseño prediseñado, color vacio = el principal), 'logo' (generado del logo) o
 // 'imagen' (imagen cuadrada propia).
-export const MARCA_DEFAULT = {
+export const MARCA_PREDETERMINADA = {
   nombre: 'Mi Inmobiliaria', color: '#2563EB', color2: '', logo: '', tema: 'clasico', fuente: 'rubik',
   icono: { tipo: 'app', diseno: 'edificio', color: '', imagen: '' },
 };
 
 // Claves en la tabla settings.
-const MARCA_KEYS = {
+const CLAVES_MARCA = {
   nombre: 'marcaNombre', color: 'marcaColor', color2: 'marcaColor2', logo: 'marcaLogo',
   tema: 'marcaTema', fuente: 'marcaFuente',
   iconoTipo: 'marcaIconoTipo', iconoDiseno: 'marcaIconoDiseno', iconoColor: 'marcaIconoColor', iconoImagen: 'marcaIconoImagen',
@@ -50,12 +50,12 @@ export const esColor = c => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c.tr
 
 const LOGO_RE = /^data:image\/(png|jpeg|webp|gif|svg\+xml);base64,[A-Za-z0-9+/=]+$/;
 const ICONO_RE = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
-export const LOGO_MAX_CHARS = 600 * 1024;
+export const LOGO_MAX_CARACTERES = 600 * 1024;
 
 // Valida lo que llega de la ventana de Configuracion y devuelve las claves a guardar.
 // Nombre vacio = el de por defecto; logo vacio = sin logo; color2 vacio = igual al principal.
-export function marcaASettings({ nombre = '', color = '', color2 = '', logo = '', tema = MARCA_DEFAULT.tema,
-  fuente = MARCA_DEFAULT.fuente, icono = MARCA_DEFAULT.icono } = {}) {
+export function marcaASettings({ nombre = '', color = '', color2 = '', logo = '', tema = MARCA_PREDETERMINADA.tema,
+  fuente = MARCA_PREDETERMINADA.fuente, icono = MARCA_PREDETERMINADA.icono } = {}) {
   nombre = String(nombre).replace(/\s+/g, ' ').trim();
   if (nombre.length > 60) throw new Error('El nombre puede tener hasta 60 caracteres.');
   if (!esColor(color)) throw new Error('Color no valido (formato #RRGGBB).');
@@ -64,47 +64,47 @@ export function marcaASettings({ nombre = '', color = '', color2 = '', logo = ''
   if (!FUENTES[fuente]) throw new Error('Tipografia desconocida.');
   logo = String(logo || '');
   if (logo && !LOGO_RE.test(logo)) throw new Error('El logo tiene que ser una imagen PNG, JPG, WEBP, GIF o SVG.');
-  if (logo.length > LOGO_MAX_CHARS) throw new Error('El logo es demasiado grande.');
-  const ic = { ...MARCA_DEFAULT.icono, ...(icono || {}) };
+  if (logo.length > LOGO_MAX_CARACTERES) throw new Error('El logo es demasiado grande.');
+  const ic = { ...MARCA_PREDETERMINADA.icono, ...(icono || {}) };
   if (!ICONO_TIPOS.includes(ic.tipo)) throw new Error('Tipo de icono desconocido.');
   if (!ICONOS_APP[ic.diseno]) throw new Error('Diseño de icono desconocido.');
   if (ic.color && !esColor(ic.color)) throw new Error('Color del icono no valido (formato #RRGGBB).');
   const imagen = String(ic.imagen || '');
   if (imagen && !ICONO_RE.test(imagen)) throw new Error('La imagen del icono tiene que ser PNG.');
-  if (imagen.length > LOGO_MAX_CHARS) throw new Error('La imagen del icono es demasiado grande.');
+  if (imagen.length > LOGO_MAX_CARACTERES) throw new Error('La imagen del icono es demasiado grande.');
   if (ic.tipo === 'logo' && !logo) throw new Error('Para usar el logo como icono hay que cargar un logo.');
   if (ic.tipo === 'imagen' && !imagen) throw new Error('Falta elegir la imagen del icono.');
   const c1 = color.trim().toUpperCase(), c2 = color2 ? color2.trim().toUpperCase() : '';
   return {
-    [MARCA_KEYS.nombre]: nombre, [MARCA_KEYS.color]: c1, [MARCA_KEYS.color2]: c2 === c1 ? '' : c2,
-    [MARCA_KEYS.logo]: logo, [MARCA_KEYS.tema]: tema, [MARCA_KEYS.fuente]: fuente,
-    [MARCA_KEYS.iconoTipo]: ic.tipo, [MARCA_KEYS.iconoDiseno]: ic.diseno,
-    [MARCA_KEYS.iconoColor]: ic.color ? ic.color.trim().toUpperCase() : '', [MARCA_KEYS.iconoImagen]: imagen,
+    [CLAVES_MARCA.nombre]: nombre, [CLAVES_MARCA.color]: c1, [CLAVES_MARCA.color2]: c2 === c1 ? '' : c2,
+    [CLAVES_MARCA.logo]: logo, [CLAVES_MARCA.tema]: tema, [CLAVES_MARCA.fuente]: fuente,
+    [CLAVES_MARCA.iconoTipo]: ic.tipo, [CLAVES_MARCA.iconoDiseno]: ic.diseno,
+    [CLAVES_MARCA.iconoColor]: ic.color ? ic.color.trim().toUpperCase() : '', [CLAVES_MARCA.iconoImagen]: imagen,
   };
 }
 
 export function leerMarca(settings = {}) {
-  const k = MARCA_KEYS;
-  const nombre = String(settings[k.nombre] || '').trim() || MARCA_DEFAULT.nombre;
-  const color  = esColor(settings[k.color]) ? settings[k.color].trim().toUpperCase() : MARCA_DEFAULT.color;
+  const k = CLAVES_MARCA;
+  const nombre = String(settings[k.nombre] || '').trim() || MARCA_PREDETERMINADA.nombre;
+  const color  = esColor(settings[k.color]) ? settings[k.color].trim().toUpperCase() : MARCA_PREDETERMINADA.color;
   const color2 = esColor(settings[k.color2]) ? settings[k.color2].trim().toUpperCase() : '';
   const logo   = LOGO_RE.test(settings[k.logo] || '') ? settings[k.logo] : '';
-  const tema   = TEMAS[settings[k.tema]] ? settings[k.tema] : MARCA_DEFAULT.tema;
-  const fuente = FUENTES[settings[k.fuente]] ? settings[k.fuente] : MARCA_DEFAULT.fuente;
+  const tema   = TEMAS[settings[k.tema]] ? settings[k.tema] : MARCA_PREDETERMINADA.tema;
+  const fuente = FUENTES[settings[k.fuente]] ? settings[k.fuente] : MARCA_PREDETERMINADA.fuente;
   // Icono: si el elegido ya no se puede usar (logo o imagen borrados) vuelve al prediseñado.
   const imagen = ICONO_RE.test(settings[k.iconoImagen] || '') ? settings[k.iconoImagen] : '';
   let tipo = ICONO_TIPOS.includes(settings[k.iconoTipo]) ? settings[k.iconoTipo] : 'app';
   if ((tipo === 'logo' && !logo) || (tipo === 'imagen' && !imagen)) tipo = 'app';
   const icono = {
     tipo, imagen,
-    diseno: ICONOS_APP[settings[k.iconoDiseno]] ? settings[k.iconoDiseno] : MARCA_DEFAULT.icono.diseno,
+    diseno: ICONOS_APP[settings[k.iconoDiseno]] ? settings[k.iconoDiseno] : MARCA_PREDETERMINADA.icono.diseno,
     color: esColor(settings[k.iconoColor]) ? settings[k.iconoColor].trim().toUpperCase() : '',
   };
   return { nombre, color, color2, logo, tema, fuente, icono };
 }
 
-const hexToRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-const rgbToHex = rgb => '#' + rgb.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('').toUpperCase();
+const hexARgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const rgbAHex = rgb => '#' + rgb.map(v => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('').toUpperCase();
 // t > 0 aclara hacia blanco, t < 0 oscurece hacia negro.
 const mezclar = (rgb, t) => rgb.map(v => t >= 0 ? v + (255 - v) * t : v * (1 + t));
 
@@ -114,7 +114,7 @@ function luminancia(rgb) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 export function contraste(a, b) {
-  const [la, lb] = [luminancia(hexToRgb(a)), luminancia(hexToRgb(b))];
+  const [la, lb] = [luminancia(hexARgb(a)), luminancia(hexARgb(b))];
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }
 
@@ -131,7 +131,7 @@ const CLARO_MAS_OSCURO = '#E6EAF0', OSCURO_MAS_CLARO = '#262626';
 // Version del color legible como texto sobre un fondo (contraste 4.5): se oscurece o se aclara.
 function legibleSobre(rgb, fondo, hacia) {
   let c = rgb, t = 0;
-  while (contraste(rgbToHex(c), fondo) < 4.5 && Math.abs(t) < 0.9) { t += hacia * 0.05; c = mezclar(rgb, t); }
+  while (contraste(rgbAHex(c), fondo) < 4.5 && Math.abs(t) < 0.9) { t += hacia * 0.05; c = mezclar(rgb, t); }
   return c;
 }
 
@@ -143,18 +143,18 @@ function legibleSobre(rgb, fondo, hacia) {
 // - sec*: lo mismo para el color secundario (pestaña activa, avisos, titulos de seccion)
 // - tinte*: fondos del tema "Con mi color"
 export function paleta(color, color2 = '') {
-  const base = esColor(color) ? color.toUpperCase() : MARCA_DEFAULT.color;
+  const base = esColor(color) ? color.toUpperCase() : MARCA_PREDETERMINADA.color;
   const sec  = esColor(color2) ? color2.toUpperCase() : base;
-  const rgb = hexToRgb(base), rgb2 = hexToRgb(sec);
+  const rgb = hexARgb(base), rgb2 = hexARgb(sec);
   const headerInk = tintaSobre(base), secOn = tintaSobre(sec);
-  const accentDark = rgbToHex(mezclar(rgb, 0.08)), secDark = rgbToHex(mezclar(rgb2, 0.08));
+  const accentDark = rgbAHex(mezclar(rgb, 0.08)), secDark = rgbAHex(mezclar(rgb2, 0.08));
   return {
     header: base, headerInk, headerFg: headerInk === '#FFFFFF' ? '255,255,255' : '26,26,26',
-    accent: base, accentRgb: rgb.join(','), accentInk: rgbToHex(legibleSobre(rgb, CLARO_MAS_OSCURO, -1)),
-    accentDark, accentDarkRgb: hexToRgb(accentDark).join(','), accentInkDark: rgbToHex(legibleSobre(rgb, OSCURO_MAS_CLARO, 1)),
-    sec, secRgb: rgb2.join(','), secOn, secInk: rgbToHex(legibleSobre(rgb2, CLARO_MAS_OSCURO, -1)),
-    secDark, secDarkRgb: hexToRgb(secDark).join(','), secInkDark: rgbToHex(legibleSobre(rgb2, OSCURO_MAS_CLARO, 1)),
-    tinteBg: rgbToHex(mezclar(rgb, 0.93)), tinteSurface: rgbToHex(mezclar(rgb, 0.985)),
-    tinteBgDark: rgbToHex(mezclar(rgb, -0.9)), tintePanelDark: rgbToHex(mezclar(rgb, -0.84)),
+    accent: base, accentRgb: rgb.join(','), accentInk: rgbAHex(legibleSobre(rgb, CLARO_MAS_OSCURO, -1)),
+    accentDark, accentDarkRgb: hexARgb(accentDark).join(','), accentInkDark: rgbAHex(legibleSobre(rgb, OSCURO_MAS_CLARO, 1)),
+    sec, secRgb: rgb2.join(','), secOn, secInk: rgbAHex(legibleSobre(rgb2, CLARO_MAS_OSCURO, -1)),
+    secDark, secDarkRgb: hexARgb(secDark).join(','), secInkDark: rgbAHex(legibleSobre(rgb2, OSCURO_MAS_CLARO, 1)),
+    tinteBg: rgbAHex(mezclar(rgb, 0.93)), tinteSurface: rgbAHex(mezclar(rgb, 0.985)),
+    tinteBgDark: rgbAHex(mezclar(rgb, -0.9)), tintePanelDark: rgbAHex(mezclar(rgb, -0.84)),
   };
 }

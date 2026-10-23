@@ -124,9 +124,9 @@ test('moneda: pesos por defecto, dolares para importes de hasta 4 cifras y se pu
 
 test('agregar planilla: suma sin tocar lo cargado, saltea repetidos y vincula propietarios por nombre', async () => {
   const s = await Store.open(path.join(tmpDir(), 'a.sqlite'));
-  const { nameKey } = require('../../src/dominios/index.js');
+  const { claveNombre } = require('../../src/dominios/index.js');
   const prev = s.addContract(sample);
-  s.linkOwnersFromText(prev.id, 'Ana', '', '', nameKey);
+  s.linkOwnersFromText(prev.id, 'Ana', '', '', claveNombre);
   s.saveAdmin({ nombre: 'Admin Sur', edificios: 'Torre Ceibo' });
   const fila = (o) => ({ ...sample, importe: sample.importeBase, moneda: 'UYU', inactive: false, ...o });
   const r = s.addImported({
@@ -136,7 +136,7 @@ test('agregar planilla: suma sin tocar lo cargado, saltea repetidos y vincula pr
       fila({ direccion: 'Guayabo 1850 U3', inquilino: 'Dario', propietario: 'Bruno', inactive: true }),
     ],
     admins: [{ nombre: 'ADMIN SUR' }, { nombre: 'Consorcio Guayabo', edificios: 'Guayabo' }],
-  }, nameKey);
+  }, claveNombre);
   assert.deepEqual(r, { agregados: 2, repetidos: 1, admins: 1 });
   const list = s.listContracts();
   assert.equal(list.length, 3);

@@ -2,7 +2,7 @@
 import { MES_ES } from './fechas.js';
 
 // El INE publica el IPC del mes anterior alrededor del dia 5.
-export function latestPublishedIPC(now) {
+export function ultimoIPCPublicado(now) {
   const d = now.getDate(), m = now.getMonth()+1, y = now.getFullYear();
   if (d >= 5) return m === 1 ? {month:12, year:y-1} : {month:m-1, year:y};
   if (m === 1) return {month:11, year:y-1};
@@ -10,15 +10,15 @@ export function latestPublishedIPC(now) {
   return {month:m-2, year:y};
 }
 
-export function prevMonth({month, year}) {
+export function mesAnterior({month, year}) {
   return month === 1 ? {month:12, year:year-1} : {month:month-1, year};
 }
 
-export function ipcPageURL(month, year) {
+export function urlPaginaIPC(month, year) {
   return `https://www.gub.uy/instituto-nacional-estadistica/comunicacion/publicaciones/indice-precios-del-consumo-ipc-${MES_ES[month]}-${year}`;
 }
 
-export function parseIPCFromHtml(html) {
+export function interpretarIPCDesdeHtml(html) {
   if (!html) return null;
   const text = String(html).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
   const patterns = [

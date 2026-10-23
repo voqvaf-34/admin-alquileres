@@ -19,10 +19,10 @@ class MetodosImportacion {
   // Suma alquileres y administraciones de una planilla a lo que ya hay, en un solo paso.
   // Se saltean los repetidos (misma direccion, inquilino y fecha de inicio) y las administraciones
   // con un nombre que ya existe. Los propietarios se vinculan por nombre (o se crean).
-  addImported({ contracts, admins = [] }, nameKey) {
-    const clave = c => [nameKey(c.direccion), nameKey(c.inquilino || ''), c.fechaInicio || ''].join('|');
+  addImported({ contracts, admins = [] }, claveNombre) {
+    const clave = c => [claveNombre(c.direccion), claveNombre(c.inquilino || ''), c.fechaInicio || ''].join('|');
     const ya = new Set(this.listContracts().map(clave));
-    const adminsYa = new Set(this.listAdmins().map(a => nameKey(a.nombre)));
+    const adminsYa = new Set(this.listAdmins().map(a => claveNombre(a.nombre)));
     const res = { agregados: 0, repetidos: 0, admins: 0 };
     this.transaction(() => {
       for (const c of contracts) {
@@ -30,12 +30,12 @@ class MetodosImportacion {
         if (ya.has(k)) { res.repetidos++; continue; }
         ya.add(k);
         const id = this._insertContract(c);
-        if (c.propietario) this._linkOwnersFromText(id, c.propietario, c.telProp, c.mailProp, nameKey);
+        if (c.propietario) this._linkOwnersFromText(id, c.propietario, c.telProp, c.mailProp, claveNombre);
         res.agregados++;
       }
       for (const a of admins) {
-        if (adminsYa.has(nameKey(a.nombre))) continue;
-        adminsYa.add(nameKey(a.nombre));
+        if (adminsYa.has(claveNombre(a.nombre))) continue;
+        adminsYa.add(claveNombre(a.nombre));
         this.db.run('INSERT INTO admins (nombre, edificios, telefono, mail) VALUES (?,?,?,?)', [s(a.nombre), s(a.edificios), s(a.telefono), s(a.mail)]);
         res.admins++;
       }

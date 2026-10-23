@@ -38,7 +38,7 @@ function parseContractsSheet(ws) {
     const g = c => { const cell = ws[XLSX.utils.encode_cell({r, c})]; return cell ? cell.v : null; };
     const a = g(0), b = g(1);
     if (a && typeof a === 'number' && a >= 2020 && a <= 2035) continue;
-    if (b && typeof b === 'string' && D.MONTH_MAP[b.trim().toUpperCase().replace(/\s+/g,'')]) continue;
+    if (b && typeof b === 'string' && D.MAPA_MESES[b.trim().toUpperCase().replace(/\s+/g,'')]) continue;
     if (b && typeof b === 'string' && ['MES','DIRECCCION','NUMERO'].includes(b.trim().toUpperCase())) continue;
     if (a && typeof a === 'string' && ['NUMERO','MES'].includes(a.trim().toUpperCase())) continue;
     if (!b || typeof b !== 'string') continue;
@@ -51,9 +51,9 @@ function parseContractsSheet(ws) {
     const ultRaw = g(6);
     let ultimoAumento = null, remitente = '';
     if (typeof ultRaw === 'number' && ultRaw > 30000) {
-      ultimoAumento = D.excelDate(ultRaw);
+      ultimoAumento = D.fechaExcel(ultRaw);
     } else if (typeof ultRaw === 'string' && ultRaw.trim()) {
-      const asDate = D.parseMonthYear(ultRaw);
+      const asDate = D.interpretarMesAnio(ultRaw);
       if (asDate) ultimoAumento = asDate;
       else remitente = ultRaw.trim().replace(/^(MANDA|ENVIA)\s+/i, '').trim();
     }
@@ -61,7 +61,7 @@ function parseContractsSheet(ws) {
     const fechaRaw = g(9);
     let fecha = null;
     if (fechaRaw instanceof Date) fecha = new Date(fechaRaw.getUTCFullYear(), fechaRaw.getUTCMonth(), fechaRaw.getUTCDate());
-    else if (typeof fechaRaw === 'number') fecha = D.excelDate(fechaRaw);
+    else if (typeof fechaRaw === 'number') fecha = D.fechaExcel(fechaRaw);
 
     out.push({
       sourceRow:     r,
@@ -70,11 +70,11 @@ function parseContractsSheet(ws) {
       telProp:       str(g(3)),
       mailProp:      str(g(4)),
       importeBase,
-      importe:       D.parseUYAmount(g(7)) || importeBase,
-      ultimoAumento: D.toISODate(ultimoAumento),
+      importe:       D.interpretarImporteUY(g(7)) || importeBase,
+      ultimoAumento: D.aFechaISO(ultimoAumento),
       remitente,
       contratoStr:   str(g(8)),
-      fechaInicio:   D.toISODate(fecha),
+      fechaInicio:   D.aFechaISO(fecha),
       inquilino:     str(g(10)),
       telInq:        str(g(11)),
       mailInq:       str(g(12)),
@@ -101,7 +101,7 @@ function parseAdminSheet(ws) {
 }
 
 const hoja = (wb, ...nombres) => {
-  const n = wb.SheetNames.find(x => nombres.includes(D.norm(x).trim()));
+  const n = wb.SheetNames.find(x => nombres.includes(D.normalizar(x).trim()));
   return n ? wb.Sheets[n] : null;
 };
 

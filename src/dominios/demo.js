@@ -1,7 +1,7 @@
 // Datos de ejemplo (todos inventados) para probar la app o mostrarla sin datos reales.
 // Las fechas se calculan desde "hoy", asi siempre hay aumentos del mes, renovaciones
 // proximas, un vencido sin resolver, delegados, inactivos y un apto ya renovado.
-import { fmtDate, toISODate } from './fechas.js';
+import { formatearFecha, aFechaISO } from './fechas.js';
 
 // Fecha a partir de hoy: anios atras y dias de corrimiento.
 const desde = (hoy, anios, dias = 0) => new Date(hoy.getFullYear() - anios, hoy.getMonth(), hoy.getDate() + dias);
@@ -31,7 +31,7 @@ export function datosDemo(hoy = new Date()) {
     return {
       sourceRow: n, direccion, propietario: P[prop], telProp: telDe[prop], mailProp: mail(P[prop].split(' / ')[0]),
       importeBase: importe, importe, moneda: importe < 10000 ? 'USD' : 'UYU', ultimoAumento: null, remitente: '', contratoStr,
-      fechaInicio: toISODate(fechaInicio), inquilino, telInq: tel(200 + n), mailInq: mail(inquilino), notas: '', inactive: false,
+      fechaInicio: aFechaISO(fechaInicio), inquilino, telInq: tel(200 + n), mailInq: mail(inquilino), notas: '', inactive: false,
       ...extra,
     };
   };
@@ -80,7 +80,7 @@ export function datosDemo(hoy = new Date()) {
   const renovado = contracts.find(c => c.direccion === 'Edificio Araza - Bv. Artigas 1610 U1002');
   const vencio = desde(hoy, 0, -120);
   const marks = {
-    [`v|${renovado.direccion}`]: { date: fmtDate(desde(hoy, 0, -125)), nuevaInicio: fmtDate(vencio), renewYears: 2 },
+    [`v|${renovado.direccion}`]: { date: formatearFecha(desde(hoy, 0, -125)), nuevaInicio: formatearFecha(vencio), renewYears: 2 },
   };
 
   return { contracts, admins, marks };

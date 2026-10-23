@@ -1,6 +1,6 @@
 // Pestaña Administraciones: tabla y formulario.
 import { nuevosPrimero, puntoNuevo } from '../componentes/novedades.js';
-import { norm } from '../../../dominios/index.js';
+import { normalizar } from '../../../dominios/index.js';
 import { render } from '../app.js';
 import { call } from '../nucleo/api.js';
 import { esc, showToast } from '../nucleo/dom.js';
@@ -14,12 +14,12 @@ let adminEditRow     = null;  // id de la administracion en edicion (null = alta
 function getAdminFiltered() {
   if (!estado.admins) return [];
   if (!adminSearchText.trim()) return estado.admins;
-  const q = norm(adminSearchText);
+  const q = normalizar(adminSearchText);
   return estado.admins.filter(a =>
-    norm(a.nombre).includes(q) ||
-    norm(a.edificios).includes(q) ||
-    norm(a.telefono).includes(q) ||
-    norm(a.mail).includes(q)
+    normalizar(a.nombre).includes(q) ||
+    normalizar(a.edificios).includes(q) ||
+    normalizar(a.telefono).includes(q) ||
+    normalizar(a.mail).includes(q)
   );
 }
 

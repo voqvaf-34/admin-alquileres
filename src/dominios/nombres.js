@@ -1,11 +1,9 @@
 // Nombres y direcciones: formato "Juan de los Santos" y "Edificio - Calle 1234 U601".
-export { key } from './texto.js';
-
-const LOWER = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y', 'e', 'da', 'do', 'dos', 'van', 'von']);
-const UPPER = new Set(['srl', 'sa', 's.a.', 'sas', 'ltda', 'bps', 'ute', 'antel', 'gge', 'ph', 'w2', 'iii', 'ii', 'iv', 'bs', 'as', 'sd']);
+const MINUSCULAS = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y', 'e', 'da', 'do', 'dos', 'van', 'von']);
+const SIGLAS = new Set(['srl', 'sa', 's.a.', 'sas', 'ltda', 'bps', 'ute', 'antel', 'gge', 'ph', 'w2', 'iii', 'ii', 'iv', 'bs', 'as', 'sd']);
 
 // "JUAN DE LOS SANTOS" -> "Juan de los Santos"; respeta siglas y codigos con numeros (W2, U601).
-export function titleCase(s) {
+export function mayusculasIniciales(s) {
   const str = String(s || '').replace(/\s+/g, ' ').trim();
   if (!str) return '';
   let first = true;
@@ -14,8 +12,8 @@ export function titleCase(s) {
     const low = tok.toLocaleLowerCase('es');
     let out;
     if (/\d/.test(tok)) out = tok.toUpperCase();
-    else if (UPPER.has(low)) out = tok.toUpperCase();
-    else if (!first && LOWER.has(low)) out = low;
+    else if (SIGLAS.has(low)) out = tok.toUpperCase();
+    else if (!first && MINUSCULAS.has(low)) out = low;
     else out = low.charAt(0).toLocaleUpperCase('es') + low.slice(1);
     first = false;
     return out;
@@ -23,7 +21,7 @@ export function titleCase(s) {
 }
 
 // Arma el nombre a mostrar: "Edificio - Calle 1234 U601" (partes opcionales).
-export function formatAddress({ edificio, calle, unidad }) {
+export function formatearDireccion({ edificio, calle, unidad }) {
   const left = String(edificio || '').trim(), mid = String(calle || '').trim(), u = String(unidad || '').trim();
   const unitTxt = u ? (/^\d/.test(u) ? `U${u}` : u) : '';
   const right = [mid, unitTxt].filter(Boolean).join(' ');
@@ -32,7 +30,7 @@ export function formatAddress({ edificio, calle, unidad }) {
 }
 
 // Separa texto libre en edificio / calle / unidad / nota. Heuristica: se revisa con reglas.
-export function parseAddress(raw) {
+export function interpretarDireccion(raw) {
   let s = String(raw || '').replace(/\s+/g, ' ').trim();
   const notes = [];
   s = s.replace(/\(([^)]*)\)/g, (_, n) => { notes.push(n.trim()); return ' '; });
@@ -81,7 +79,7 @@ export function parseAddress(raw) {
   }
   if (unidad) unidad += extraTxt; else if (extraTxt) notes.push(extraTxt.trim());
   return {
-    edificio: titleCase(edificio), calle: titleCase(calle), unidad,
-    nota: notes.filter(Boolean).map(n => titleCase(n)).join('; '),
+    edificio: mayusculasIniciales(edificio), calle: mayusculasIniciales(calle), unidad,
+    nota: notes.filter(Boolean).map(n => mayusculasIniciales(n)).join('; '),
   };
 }
