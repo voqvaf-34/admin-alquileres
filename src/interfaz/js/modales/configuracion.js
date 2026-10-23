@@ -6,11 +6,9 @@ import { COLORES_SUGERIDOS, FUENTES, ICONOS_APP, colorConPocoContraste, PLANTILL
 import { dibujarIcono, imagenCuadrada } from '../componentes/iconos.js';
 import { aplicarMarca, pintarApariencia } from '../componentes/marca.js';
 import { call } from '../nucleo/api.js';
-import { esc, showToast } from '../nucleo/dom.js';
+import { $, cargarImagen, esc, leerComoDataURL, showToast } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
 import { closeModal, openModal } from '../nucleo/modales.js';
-
-const $ = id => document.getElementById(id);
 
 // Lo que se esta editando (el icono "aplanado": iconoTipo, iconoDiseno, iconoColor, iconoImagen).
 let borrador = {};
@@ -128,8 +126,7 @@ function armarIcono() {
     const file = e.target.files[0]; e.target.value = '';
     if (!file) { if (!borrador.iconoImagen) { borrador.iconoTipo = 'app'; pintarBorrador(); } return; }
     try {
-      const url = await new Promise((ok, mal) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = mal; fr.readAsDataURL(file); });
-      borrador.iconoImagen = await imagenCuadrada(url);
+      borrador.iconoImagen = await imagenCuadrada(await leerComoDataURL(file));
       borrador.iconoTipo = 'imagen';
     } catch (_) { showToast('No se pudo leer la imagen.', 'err'); }
     pintarBorrador();
@@ -337,30 +334,19 @@ function terminarAsistente() {
 }
 
 // Achica la imagen para que la base no crezca de mas (el logo se guarda dentro de la base).
-function leerLogo(file) {
-  return new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onerror = () => reject(new Error('No se pudo leer la imagen.'));
-    fr.onload = () => {
-      const url = fr.result;
-      if (file.type === 'image/svg+xml') {
-        if (url.length > LOGO_MAX_BYTES) return reject(new Error('El SVG es demasiado grande.'));
-        return resolve(url);
-      }
-      const img = new Image();
-      img.onerror = () => reject(new Error('El archivo no es una imagen valida.'));
-      img.onload = () => {
-        const k = Math.min(1, LOGO_MAX_ALTO / img.height, LOGO_MAX_ANCHO / img.width);
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        const out = c.toDataURL('image/png');
-        resolve(out.length > LOGO_MAX_BYTES ? c.toDataURL('image/webp', 0.9) : out);
-      };
-      img.src = url;
-    };
-    fr.readAsDataURL(file);
-  });
+async function leerLogo(file) {
+  const url = await leerComoDataURL(file);
+  if (file.type === 'image/svg+xml') {
+    if (url.length > LOGO_MAX_BYTES) throw new Error('El SVG es demasiado grande.');
+    return url;
+  }
+  const img = await cargarImagen(url);
+  const k = Math.min(1, LOGO_MAX_ALTO / img.height, LOGO_MAX_ANCHO / img.width);
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  const out = c.toDataURL('image/png');
+  return out.length > LOGO_MAX_BYTES ? c.toDataURL('image/webp', 0.9) : out;
 }
 
 async function guardar() {

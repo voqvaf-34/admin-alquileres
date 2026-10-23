@@ -1,6 +1,7 @@
 // Icono de la app: prediseñado (un dibujo sobre un color), generado del logo o imagen propia.
 // Se dibuja en un canvas y se manda como PNG al proceso principal.
 import { paleta } from '../../../dominios/index.js';
+import { cargarImagen } from '../nucleo/dom.js';
 
 // Dibujos en coordenadas 0..1 (el canvas ya esta escalado); "tinta" es el color del dibujo y
 // "fondo" el del cuadrado (para "recortar" ventanas y puertas).
@@ -42,13 +43,6 @@ const DIBUJOS = {
     g.fillText(letra, 0.5, 0.53);
   },
 };
-
-const cargarImagen = src => new Promise((resolve, reject) => {
-  const img = new Image();
-  img.onload = () => resolve(img);
-  img.onerror = () => reject(new Error('No se pudo leer la imagen.'));
-  img.src = src;
-});
 
 function cuadrado(lado, color) {
   const c = document.createElement('canvas');

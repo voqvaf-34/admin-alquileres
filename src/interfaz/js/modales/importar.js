@@ -2,12 +2,10 @@
 // descargar la planilla modelo.
 import { applyState, render } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { esc, showToast } from '../nucleo/dom.js';
+import { $, esc, showToast } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
 import { closeModal, openModal } from '../nucleo/modales.js';
 import { populateDBYears } from '../vistas/base-datos.js';
-
-const $ = id => document.getElementById(id);
 
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 
