@@ -3,47 +3,47 @@ const { claveNombre } = require('../../dominios/index.js');
 const { s } = require('./util');
 class MetodosPropietarios {
   // ── propietarios y contactos ─────────────────────────────────────────────
-  listOwners() {
-    return this.all(`SELECT id, nombre, telefono, mail, notas, contact_id AS contactId, cedula, domicilio,
+  listarPropietarios() {
+    return this.consultar(`SELECT id, nombre, telefono, mail, notas, contact_id AS contactId, cedula, domicilio,
       estado_civil AS estadoCivil, cuenta_cobro AS cuentaCobro FROM owners ORDER BY nombre COLLATE NOCASE`);
   }
-  listOwnerDocs() {
-    return this.all('SELECT id, owner_id AS ownerId, tipo, archivo, nombre_original AS nombreOriginal, created_at AS creado FROM owner_docs ORDER BY id');
+  listarDocsPropietarios() {
+    return this.consultar('SELECT id, owner_id AS ownerId, tipo, archivo, nombre_original AS nombreOriginal, created_at AS creado FROM owner_docs ORDER BY id');
   }
-  listOwnerAccounts() { return this.all('SELECT owner_id AS ownerId, direccion, cuenta FROM owner_accounts'); }
+  listarCuentasPropietarios() { return this.consultar('SELECT owner_id AS ownerId, direccion, cuenta FROM owner_accounts'); }
 
-  addOwnerDoc(ownerId, tipo, archivo, nombreOriginal) {
-    this.transaction(() => this.db.run('INSERT INTO owner_docs (owner_id, tipo, archivo, nombre_original) VALUES (?,?,?,?)',
+  agregarDocPropietario(ownerId, tipo, archivo, nombreOriginal) {
+    this.transaccion(() => this.db.run('INSERT INTO owner_docs (owner_id, tipo, archivo, nombre_original) VALUES (?,?,?,?)',
       [ownerId, s(tipo) || 'cedula', archivo, s(nombreOriginal)]));
   }
-  getOwnerDoc(id) {
-    const [d] = this.all('SELECT id, owner_id AS ownerId, archivo, nombre_original AS nombreOriginal FROM owner_docs WHERE id=?', [id]);
+  obtenerDocPropietario(id) {
+    const [d] = this.consultar('SELECT id, owner_id AS ownerId, archivo, nombre_original AS nombreOriginal FROM owner_docs WHERE id=?', [id]);
     return d || null;
   }
-  deleteOwnerDoc(id) { this.transaction(() => this.db.run('DELETE FROM owner_docs WHERE id=?', [id])); }
+  borrarDocPropietario(id) { this.transaccion(() => this.db.run('DELETE FROM owner_docs WHERE id=?', [id])); }
 
   // Cuenta / metodo de cobro de un propietario para un apto puntual ('' la borra).
-  setOwnerAccount(ownerId, direccion, cuenta) {
-    this.transaction(() => {
+  ponerCuentaPropietario(ownerId, direccion, cuenta) {
+    this.transaccion(() => {
       if (!s(cuenta)) this.db.run('DELETE FROM owner_accounts WHERE owner_id=? AND direccion=?', [ownerId, direccion]);
       else this.db.run(`INSERT INTO owner_accounts (owner_id, direccion, cuenta) VALUES (?,?,?)
         ON CONFLICT(owner_id, direccion) DO UPDATE SET cuenta=excluded.cuenta`, [ownerId, direccion, s(cuenta)]);
     });
   }
-  listContacts() { return this.all('SELECT id, nombre, rol, telefono, mail, notas FROM contacts ORDER BY nombre COLLATE NOCASE'); }
-  listContractOwners() {
-    return this.all('SELECT contract_id AS contractId, owner_id AS ownerId, orden FROM contract_owners ORDER BY contract_id, orden');
+  listarContactos() { return this.consultar('SELECT id, nombre, rol, telefono, mail, notas FROM contacts ORDER BY nombre COLLATE NOCASE'); }
+  listarPropietariosDeContratos() {
+    return this.consultar('SELECT contract_id AS contractId, owner_id AS ownerId, orden FROM contract_owners ORDER BY contract_id, orden');
   }
 
-  _contactExists(id) { return id == null || this.all('SELECT 1 FROM contacts WHERE id=?', [id]).length > 0; }
+  _existeContacto(id) { return id == null || this.consultar('SELECT 1 FROM contacts WHERE id=?', [id]).length > 0; }
 
-  saveOwner(o) {
+  guardarPropietario(o) {
     if (!s(o.nombre)) throw new Error('El nombre del propietario es obligatorio.');
     const contactId = o.contactId ? Number(o.contactId) : null;
-    if (!this._contactExists(contactId)) throw new Error('Contacto inexistente.');
+    if (!this._existeContacto(contactId)) throw new Error('Contacto inexistente.');
     const vals = [s(o.nombre), s(o.telefono), s(o.mail), s(o.notas), contactId,
                   s(o.cedula), s(o.domicilio), s(o.estadoCivil), s(o.cuentaCobro)];
-    return this.transaction(() => {
+    return this.transaccion(() => {
       if (o.id != null) {
         this.db.run(`UPDATE owners SET nombre=?, telefono=?, mail=?, notas=?, contact_id=?, cedula=?, domicilio=?,
           estado_civil=?, cuenta_cobro=? WHERE id=?`, [...vals, o.id]);
@@ -51,32 +51,32 @@ class MetodosPropietarios {
       }
       this.db.run(`INSERT INTO owners (nombre, telefono, mail, notas, contact_id, cedula, domicilio, estado_civil, cuenta_cobro)
         VALUES (?,?,?,?,?,?,?,?,?)`, vals);
-      return this.lastId();
+      return this.ultimoId();
     });
   }
 
-  deleteOwner(id) { this.transaction(() => this.db.run('DELETE FROM owners WHERE id=?', [id])); }
+  borrarPropietario(id) { this.transaccion(() => this.db.run('DELETE FROM owners WHERE id=?', [id])); }
 
-  saveContact(c) {
+  guardarContacto(c) {
     if (!s(c.nombre)) throw new Error('El nombre del contacto es obligatorio.');
     const vals = [s(c.nombre), s(c.rol), s(c.telefono), s(c.mail), s(c.notas)];
-    return this.transaction(() => {
+    return this.transaccion(() => {
       if (c.id != null) { this.db.run('UPDATE contacts SET nombre=?, rol=?, telefono=?, mail=?, notas=? WHERE id=?', [...vals, c.id]); return c.id; }
       this.db.run('INSERT INTO contacts (nombre, rol, telefono, mail, notas) VALUES (?,?,?,?,?)', vals);
-      return this.lastId();
+      return this.ultimoId();
     });
   }
 
-  deleteContact(id) { this.transaction(() => this.db.run('DELETE FROM contacts WHERE id=?', [id])); }
+  borrarContacto(id) { this.transaccion(() => this.db.run('DELETE FROM contacts WHERE id=?', [id])); }
 
   // Une "drop" dentro de "keep": pasa los aptos, completa datos vacios y suma notas.
-  mergeOwners(keepId, dropId) {
+  unificarPropietarios(keepId, dropId) {
     if (keepId === dropId) throw new Error('No se puede unificar un propietario consigo mismo.');
-    const [keep] = this.all('SELECT * FROM owners WHERE id=?', [keepId]);
-    const [drop] = this.all('SELECT * FROM owners WHERE id=?', [dropId]);
+    const [keep] = this.consultar('SELECT * FROM owners WHERE id=?', [keepId]);
+    const [drop] = this.consultar('SELECT * FROM owners WHERE id=?', [dropId]);
     if (!keep || !drop) throw new Error('Propietario inexistente.');
     const notas = [keep.notas, drop.notas, `Unificado con: ${drop.nombre}`].filter(x => x && x.trim()).join('\n');
-    this.transaction(() => {
+    this.transaccion(() => {
       this.db.run(`INSERT OR IGNORE INTO contract_owners (contract_id, owner_id, orden)
                    SELECT contract_id, ?, orden FROM contract_owners WHERE owner_id=?`, [keepId, dropId]);
       this.db.run(`INSERT OR IGNORE INTO owner_accounts (owner_id, direccion, cuenta)
@@ -91,10 +91,10 @@ class MetodosPropietarios {
     });
   }
 
-  setContractOwners(contractId, ownerIds) {
-    this.transaction(() => this._setContractOwners(contractId, ownerIds));
+  asignarPropietariosContrato(contractId, ownerIds) {
+    this.transaccion(() => this._asignarPropietariosContrato(contractId, ownerIds));
   }
-  _setContractOwners(contractId, ownerIds) {
+  _asignarPropietariosContrato(contractId, ownerIds) {
     this.db.run('DELETE FROM contract_owners WHERE contract_id=?', [contractId]);
     [...new Set(ownerIds)].forEach((oid, i) =>
       this.db.run('INSERT INTO contract_owners (contract_id, owner_id, orden) VALUES (?,?,?)', [contractId, oid, i]));
@@ -102,12 +102,12 @@ class MetodosPropietarios {
 
   // Vincula un contrato a partir del texto del modal ("A / B"): reutiliza propietarios
   // existentes por nombre y crea los que falten (con tel/mail si es uno solo).
-  linkOwnersFromText(contractId, text, telefono, mail, claveNombre) {
-    this.transaction(() => this._linkOwnersFromText(contractId, text, telefono, mail, claveNombre));
+  vincularPropietariosDesdeTexto(contractId, text, telefono, mail, claveNombre) {
+    this.transaccion(() => this._vincularPropietariosDesdeTexto(contractId, text, telefono, mail, claveNombre));
   }
-  _linkOwnersFromText(contractId, text, telefono, mail, claveNombre) {
+  _vincularPropietariosDesdeTexto(contractId, text, telefono, mail, claveNombre) {
     const names = String(text || '').split(/\s*\/{1,}\s*/).map(x => x.trim()).filter(Boolean);
-    const existing = this.listOwners();
+    const existing = this.listarPropietarios();
     const ids = names.map(n => {
       const found = existing.find(o => claveNombre(o.nombre) === claveNombre(n));
       if (found) {
@@ -119,18 +119,18 @@ class MetodosPropietarios {
       }
       this.db.run('INSERT INTO owners (nombre, telefono, mail) VALUES (?,?,?)',
         [n, names.length === 1 ? s(telefono) : '', names.length === 1 ? s(mail) : '']);
-      return this.lastId();
+      return this.ultimoId();
     });
-    this._setContractOwners(contractId, ids);
+    this._asignarPropietariosContrato(contractId, ids);
   }
 
   // Aplica el plan del unificador (reemplaza propietarios, contactos y vinculos).
-  applyOwnersPlan(plan) {
+  aplicarPlanPropietarios(plan) {
     // Los datos cargados a mano (cedula, documentos, cuentas...) se conservan por nombre.
-    const prevOwners = new Map(this.all('SELECT * FROM owners').map(o => [claveNombre(o.nombre), o]));
-    const prevDocs = this.all('SELECT * FROM owner_docs');
-    const prevAccounts = this.all('SELECT * FROM owner_accounts');
-    return this.transaction(() => {
+    const prevOwners = new Map(this.consultar('SELECT * FROM owners').map(o => [claveNombre(o.nombre), o]));
+    const prevDocs = this.consultar('SELECT * FROM owner_docs');
+    const prevAccounts = this.consultar('SELECT * FROM owner_accounts');
+    return this.transaccion(() => {
       this.db.run('DELETE FROM contract_owners');
       this.db.run('DELETE FROM owners');
       this.db.run('DELETE FROM contacts');
@@ -138,13 +138,13 @@ class MetodosPropietarios {
       for (const c of plan.contacts) {
         this.db.run('INSERT INTO contacts (nombre, rol, telefono, mail, notas) VALUES (?,?,?,?,?)',
           [c.nombre, c.rol, c.telefono, c.mail, c.notas]);
-        contactIds.set(c.key, this.lastId());
+        contactIds.set(c.key, this.ultimoId());
       }
       const ownerIds = new Map();
       for (const o of plan.owners) {
         this.db.run('INSERT INTO owners (nombre, telefono, mail, notas, contact_id) VALUES (?,?,?,?,?)',
           [o.nombre, o.telefono, o.mail, o.notas, o.contactKey ? contactIds.get(o.contactKey) : null]);
-        ownerIds.set(o.key, this.lastId());
+        ownerIds.set(o.key, this.ultimoId());
       }
       for (const l of plan.links) {
         this.db.run('INSERT OR IGNORE INTO contract_owners (contract_id, owner_id, orden) VALUES (?,?,?)',

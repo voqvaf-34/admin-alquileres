@@ -15,15 +15,15 @@ export function paintUndo(st) {
   r.title = st.canRedo ? `Rehacer: ${st.redoLabel} (Ctrl+Y)` : 'Nada para rehacer';
 }
 
-async function doUndo(redo) {
+async function doUndo(rehacer) {
   try {
     await _marksSaving;
-    const r = await call(redo ? 'redo' : 'undo');
+    const r = await call(rehacer ? 'rehacerCambio' : 'deshacerCambio');
     limpiarPendientes();
     applyState(r.state);
     populateDBYears();
     render();
-    showToast(`${redo ? '&#8631; Rehecho' : '&#8630; Deshecho'}: ${esc(r.label)}`, 'info');
+    showToast(`${rehacer ? '&#8631; Rehecho' : '&#8630; Deshecho'}: ${esc(r.label)}`, 'info');
   } catch (err) {
     showToast(esc(err.message), 'info');
   }
@@ -32,7 +32,7 @@ async function doUndo(redo) {
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
   // Deshacer / rehacer: botones, Ctrl+Z y Ctrl+Y (o Ctrl+Shift+Z).
-  window.api.onUndoChanged(paintUndo);
+  window.api.alCambiarDeshacer(paintUndo);
   document.getElementById('btn-undo').addEventListener('click', () => doUndo(false));
   document.getElementById('btn-redo').addEventListener('click', () => doUndo(true));
   document.addEventListener('keydown', e => {

@@ -7,14 +7,14 @@ import { estado } from '../nucleo/estado.js';
 function setIPC(value) {
   estado.ipc = value;
   document.getElementById('inp-ipc').value = estado.ipc;
-  call('setSetting', 'ipc', estado.ipc).catch(() => {});
+  call('guardarAjuste', 'ipc', estado.ipc).catch(() => {});
 }
 
-export async function fetchIPC() {
+export async function consultarIPC() {
   const btn = document.getElementById('btn-ipc-fetch'), period = document.getElementById('ipc-period');
   btn.textContent = '...'; btn.disabled = true; period.textContent = '';
   try {
-    const r = await call('fetchIPC');
+    const r = await call('consultarIPC');
     if (r.ok) {
       setIPC(r.ipc);
       const mes = D.MES_ES[r.month];

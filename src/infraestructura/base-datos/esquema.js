@@ -1,5 +1,5 @@
 // Tablas de la base (SQLite) y columnas agregadas en versiones posteriores.
-const SCHEMA = `
+const ESQUEMA = `
 CREATE TABLE IF NOT EXISTS contracts (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
   direccion      TEXT    NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS owner_accounts (
 `;
 
 // Columnas agregadas despues de la primera version (las bases existentes se migran).
-const ADDED_COLUMNS = [
+const COLUMNAS_AGREGADAS = [
   ['contracts', 'edificio',           "TEXT NOT NULL DEFAULT ''"],
   ['contracts', 'calle',              "TEXT NOT NULL DEFAULT ''"],
   ['contracts', 'unidad',             "TEXT NOT NULL DEFAULT ''"],
@@ -89,4 +89,4 @@ const ADDED_COLUMNS = [
   ['owners',    'cuenta_cobro',       "TEXT NOT NULL DEFAULT ''"],
 ];
 
-module.exports = { SCHEMA, ADDED_COLUMNS };
+module.exports = { ESQUEMA, COLUMNAS_AGREGADAS };

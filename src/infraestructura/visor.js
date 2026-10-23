@@ -2,29 +2,29 @@
 const { app, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { Store } = require('./base-datos');
+const { BaseDatos } = require('./base-datos');
 const share = require('./compartir');
 const { ctx } = require('./contexto');
-const { DEFAULT_SHARED_DIR, POLL_MS } = require('./config');
+const { CARPETA_COMPARTIDA_PREDETERMINADA, INTERVALO_SONDEO_MS } = require('./config');
 const estadoApp = require('./estado-app');
 
 
-function viewerConfigFile() { return path.join(app.getPath('userData'), 'visor.json'); }
+function archivoConfigVisor() { return path.join(app.getPath('userData'), 'visor.json'); }
 
-function viewerStatus() { return { dir: ctx.viewer.dir, lastLoad: ctx.viewer.lastLoad, publicado: ctx.viewer.dir ? (share.readInfo(ctx.viewer.dir) || {}).publicado : null, error: ctx.viewer.error }; }
+function estadoVisor() { return { dir: ctx.viewer.dir, lastLoad: ctx.viewer.lastLoad, publicado: ctx.viewer.dir ? (share.leerInfo(ctx.viewer.dir) || {}).publicado : null, error: ctx.viewer.error }; }
 
-async function loadViewer() {
+async function cargarVisor() {
   if (!ctx.viewer.dir) {
     let cfg = {};
-    try { cfg = JSON.parse(fs.readFileSync(viewerConfigFile(), 'utf8')); } catch (_) {}
-    ctx.viewer.dir = process.env.ADMIN_ALQ_SHARED_DIR || cfg.sharedDir || DEFAULT_SHARED_DIR;
+    try { cfg = JSON.parse(fs.readFileSync(archivoConfigVisor(), 'utf8')); } catch (_) {}
+    ctx.viewer.dir = process.env.ADMIN_ALQ_SHARED_DIR || cfg.sharedDir || CARPETA_COMPARTIDA_PREDETERMINADA;
   }
   if (!ctx.viewer.dir) { ctx.viewer.error = 'Todavía no se eligió la carpeta compartida.'; return; }
   try {
-    const next = await Store.open(share.sharedDbPath(ctx.viewer.dir), { readOnly: true });
+    const next = await BaseDatos.open(share.rutaBaseCompartida(ctx.viewer.dir), { readOnly: true });
     if (ctx.store) ctx.store.close();
     ctx.store = next;
-    ctx.viewer.mtime = share.dbMtime(ctx.viewer.dir);
+    ctx.viewer.mtime = share.fechaModBase(ctx.viewer.dir);
     ctx.viewer.lastLoad = new Date().toISOString();
     ctx.viewer.error = null;
   } catch (e) {
@@ -32,28 +32,28 @@ async function loadViewer() {
   }
 }
 
-function startViewerPolling() {
+function iniciarSondeoVisor() {
   setInterval(async () => {
-    const m = ctx.viewer.dir && share.dbMtime(ctx.viewer.dir);
+    const m = ctx.viewer.dir && share.fechaModBase(ctx.viewer.dir);
     if (!m || m === ctx.viewer.mtime) return;
     await new Promise(r => setTimeout(r, 400));            // que termine de escribirse
-    await loadViewer();
-    if (ctx.win && !ctx.win.isDestroyed()) ctx.win.webContents.send('data:changed', viewerStatus());
-  }, POLL_MS);
+    await cargarVisor();
+    if (ctx.win && !ctx.win.isDestroyed()) ctx.win.webContents.send('data:changed', estadoVisor());
+  }, INTERVALO_SONDEO_MS);
 }
 
-async function pickViewerDir() {
+async function elegirCarpetaVisor() {
   const res = await dialog.showOpenDialog(ctx.win, {
     title: 'Elegir la carpeta compartida de Admin Alquileres', properties: ['openDirectory'],
-    defaultPath: DEFAULT_SHARED_DIR && fs.existsSync(DEFAULT_SHARED_DIR) ? DEFAULT_SHARED_DIR : undefined,
+    defaultPath: CARPETA_COMPARTIDA_PREDETERMINADA && fs.existsSync(CARPETA_COMPARTIDA_PREDETERMINADA) ? CARPETA_COMPARTIDA_PREDETERMINADA : undefined,
   });
   if (res.canceled || !res.filePaths[0]) return null;
   const dir = res.filePaths[0];
-  if (!fs.existsSync(share.sharedDbPath(dir))) throw new Error('En esa carpeta no está la base compartida (alquileres.sqlite).');
+  if (!fs.existsSync(share.rutaBaseCompartida(dir))) throw new Error('En esa carpeta no está la base compartida (alquileres.sqlite).');
   ctx.viewer.dir = dir;
-  fs.writeFileSync(viewerConfigFile(), JSON.stringify({ sharedDir: dir }));
-  await loadViewer();
+  fs.writeFileSync(archivoConfigVisor(), JSON.stringify({ sharedDir: dir }));
+  await cargarVisor();
   return estadoApp.state();
 }
 
-Object.assign(module.exports, { viewerStatus, loadViewer, startViewerPolling, pickViewerDir });
+Object.assign(module.exports, { estadoVisor, cargarVisor, iniciarSondeoVisor, elegirCarpetaVisor });

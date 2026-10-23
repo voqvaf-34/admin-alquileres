@@ -99,9 +99,9 @@ function setDuracionOption(value) {
 function garantiaOptions() {
   let extra = [];
   try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
-  const all = [...D.GARANTIAS_PREDETERMINADAS, ...extra, ...estado.entries.map(e => e.garantia)].filter(Boolean);
+  const todas = [...D.GARANTIAS_PREDETERMINADAS, ...extra, ...estado.entries.map(e => e.garantia)].filter(Boolean);
   const seen = new Set();
-  return all.filter(g => { const k = g.toUpperCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  return todas.filter(g => { const k = g.toUpperCase(); if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
 function setGarantiaOptions(value) {
@@ -133,7 +133,7 @@ function addGarantiaOption(name) {
     try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
     extra.push(name);
     estado.appSettings.garantias = JSON.stringify(extra);
-    call('setSetting', 'garantias', estado.appSettings.garantias).catch(() => {});
+    call('guardarAjuste', 'garantias', estado.appSettings.garantias).catch(() => {});
   }
   setGarantiaOptions(exists || name);
 }
@@ -146,7 +146,7 @@ function hideAddModal() {
 export async function deleteEntry(id, dir) {
   if (!confirm(`Marcar "${dir}" como INACTIVO?\n\nDejara de aparecer en aumentos y renovaciones.`)) return;
   try {
-    replaceEntry(await call('inactivate', id));
+    replaceEntry(await call('inactivar', id));
     showToast('&#10003; Alquiler marcado como inactivo', 'ok');
     estado.expandedRows.delete(id);
     render();
@@ -187,8 +187,8 @@ async function submitAddEntry() {
   btn.textContent = 'Guardando...';
   try {
     const res = isEdit
-      ? await call('updateContract', editingEntry.id, payload)
-      : await call('addContract', payload);
+      ? await call('editarContrato', editingEntry.id, payload)
+      : await call('agregarContrato', payload);
     applyOwners(res);
     replaceEntry(res.contract);
     showToast(isEdit ? '&#10003; Alquiler actualizado' : '&#10003; Alquiler agregado correctamente', 'ok');

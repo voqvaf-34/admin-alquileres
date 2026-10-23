@@ -46,13 +46,13 @@ export function aplicarMarca(settings) {
   const p = paleta(marca.color, marca.color2);
   if (marca.color !== ultimoColor) {
     ultimoColor = marca.color;
-    window.api.setTitleBarColor(p.header, p.headerInk).catch(() => {});
+    window.api.ponerColorBarraTitulo(p.header, p.headerInk).catch(() => {});
   }
   // Icono: se vuelve a dibujar solo si cambio algo que lo afecta.
   const clave = claveIcono(marca);
   if (clave !== ultimoIcono) {
     ultimoIcono = clave;
-    dibujarIcono(marca).then(png => window.api.setAppIcon(png)).catch(() => {});
+    dibujarIcono(marca).then(png => window.api.ponerIconoApp(png)).catch(() => {});
   }
   try {
     localStorage.setItem(CACHE, JSON.stringify({ vars: variablesCss(p, marca.fuente), tema: marca.tema, nombre: marca.nombre, logo: marca.logo }));

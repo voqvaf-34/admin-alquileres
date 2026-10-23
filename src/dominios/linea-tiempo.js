@@ -21,9 +21,9 @@ export function indicePorDireccion(contratos) {
 // comentarios. Las marcas se guardan por direccion, asi que solo cuentan las que caen dentro
 // del periodo de este contrato (hasta que empieza el siguiente en el mismo apto).
 // `all`: todos los contratos, o el indice de indicePorDireccion().
-export function renovaciones(e, marks, all) {
+export function renovaciones(e, marks, todos) {
   marks = marks || {};
-  const idx = all instanceof Map ? all : indicePorDireccion(all);
+  const idx = todos instanceof Map ? todos : indicePorDireccion(todos);
   const sig = e.fechaInicio && (idx.get(e.direccion) || []).find(x => x.id !== e.id && x.fechaInicio > e.fechaInicio);
   const desde = e.fechaInicio || new Date(0), hasta = sig ? sig.fechaInicio : null;
   const dentro = d => !!d && d >= desde && (!hasta || d < hasta);
@@ -49,8 +49,8 @@ export function renovaciones(e, marks, all) {
 
 // Linea de tiempo de UN contrato (no del apto): cuando entro y a cuanto, cuando vencio,
 // cada renovacion con su nuevo vencimiento, y como sigue. Solo tiene sentido si renovo.
-export function lineaTiempo(e, marks, all) {
-  const { lista, noRenueva } = renovaciones(e, marks, all);
+export function lineaTiempo(e, marks, todos) {
+  const { lista, noRenueva } = renovaciones(e, marks, todos);
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
   const money = n => (e.moneda === 'USD' ? 'US$ ' : '$') + Math.round(n).toLocaleString('es-UY');
   const plusYears = (d, y) => new Date(d.getFullYear() + y, d.getMonth(), Math.min(d.getDate(), 28));

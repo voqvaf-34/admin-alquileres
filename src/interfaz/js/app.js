@@ -20,7 +20,7 @@ import { aplicarMarca } from './componentes/marca.js';
 import { marcarVisto, pintarNovedades } from './componentes/novedades.js';
 import { paintSave, paintShare, paintViewer, viewerUseState } from './componentes/compartir.js';
 import { paintUndo } from './componentes/deshacer.js';
-import { fetchIPC } from './componentes/ipc.js';
+import { consultarIPC } from './componentes/ipc.js';
 import { call } from './nucleo/api.js';
 import { entryByDir, saveNotes, vencColor } from './nucleo/datos.js';
 import { esc, showToast } from './nucleo/dom.js';
@@ -39,7 +39,7 @@ export function applyState(st) {
   estado.appSettings = st.settings || {};
   aplicarMarca(estado.appSettings);
   applyOwners(st);
-  paintUndo(st.undo);
+  paintUndo(st.estadoDeshacer);
   if (st.share) paintShare(st.share);
   if (st.save) paintSave(st.save);
   if (st.viewer) paintViewer(st.viewer);
@@ -120,11 +120,11 @@ function showImportScreen() {
 async function loadState() {
   showAutoLoad();
   try {
-    const st = await call('getState');
+    const st = await call('obtenerEstado');
     if (st.mode === 'viewer') {
       document.body.classList.add('viewer');
       await viewerUseState(st);
-      if (!st.needsShared) fetchIPC();
+      if (!st.needsShared) consultarIPC();
       return;
     }
     applyState(st);
@@ -134,7 +134,7 @@ async function loadState() {
       return;
     }
     showApp();
-    fetchIPC();
+    consultarIPC();
   } catch (err) {
     showAutoLoad('Error al abrir la base de datos: ' + err.message);
   }
@@ -148,7 +148,7 @@ async function runImport(promise) {
     estado.expandedRows.clear();
     showApp();
     showToast(`&#10003; Importados ${res.counts.contracts} alquileres y ${res.counts.admins} administraciones`, 'ok');
-    fetchIPC();
+    consultarIPC();
     return true;
   } catch (err) {
     showToast('Error al importar: ' + esc(err.message), 'err');
@@ -157,11 +157,11 @@ async function runImport(promise) {
   }
 }
 
-export const importPick     = () => runImport(call('importPick'));
+export const elegirImportacion     = () => runImport(call('elegirImportacion'));
 
-export const importFromFile = file => {
+export const importarDesdeArchivo = file => {
   document.getElementById('drop-label').textContent = 'Importando...';
-  return runImport(call('importFromFile', file));
+  return runImport(call('importarDesdeArchivo', file));
 };
 
 // Conecta los eventos de esta parte de la pantalla.
@@ -183,8 +183,8 @@ export function iniciar() {
   selYearEl.addEventListener('change', e => { estado.selYear=+e.target.value; render(); });
 
   document.getElementById('inp-ipc').addEventListener('input', e => { estado.ipc=parseFloat(e.target.value)||0; render(); });
-  document.getElementById('inp-ipc').addEventListener('change', () => { call('setSetting', 'ipc', estado.ipc).catch(() => {}); });
-  document.getElementById('btn-ipc-fetch').addEventListener('click', fetchIPC);
+  document.getElementById('inp-ipc').addEventListener('change', () => { call('guardarAjuste', 'ipc', estado.ipc).catch(() => {}); });
+  document.getElementById('btn-ipc-fetch').addEventListener('click', consultarIPC);
   document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => { estado.activeTab=b.dataset.tab; marcarVisto(b.dataset.tab); render(); }));
 
   // Filtros resuelto / sin resolver (tabs operativas)
@@ -200,8 +200,8 @@ export function iniciar() {
   });
 
   // Importacion inicial / cabecera
-  document.getElementById('btn-autoload').addEventListener('click', importPick);
-  document.getElementById('btn-data-folder').addEventListener('click', () => call('openDataFolder').catch(() => {}));
+  document.getElementById('btn-autoload').addEventListener('click', elegirImportacion);
+  document.getElementById('btn-data-folder').addEventListener('click', () => call('abrirCarpetaDatos').catch(() => {}));
 
   // Drag & drop (pantalla de importacion)
   const dz = document.getElementById('dropzone');
@@ -209,24 +209,24 @@ export function iniciar() {
   dz.addEventListener('dragleave', ()=>dz.classList.remove('drag-over'));
   dz.addEventListener('drop', e=>{
     e.preventDefault(); dz.classList.remove('drag-over');
-    if (e.dataTransfer.files[0]) importFromFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files[0]) importarDesdeArchivo(e.dataTransfer.files[0]);
   });
-  dz.addEventListener('click', importPick);
+  dz.addEventListener('click', elegirImportacion);
   // Evita que soltar un archivo fuera de la zona navegue la ventana hacia el archivo.
   document.addEventListener('dragover', e => e.preventDefault());
   document.addEventListener('drop', e => e.preventDefault());
 
   document.getElementById('btn-export-csv').addEventListener('click', async () => {
     try {
-      const r = await call('exportCsv');
+      const r = await call('exportarCsv');
       if (r) showToast(`&#10003; Exportados ${r.files} archivos CSV`, 'ok');
     } catch (err) { showToast('Error al exportar: ' + esc(err.message), 'err'); }
   });
 
-  document.getElementById('btn-start-demo').addEventListener('click', () => runImport(call('loadDemo')));
+  document.getElementById('btn-start-demo').addEventListener('click', () => runImport(call('cargarDemo')));
 
   document.getElementById('btn-start-empty').addEventListener('click', async () => {
-    try { applyState(await call('startEmpty')); showApp(); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
+    try { applyState(await call('empezarVacio')); showApp(); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
   });
 }
 

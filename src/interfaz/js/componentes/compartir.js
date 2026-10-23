@@ -56,39 +56,39 @@ export function paintSave(st) {
 
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
-  window.api.onShareChanged(paintShare);
+  window.api.alCambiarCompartir(paintShare);
 
   document.getElementById('btn-share').addEventListener('click', async () => {
-    paintShare(await call('shareStatus').catch(() => shareInfo));
+    paintShare(await call('estadoCompartir').catch(() => shareInfo));
     document.getElementById('modal-share').classList.add('open');
   });
 
   document.getElementById('btn-share-publish').addEventListener('click', async () => {
-    try { paintShare(await call('sharePublish')); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
+    try { paintShare(await call('publicarCompartido')); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
   });
 
   document.getElementById('btn-share-pick').addEventListener('click', async () => {
-    try { paintShare(await call('sharePick')); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
+    try { paintShare(await call('elegirCarpetaCompartida')); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
   });
 
   document.getElementById('btn-share-disable').addEventListener('click', async () => {
     if (!confirm('Dejar de compartir con el Visor?\nLa copia que ya está en la carpeta compartida no se borra, pero deja de actualizarse.')) return;
-    try { paintShare(await call('shareDisable')); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
+    try { paintShare(await call('desactivarCompartir')); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
   });
 
   document.getElementById('btn-viewer-pick').addEventListener('click', async () => {
-    try { const st = await call('viewerPickDir'); if (st) viewerUseState(st); }
+    try { const st = await call('visorElegirCarpeta'); if (st) viewerUseState(st); }
     catch (err) { document.getElementById('viewer-setup-error').textContent = err.message; }
   });
 
   document.getElementById('btn-viewer-retry').addEventListener('click', async () => {
-    try { viewerUseState(await call('viewerReload')); } catch (err) { document.getElementById('viewer-setup-error').textContent = err.message; }
+    try { viewerUseState(await call('visorRecargar')); } catch (err) { document.getElementById('viewer-setup-error').textContent = err.message; }
   });
 
   // La app principal publico cambios: recargar manteniendo la pestaña y los filtros.
-  window.api.onDataChanged(async () => {
+  window.api.alCambiarDatos(async () => {
     try {
-      const st = await call('getState');
+      const st = await call('obtenerEstado');
       if (st.needsShared) return;
       applyState(st);
       populateDBYears();
@@ -97,7 +97,7 @@ export function iniciar() {
     } catch (_) {}
   });
 
-  window.api.onSaveChanged(st => {
+  window.api.alCambiarGuardado(st => {
     const wasOk = !document.getElementById('save-ind').classList.contains('err');
     paintSave(st);
     if (st && st.ok === false && wasOk) showToast('Error al guardar: ' + esc(st.error || ''), 'err');

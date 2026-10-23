@@ -2,22 +2,22 @@
 const { s } = require('./util');
 class MetodosAdministraciones {
   // ── administraciones ─────────────────────────────────────────────────────
-  listAdmins() { return this.all('SELECT id, nombre, edificios, telefono, mail FROM admins ORDER BY id'); }
+  listarAdmins() { return this.consultar('SELECT id, nombre, edificios, telefono, mail FROM admins ORDER BY id'); }
 
-  saveAdmin(a) {
+  guardarAdmin(a) {
     if (!s(a.nombre)) throw new Error('El nombre de la administracion es obligatorio.');
     const vals = [s(a.nombre), s(a.edificios), s(a.telefono), s(a.mail)];
-    return this.transaction(() => {
+    return this.transaccion(() => {
       if (a.id != null) {
         this.db.run('UPDATE admins SET nombre=?, edificios=?, telefono=?, mail=? WHERE id=?', [...vals, a.id]);
         return a.id;
       }
       this.db.run('INSERT INTO admins (nombre, edificios, telefono, mail) VALUES (?,?,?,?)', vals);
-      return this.lastId();
+      return this.ultimoId();
     });
   }
 
-  deleteAdmin(id) { this.transaction(() => this.db.run('DELETE FROM admins WHERE id=?', [id])); }
+  borrarAdmin(id) { this.transaccion(() => this.db.run('DELETE FROM admins WHERE id=?', [id])); }
 }
 
 module.exports = { MetodosAdministraciones };

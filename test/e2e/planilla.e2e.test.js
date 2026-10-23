@@ -43,9 +43,9 @@ test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
 
 test('importar planilla con la app en uso: agregar (sin repetir), reemplazar y deshacer', { timeout: 90000 }, async () => {
   const XLSX = require('xlsx');
-  const { templateWorkbook } = require('../../src/infraestructura/importador-excel');
+  const { libroModelo } = require('../../src/infraestructura/importador-excel');
   const archivo = path.join(tmpDir('alq-planilla-'), 'mis-alquileres.xlsx');
-  XLSX.writeFile(templateWorkbook(), archivo);
+  XLSX.writeFile(libroModelo(), archivo);
 
   const { app, page, errors } = await launch(tmpDir());
   try {

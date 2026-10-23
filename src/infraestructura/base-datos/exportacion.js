@@ -1,20 +1,20 @@
 // Exportacion de las tablas (para los CSV).
 class MetodosExportacion {
   // ── exportacion ──────────────────────────────────────────────────────────
-  exportTables() {
+  exportarTablas() {
     const ownersByContract = new Map(), contractsByOwner = new Map();
-    const owners = new Map(this.listOwners().map(o => [o.id, o]));
-    const contracts = this.listContracts();
+    const owners = new Map(this.listarPropietarios().map(o => [o.id, o]));
+    const contracts = this.listarContratos();
     const cById = new Map(contracts.map(c => [c.id, c]));
-    for (const l of this.listContractOwners()) {
+    for (const l of this.listarPropietariosDeContratos()) {
       if (!ownersByContract.has(l.contractId)) ownersByContract.set(l.contractId, []);
       ownersByContract.get(l.contractId).push(owners.get(l.ownerId).nombre);
       if (!contractsByOwner.has(l.ownerId)) contractsByOwner.set(l.ownerId, new Set());
       contractsByOwner.get(l.ownerId).add(cById.get(l.contractId).direccion);
     }
-    const contacts = new Map(this.listContacts().map(c => [c.id, c]));
+    const contacts = new Map(this.listarContactos().map(c => [c.id, c]));
     const accounts = new Map();
-    for (const a of this.listOwnerAccounts()) {
+    for (const a of this.listarCuentasPropietarios()) {
       if (!accounts.has(a.ownerId)) accounts.set(a.ownerId, []);
       accounts.get(a.ownerId).push(`${a.direccion}: ${a.cuenta}`);
     }
@@ -34,7 +34,7 @@ class MetodosExportacion {
         aptos: [...(contractsByOwner.get(o.id) || [])].join(' | '),
       })),
       contactos: [...contacts.values()],
-      administraciones: this.listAdmins(),
+      administraciones: this.listarAdmins(),
     };
   }
 }

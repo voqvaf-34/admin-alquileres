@@ -362,7 +362,7 @@ async function guardar() {
     const m = marcaBorrador();
     const marca = { nombre: $('cfg-nombre').value.trim(), color: m.color, color2: m.color2, logo: m.logo, tema: m.tema,
       fuente: m.fuente, icono: { ...m.icono, imagen: borrador.iconoImagen } };
-    const st = await call('saveConfig', { marca, mensajes, asistente: !!asistente });
+    const st = await call('guardarConfig', { marca, mensajes, asistente: !!asistente });
     estado.appSettings = st.settings;
     aplicarMarca(estado.appSettings);
     if (asistente) return terminarAsistente();
@@ -392,7 +392,7 @@ export function iniciar() {
   $('cfg-siguiente').addEventListener('click', () => mostrarPestana(PASOS[asistente.paso + 1]));
   $('cfg-atras').addEventListener('click', () => mostrarPestana(PASOS[asistente.paso - 1]));
   $('cfg-saltar').addEventListener('click', async () => {
-    try { await call('setSetting', 'asistenteVisto', '1'); estado.appSettings.asistenteVisto = '1'; } catch (_) {}
+    try { await call('guardarAjuste', 'asistenteVisto', '1'); estado.appSettings.asistenteVisto = '1'; } catch (_) {}
     terminarAsistente();
   });
   $('cfg-guardar').addEventListener('click', guardar);

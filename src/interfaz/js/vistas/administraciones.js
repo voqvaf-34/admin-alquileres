@@ -84,7 +84,7 @@ async function submitAdminEntry() {
   btn.disabled    = true;
   btn.textContent = 'Guardando...';
   try {
-    estado.admins = await call('saveAdmin', payload);
+    estado.admins = await call('guardarAdmin', payload);
     showToast('&#10003; Administracion guardada', 'ok');
     hideAdminModal();
     render();
@@ -98,7 +98,7 @@ async function submitAdminEntry() {
 async function deleteAdminEntry(id, nombre) {
   if (!confirm(`Eliminar "${nombre}"?`)) return;
   try {
-    estado.admins = await call('deleteAdmin', id);
+    estado.admins = await call('borrarAdmin', id);
     showToast('&#10003; Administracion eliminada', 'ok');
     render();
   } catch (err) {

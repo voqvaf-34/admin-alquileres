@@ -11,7 +11,7 @@ const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 
 // Guarda la planilla modelo donde elija el usuario.
 async function descargarPlanilla() {
-  try { if (await call('downloadTemplate')) showToast('&#10003; Planilla modelo guardada', 'ok'); }
+  try { if (await call('descargarModelo')) showToast('&#10003; Planilla modelo guardada', 'ok'); }
   catch (err) { showToast('Error al guardar la planilla: ' + esc(err.message), 'err'); }
 }
 
@@ -19,7 +19,7 @@ async function importar() {
   const modo = document.querySelector('input[name="imp-modo"]:checked').value;
   if (modo === 'reemplazar' && !confirm('Se van a borrar los alquileres y administraciones actuales y se van a cargar los de la planilla.\n\nSe puede deshacer con Ctrl+Z. ¿Seguir?')) return;
   try {
-    const res = await call(modo === 'agregar' ? 'importAdd' : 'importReplace');
+    const res = await call(modo === 'agregar' ? 'importarSumar' : 'importarReemplazar');
     if (!res) return;                                   // dialogo cancelado
     closeModal('modal-importar');
     applyState(res.state);

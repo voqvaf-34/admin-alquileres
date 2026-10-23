@@ -5,7 +5,7 @@ const fs = require('fs');
 const { ctx } = require('./contexto');
 
 // Compatible con Excel en espanol: separador ";" y BOM UTF-8.
-function toCsv(rows) {
+function aCsv(rows) {
   if (!rows.length) return '﻿';
   const cols = Object.keys(rows[0]);
   const cell = v => {
@@ -15,7 +15,7 @@ function toCsv(rows) {
   return '﻿' + [cols.join(';'), ...rows.map(r => cols.map(c => cell(r[c])).join(';'))].join('\r\n');
 }
 
-async function exportCsv() {
+async function exportarCsv() {
   const res = await dialog.showOpenDialog(ctx.win, {
     title: 'Elegir carpeta para exportar', properties: ['openDirectory', 'createDirectory'],
     defaultPath: app.getPath('documents'),
@@ -24,10 +24,10 @@ async function exportCsv() {
   const stamp = new Date().toISOString().slice(0, 10);
   const dir = path.join(res.filePaths[0], `Admin Alquileres - export ${stamp}`);
   fs.mkdirSync(dir, { recursive: true });
-  const tables = ctx.store.exportTables();
-  for (const [name, rows] of Object.entries(tables)) fs.writeFileSync(path.join(dir, `${name}.csv`), toCsv(rows), 'utf8');
+  const tables = ctx.store.exportarTablas();
+  for (const [name, rows] of Object.entries(tables)) fs.writeFileSync(path.join(dir, `${name}.csv`), aCsv(rows), 'utf8');
   shell.openPath(dir);
   return { dir, files: Object.keys(tables).length };
 }
 
-Object.assign(module.exports, { exportCsv });
+Object.assign(module.exports, { exportarCsv });

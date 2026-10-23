@@ -7,10 +7,10 @@ import { colorPorDias } from './formato.js';
 
 export let _marksSaving = Promise.resolve();
 
-export function saveMarks() {
+export function guardarMarcas() {
   const snapshot = JSON.parse(JSON.stringify(estado.marks));
   _marksSaving = _marksSaving
-    .then(() => call('saveMarks', snapshot))
+    .then(() => call('guardarMarcas', snapshot))
     .catch(err => showToast('No se pudieron guardar las marcas: ' + esc(err.message), 'err'));
   return _marksSaving;
 }
@@ -19,7 +19,7 @@ export function saveMarks() {
 export async function saveIncrease(entry, newAmount, date) {
   try {
     const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    replaceEntry(await call('patchContract', entry.id, { importe: newAmount, ultimoAumento: D.aFechaISO(firstOfMonth) }));
+    replaceEntry(await call('modificarContrato', entry.id, { importe: newAmount, ultimoAumento: D.aFechaISO(firstOfMonth) }));
     showToast('&#10003; Aumento guardado', 'ok');
     return true;
   } catch (err) {
@@ -30,7 +30,7 @@ export async function saveIncrease(entry, newAmount, date) {
 
 export async function saveNotes(entry, text, okMsg) {
   try {
-    replaceEntry(await call('patchContract', entry.id, { notas: text.trim() }));
+    replaceEntry(await call('modificarContrato', entry.id, { notas: text.trim() }));
     if (okMsg) showToast(okMsg, 'ok');
     return true;
   } catch (err) {
@@ -55,9 +55,9 @@ export async function saveRenewal(entry, years, comment) {
 // Ante direcciones repetidas (re-alquileres) se prioriza el contrato activo mas reciente.
 export function entryByDir(dir) {
   if (!estado.entries) return null;
-  const all = estado.entries.filter(e => e.direccion === dir);
-  if (!all.length) return null;
-  const pool = all.some(e => !e.inactive) ? all.filter(e => !e.inactive) : all;
+  const coincidencias = estado.entries.filter(e => e.direccion === dir);
+  if (!coincidencias.length) return null;
+  const pool = coincidencias.some(e => !e.inactive) ? coincidencias.filter(e => !e.inactive) : coincidencias;
   return pool.reduce((a, b) => (b.id > a.id ? b : a));
 }
 

@@ -4,10 +4,10 @@ const SIGLAS = new Set(['srl', 'sa', 's.a.', 'sas', 'ltda', 'bps', 'ute', 'antel
 
 // "JUAN DE LOS SANTOS" -> "Juan de los Santos"; respeta siglas y codigos con numeros (W2, U601).
 export function mayusculasIniciales(s) {
-  const str = String(s || '').replace(/\s+/g, ' ').trim();
-  if (!str) return '';
+  const texto = String(s || '').replace(/\s+/g, ' ').trim();
+  if (!texto) return '';
   let first = true;
-  return str.split(/(\s+|[/\-(),.]+)/).map(tok => {
+  return texto.split(/(\s+|[/\-(),.]+)/).map(tok => {
     if (!tok || /^[\s/\-(),.]+$/.test(tok)) return tok;
     const low = tok.toLocaleLowerCase('es');
     let out;

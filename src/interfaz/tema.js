@@ -34,7 +34,7 @@
     cl.toggle('a11y-subrayar', !!p.subrayar);
     cl.toggle('a11y-sin-animaciones', p.animaciones === 'no');
     cl.toggle('a11y-con-animaciones', p.animaciones === 'si');
-    if (window.api && window.api.setZoom) window.api.setZoom(+p.tamano || 1).catch(() => {});
+    if (window.api && window.api.ponerZoom) window.api.ponerZoom(+p.tamano || 1).catch(() => {});
   };
   aplicarA11y(leerA11y());
   window.A11y = {

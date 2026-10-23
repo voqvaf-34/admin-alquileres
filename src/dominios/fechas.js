@@ -25,23 +25,23 @@ export function aFechaISO(d) {
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-export function interpretarISO(str) {
-  if (!str) return null;
-  const p = String(str).split('-');
+export function interpretarISO(texto) {
+  if (!texto) return null;
+  const p = String(texto).split('-');
   if (p.length !== 3) return null;
   const d = new Date(+p[0], +p[1]-1, +p[2]);
   return isNaN(d.getTime()) ? null : d;
 }
 
-export function interpretarDMA(str) {
-  if (!str) return null;
-  const p = String(str).split('/');
+export function interpretarDMA(texto) {
+  if (!texto) return null;
+  const p = String(texto).split('/');
   if (p.length !== 3) return null;
   return new Date(+p[2], +p[1]-1, +p[0]);
 }
 
-export function interpretarMesAnio(str) {
-  const m = String(str).trim().match(/^(\d{1,2})\/(\d{2,4})$/);
+export function interpretarMesAnio(texto) {
+  const m = String(texto).trim().match(/^(\d{1,2})\/(\d{2,4})$/);
   if (!m) return null;
   const month = parseInt(m[1], 10) - 1;
   let year = parseInt(m[2], 10);

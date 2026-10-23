@@ -3,7 +3,7 @@ import * as D from '../../../dominios/index.js';
 import { claveAumento, formatearFecha, claveNoAumenta } from '../../../dominios/index.js';
 import { render } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { appendNote, entryByDir, obtenerAumentos, esAumentoResuelto, saveIncrease, saveMarks, saveNotes } from '../nucleo/datos.js';
+import { appendNote, entryByDir, obtenerAumentos, esAumentoResuelto, saveIncrease, guardarMarcas, saveNotes } from '../nucleo/datos.js';
 import { copyToClipboard, esc, showToast } from '../nucleo/dom.js';
 import { estado, replaceEntry } from '../nucleo/estado.js';
 import { MONTH_NAMES, fmtIPC, fmtMoney, fmtNames, fmtNotas } from '../nucleo/formato.js';
@@ -188,7 +188,7 @@ async function marcarAumentoEnviado(key) {
   const prev = { importeAnterior: entry.importe, ultimoAumentoAnterior: D.aFechaISO(entry.ultimoAumento) };
   if (await saveIncrease(entry, newAmount, today)) {
     estado.marks[key] = { date: formatearFecha(today), importeNuevo: newAmount, ipc: estado.ipc, ...prev };
-    await saveMarks();
+    await guardarMarcas();
   }
 }
 
@@ -199,7 +199,7 @@ async function deshacerAumentoEnviado(key) {
   // Revierte el importe solo si la marca guardo el estado previo (las importadas no lo tienen).
   if (entry && mk && mk.importeAnterior) {
     try {
-      replaceEntry(await call('patchContract', entry.id,
+      replaceEntry(await call('modificarContrato', entry.id,
         { importe: mk.importeAnterior, ultimoAumento: mk.ultimoAumentoAnterior || null }));
     } catch (err) {
       showToast('Error al revertir el aumento: ' + esc(err.message), 'err');
@@ -207,7 +207,7 @@ async function deshacerAumentoEnviado(key) {
     }
   }
   delete estado.marks[key];
-  await saveMarks();
+  await guardarMarcas();
   return true;
 }
 
@@ -271,7 +271,7 @@ export function iniciar() {
       const desc   = descEl ? descEl.value.trim() : '';
       const entry  = entryByDir(naKy.split('|')[1]);   // na|dir|m|y
       estado.marks[naKy]  = { date: formatearFecha(new Date()), desc };
-      saveMarks();
+      guardarMarcas();
       pendientes.noAumenta = null;
       if (entry && desc) await saveNotes(entry, appendNote(entry, `NO AUMENTA: ${desc}`));
       render();
@@ -280,7 +280,7 @@ export function iniciar() {
 
     // ── un-na (deshacer no aumenta) ───────────────────────────────────────────
     const unNa = e.target.closest('[data-un-na]');
-    if (unNa) { delete estado.marks[unNa.dataset.unNa]; saveMarks(); render(); return; }
+    if (unNa) { delete estado.marks[unNa.dataset.unNa]; guardarMarcas(); render(); return; }
 
   });
 }

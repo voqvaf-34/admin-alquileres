@@ -2,44 +2,44 @@
 const { app } = require('electron');
 const path = require('path');
 
-const OWNER_RULES   = require('../dominios/reglas/propietarios.json');
+const REGLAS_PROPIETARIOS   = require('../dominios/reglas/propietarios.json');
 
-const ADDRESS_RULES = require('../dominios/reglas/direcciones.json');
+const REGLAS_DIRECCIONES = require('../dominios/reglas/direcciones.json');
 
-const OWNERS_VERSION  = '4';
+const VERSION_PROPIETARIOS  = '4';
 
-const ADDRESS_VERSION = '2';
+const VERSION_DIRECCIONES = '2';
 
-const CLEANUP_VERSION = '1';
+const VERSION_LIMPIEZA = '1';
 
-const GARANTIA_VERSION = '1';
+const VERSION_GARANTIAS = '1';
 
-const MONEDA_VERSION = '1';
+const VERSION_MONEDA = '1';
 
 // "editor" (la app de siempre) o "viewer" (Visor de solo lectura, otro instalador).
-const PKG = require('../../package.json');
+const PAQUETE = require('../../package.json');
 
-const MODE = process.env.ADMIN_ALQ_MODE || PKG.adminMode || 'editor';
+const MODO = process.env.ADMIN_ALQ_MODE || PAQUETE.adminMode || 'editor';
 
-const IS_VIEWER = MODE === 'viewer';
+const ES_VISOR = MODO === 'viewer';
 
 // Sin carpeta compartida por defecto: se elige desde la app (Compartir con el Visor).
-const DEFAULT_SHARED_DIR = '';
+const CARPETA_COMPARTIDA_PREDETERMINADA = '';
 
-const POLL_MS = +process.env.ADMIN_ALQ_POLL_MS || 10000;
+const INTERVALO_SONDEO_MS = +process.env.ADMIN_ALQ_POLL_MS || 10000;
 
-const defaultExcelPaths = () => [
+const rutasExcelPredeterminadas = () => [
   path.join(app.getPath('documents'), 'alquileres.xlsx'),
 ];
 
 const RECURSOS  = path.join(__dirname, '..', 'interfaz', 'recursos');
 
-const ICON      = path.join(RECURSOS, IS_VIEWER ? 'icon-visor.png' : 'icon.png');
+const ICONO      = path.join(RECURSOS, ES_VISOR ? 'icon-visor.png' : 'icon.png');
 
-const TRAY_ICON = path.join(RECURSOS, IS_VIEWER ? 'tray-visor.png' : 'tray.png');
+const ICONO_BANDEJA = path.join(RECURSOS, ES_VISOR ? 'tray-visor.png' : 'tray.png');
 
-const START_HIDDEN_ARG = '--hidden';
+const ARG_INICIO_OCULTO = '--hidden';
 
-const TITLEBAR_H = 56;   // = alto de .header en style.css
+const ALTO_BARRA_TITULO = 56;   // = alto de .header en style.css
 
-Object.assign(module.exports, { OWNER_RULES, ADDRESS_RULES, OWNERS_VERSION, ADDRESS_VERSION, CLEANUP_VERSION, GARANTIA_VERSION, MONEDA_VERSION, MODE, IS_VIEWER, DEFAULT_SHARED_DIR, POLL_MS, defaultExcelPaths, ICON, TRAY_ICON, START_HIDDEN_ARG, TITLEBAR_H });
+Object.assign(module.exports, { REGLAS_PROPIETARIOS, REGLAS_DIRECCIONES, VERSION_PROPIETARIOS, VERSION_DIRECCIONES, VERSION_LIMPIEZA, VERSION_GARANTIAS, VERSION_MONEDA, MODO, ES_VISOR, CARPETA_COMPARTIDA_PREDETERMINADA, INTERVALO_SONDEO_MS, rutasExcelPredeterminadas, ICONO, ICONO_BANDEJA, ARG_INICIO_OCULTO, ALTO_BARRA_TITULO });

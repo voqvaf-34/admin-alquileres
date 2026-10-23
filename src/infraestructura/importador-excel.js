@@ -2,7 +2,7 @@ const fs   = require('fs');
 const XLSX = require('xlsx');
 const D    = require('../dominios/index.js');
 
-function str(v) { return v == null ? '' : String(v).trim(); }
+function textoLimpio(v) { return v == null ? '' : String(v).trim(); }
 
 // Importacion desde Excel o CSV. Dos formatos:
 // - "plantilla": columnas reconocidas por su encabezado (ver dominios/planilla.js y la planilla modelo)
@@ -11,7 +11,7 @@ function str(v) { return v == null ? '' : String(v).trim(); }
 
 const filasDe = ws => (ws && ws['!ref'] ? XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null }) : []);
 
-function parseTemplateSheet(ws, columnas, aRegistro) {
+function interpretarHojaModelo(ws, columnas, aRegistro) {
   const filas = filasDe(ws);
   const enc = D.detectarEncabezados(filas, columnas);
   if (!enc) return null;
@@ -23,7 +23,7 @@ function parseTemplateSheet(ws, columnas, aRegistro) {
   return out;
 }
 
-function parseContractsSheet(ws) {
+function interpretarHojaContratos(ws) {
   if (!ws || !ws['!ref']) return [];
   const range = XLSX.utils.decode_range(ws['!ref']);
   const out = [];
@@ -45,7 +45,7 @@ function parseContractsSheet(ws) {
     const importeBase = g(5);
     if (!importeBase || typeof importeBase !== 'number') continue;
 
-    const inactive = estadoCol >= 0 && str(g(estadoCol)).toUpperCase() === 'INACTIVO';
+    const inactive = estadoCol >= 0 && textoLimpio(g(estadoCol)).toUpperCase() === 'INACTIVO';
 
     // Col G: fecha de ultimo aumento (serial o "MM/AAAA") o "MANDA <persona>" (delegado)
     const ultRaw = g(6);
@@ -66,26 +66,26 @@ function parseContractsSheet(ws) {
     out.push({
       sourceRow:     r,
       direccion:     b.trim(),
-      propietario:   str(g(2)),
-      telProp:       str(g(3)),
-      mailProp:      str(g(4)),
+      propietario:   textoLimpio(g(2)),
+      telProp:       textoLimpio(g(3)),
+      mailProp:      textoLimpio(g(4)),
       importeBase,
       importe:       D.interpretarImporteUY(g(7)) || importeBase,
       ultimoAumento: D.aFechaISO(ultimoAumento),
       remitente,
-      contratoStr:   str(g(8)),
+      contratoStr:   textoLimpio(g(8)),
       fechaInicio:   D.aFechaISO(fecha),
-      inquilino:     str(g(10)),
-      telInq:        str(g(11)),
-      mailInq:       str(g(12)),
-      notas:         str(g(13)),
+      inquilino:     textoLimpio(g(10)),
+      telInq:        textoLimpio(g(11)),
+      mailInq:       textoLimpio(g(12)),
+      notas:         textoLimpio(g(13)),
       inactive,
     });
   }
   return out;
 }
 
-function parseAdminSheet(ws) {
+function interpretarHojaAdmins(ws) {
   if (!ws || !ws['!ref']) return [];
   const range = XLSX.utils.decode_range(ws['!ref']);
   const out = [];
@@ -95,7 +95,7 @@ function parseAdminSheet(ws) {
     if (!nombreRaw || typeof nombreRaw !== 'string') continue;
     const nombre = nombreRaw.trim();
     if (!nombre || nombre.toUpperCase() === 'ADMINISTRACIONES') continue;
-    out.push({ sourceRow: r, nombre, edificios: str(g(1)), telefono: str(g(2)), mail: str(g(3)) });
+    out.push({ sourceRow: r, nombre, edificios: textoLimpio(g(1)), telefono: textoLimpio(g(2)), mail: textoLimpio(g(3)) });
   }
   return out;
 }
@@ -105,30 +105,30 @@ const hoja = (wb, ...nombres) => {
   return n ? wb.Sheets[n] : null;
 };
 
-function readWorkbook(wb) {
+function leerLibro(wb) {
   const wsC = hoja(wb, 'alquileres', 'alquilados', 'contratos') || wb.Sheets[wb.SheetNames[0]];
   const wsA = hoja(wb, 'administraciones');
-  const contracts = parseTemplateSheet(wsC, D.COLUMNAS_ALQUILERES, D.filaAContrato);
+  const contracts = interpretarHojaModelo(wsC, D.COLUMNAS_ALQUILERES, D.filaAContrato);
   if (contracts) {
-    return { formato: 'plantilla', contracts, admins: parseTemplateSheet(wsA, D.COLUMNAS_ADMINISTRACIONES, D.filaAAdministracion) || [] };
+    return { formato: 'plantilla', contracts, admins: interpretarHojaModelo(wsA, D.COLUMNAS_ADMINISTRACIONES, D.filaAAdministracion) || [] };
   }
-  return { formato: 'clasico', contracts: parseContractsSheet(wsC), admins: parseAdminSheet(wsA) };
+  return { formato: 'clasico', contracts: interpretarHojaContratos(wsC), admins: interpretarHojaAdmins(wsA) };
 }
 
 // Los CSV pueden venir en UTF-8 o en ANSI (Excel en Windows): se detecta para leer bien las tildes.
 const esUtf8 = buf => { try { new TextDecoder('utf-8', { fatal: true }).decode(buf); return true; } catch (_) { return false; } };
 
-function readBuffer(buf) {
-  return readWorkbook(XLSX.read(buf, { type: 'buffer', codepage: esUtf8(buf) ? 65001 : 1252 }));
+function leerBuffer(buf) {
+  return leerLibro(XLSX.read(buf, { type: 'buffer', codepage: esUtf8(buf) ? 65001 : 1252 }));
 }
 
-function readWorkbookFile(filePath) {
+function leerArchivoLibro(filePath) {
   // Lectura a buffer: no bloquea el archivo si Excel lo tiene abierto.
-  return readBuffer(fs.readFileSync(filePath));
+  return leerBuffer(fs.readFileSync(filePath));
 }
 
 // Planilla modelo para completar e importar: encabezados, dos filas de ejemplo e instrucciones.
-function templateWorkbook() {
+function libroModelo() {
   const wb = XLSX.utils.book_new();
   const cols = D.COLUMNAS_ALQUILERES;
   const filas = [cols.map(c => c.titulo), ...D.EJEMPLO_PLANILLA.map(e => cols.map(c => e[c.campo] ?? ''))];
@@ -157,6 +157,6 @@ function templateWorkbook() {
   return wb;
 }
 
-function writeTemplate(filePath) { XLSX.writeFile(templateWorkbook(), filePath); }
+function escribirModelo(filePath) { XLSX.writeFile(libroModelo(), filePath); }
 
-module.exports = { readBuffer, readWorkbook, readWorkbookFile, templateWorkbook, writeTemplate };
+module.exports = { leerBuffer, leerLibro, leerArchivoLibro, libroModelo, escribirModelo };

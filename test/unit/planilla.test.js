@@ -2,7 +2,7 @@ const test   = require('node:test');
 const assert = require('node:assert/strict');
 const XLSX   = require('xlsx');
 const D      = require('../../src/dominios/index.js');
-const { readBuffer, readWorkbook, templateWorkbook } = require('../../src/infraestructura/importador-excel');
+const { leerBuffer, leerLibro, libroModelo } = require('../../src/infraestructura/importador-excel');
 
 const libro = (hojas) => {
   const wb = XLSX.utils.book_new();
@@ -34,9 +34,9 @@ test('planilla: fechas, importes y moneda en distintos formatos', () => {
 });
 
 test('planilla modelo: se puede importar tal cual (ida y vuelta)', () => {
-  const wb = XLSX.read(XLSX.write(templateWorkbook(), { type: 'buffer', bookType: 'xlsx' }), { type: 'buffer' });
+  const wb = XLSX.read(XLSX.write(libroModelo(), { type: 'buffer', bookType: 'xlsx' }), { type: 'buffer' });
   assert.deepEqual(wb.SheetNames, ['Alquileres', 'Administraciones', 'Instrucciones']);
-  const data = readWorkbook(wb);
+  const data = leerLibro(wb);
   assert.equal(data.formato, 'plantilla');
   assert.equal(data.contracts.length, 2);
   const [a, b] = data.contracts;
@@ -48,7 +48,7 @@ test('planilla modelo: se puede importar tal cual (ida y vuelta)', () => {
 });
 
 test('planilla: filas vacias o sin importe se saltean; Estado inactivo', () => {
-  const data = readWorkbook(libro({ Hoja1: [
+  const data = leerLibro(libro({ Hoja1: [
     ['Dirección', 'Alquiler', 'Estado'],
     ['Canelones 1234 U502', '$ 25.000', ''],
     [],
@@ -64,7 +64,7 @@ test('planilla: filas vacias o sin importe se saltean; Estado inactivo', () => {
 test('planilla CSV con encabezados, en UTF-8 y en ANSI (Excel en Windows)', () => {
   const csv = 'Dirección;Alquiler actual;Moneda;Inquilino\nCanelones 1234 U502;25000;UYU;Beto Gómez\nGuayabo 1850 U3;850;USD;Camila Ruiz\n';
   for (const buf of [Buffer.from(csv, 'utf8'), Buffer.from(csv, 'latin1')]) {
-    const data = readBuffer(buf);
+    const data = leerBuffer(buf);
     assert.equal(data.formato, 'plantilla');
     assert.deepEqual(data.contracts.map(c => [c.direccion, c.importe, c.moneda, c.inquilino]),
       [['Canelones 1234 U502', 25000, 'UYU', 'Beto Gómez'], ['Guayabo 1850 U3', 850, 'USD', 'Camila Ruiz']]);
@@ -72,7 +72,7 @@ test('planilla CSV con encabezados, en UTF-8 y en ANSI (Excel en Windows)', () =
 });
 
 test('planilla clasica (sin encabezados reconocibles): columnas por posicion', () => {
-  const data = readWorkbook(libro({ ALQUILADOS: [
+  const data = leerLibro(libro({ ALQUILADOS: [
     ['NUMERO', 'DIRECCCION', 'PROPIETARIO', 'TEL', 'MAIL', 'IMPORTE', 'ULT', 'ACTUAL', 'CONTRATO', 'FECHA', 'INQUILINO', 'TEL', 'MAIL', 'NOTAS', 'ESTADO'],
     [2025],
     [1, 'TORRE CEIBO 403', 'ANA PEREZ', '091000101', '', 28500, '03/2026', 29400, '2 AÑOS', 45721, 'BETO GOMEZ', '', '', '', ''],

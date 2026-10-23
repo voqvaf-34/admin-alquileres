@@ -152,7 +152,7 @@ async function loadDocThumbs(o) {
     const el = document.querySelector(`[data-doc-thumb="${d.id}"]`);
     if (!el || /\.pdf$/i.test(d.archivo)) continue;
     if (!docThumbs.has(d.id)) {
-      try { const r = await call('docPreview', d.id); docThumbs.set(d.id, r.image ? r.dataUrl : null); }
+      try { const r = await call('vistaPreviaDoc', d.id); docThumbs.set(d.id, r.image ? r.dataUrl : null); }
       catch (_) { docThumbs.set(d.id, null); }
     }
     const url = docThumbs.get(d.id);
@@ -215,7 +215,7 @@ async function submitOwner() {
   if (!payload.nombre) { showToast('El nombre es obligatorio.', 'err'); return; }
   if (payload.contact.mode !== 'none' && !payload.contact.nombre) { showToast('Falta el nombre del contacto.', 'err'); return; }
   try {
-    applyOwners(await call('saveOwner', payload));
+    applyOwners(await call('guardarPropietario', payload));
     closeModal('modal-owner');
     showToast('&#10003; Propietario guardado', 'ok');
     render();
@@ -246,18 +246,18 @@ async function submitMerge() {
   if (!drop || !keep) return;
   if (!confirm(`Unificar "${drop.nombre}" dentro de "${keep.nombre}"?\n\nLos aptos y datos de "${drop.nombre}" pasan a "${keep.nombre}". Se puede deshacer con Ctrl+Z.`)) return;
   try {
-    applyOwners(await call('mergeOwners', mergeKeepId, mergeDropId));
+    applyOwners(await call('unificarPropietarios', mergeKeepId, mergeDropId));
     closeModal('modal-merge');
     showToast('&#10003; Propietarios unificados (Ctrl+Z para deshacer)', 'ok');
     render();
   } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
 }
 
-export async function deleteOwner(id) {
+export async function borrarPropietario(id) {
   const o = estado.owners.find(x => x.id === id);
   const n = ownerUnits(contractsByOwner().get(id) || []).length;
   if (!confirm(`Eliminar el propietario "${o.nombre}"?${n ? `\n\n${n} apto(s) quedaran sin este propietario vinculado.` : ''}`)) return;
-  try { applyOwners(await call('deleteOwner', id)); ownersExpanded.delete(id); render(); }
+  try { applyOwners(await call('borrarPropietario', id)); ownersExpanded.delete(id); render(); }
   catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
 }
 
@@ -307,13 +307,13 @@ export function iniciar() {
     if (del) {
       e.stopPropagation();
       if (!confirm('Quitar este documento?')) return;
-      try { applyOwners(await call('deleteOwnerDoc', +del.dataset.docDel)); render(); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
+      try { applyOwners(await call('borrarDocPropietario', +del.dataset.docDel)); render(); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
       return;
     }
     const view = t.closest('[data-doc-view]');
     if (view) {
       const id = +view.dataset.docView, d = estado.ownerDocs.find(x => x.id === id);
-      if (d && /\.pdf$/i.test(d.archivo)) { call('openDoc', id).catch(err => showToast('Error: ' + esc(err.message), 'err')); return; }
+      if (d && /\.pdf$/i.test(d.archivo)) { call('abrirDoc', id).catch(err => showToast('Error: ' + esc(err.message), 'err')); return; }
       const url = docThumbs.get(id);
       if (url) {
         document.getElementById('modal-doc-title').textContent = d ? d.nombreOriginal : 'Documento';
@@ -324,7 +324,7 @@ export function iniciar() {
     }
     const add = t.closest('[data-doc-add]');
     if (add) {
-      try { applyOwners(await call('addOwnerDocs', +add.dataset.docAdd)); render(); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
+      try { applyOwners(await call('agregarDocsPropietario', +add.dataset.docAdd)); render(); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
       return;
     }
     if (t.closest('input')) return;
@@ -335,7 +335,7 @@ export function iniciar() {
     const mg = t.closest('[data-owner-merge]');
     if (mg) return showMergeModal(+mg.dataset.ownerMerge);
     const dl = t.closest('[data-owner-del]');
-    if (dl) return deleteOwner(+dl.dataset.ownerDel);
+    if (dl) return borrarPropietario(+dl.dataset.ownerDel);
     const row = t.closest('[data-owner-row]');
     if (!row) return;
     const id = +row.dataset.ownerRow;
@@ -348,7 +348,7 @@ export function iniciar() {
     const inp = e.target.closest('[data-acct-owner]');
     if (!inp) return;
     try {
-      applyOwners(await call('setOwnerAccount', +inp.dataset.acctOwner, inp.dataset.acctDir, inp.value.trim()));
+      applyOwners(await call('ponerCuentaPropietario', +inp.dataset.acctOwner, inp.dataset.acctDir, inp.value.trim()));
       showToast('&#10003; Cuenta de cobro guardada', 'ok');
     } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
   });

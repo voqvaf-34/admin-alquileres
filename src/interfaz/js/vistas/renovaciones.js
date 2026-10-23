@@ -3,7 +3,7 @@ import * as D from '../../../dominios/index.js';
 import { formatearFecha, claveNoRenueva, interpretarDMA, interpretarISO, duracionReal, claveVenc, claveVencRenovado } from '../../../dominios/index.js';
 import { render } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { appendNote, entryByDir, obtenerFechaVenc, obtenerVencidosAtrasados, obtenerVencimientos, esVencResuelto, saveMarks, saveNotes, saveRenewal, vencColor, vencRenewalMsg } from '../nucleo/datos.js';
+import { appendNote, entryByDir, obtenerFechaVenc, obtenerVencidosAtrasados, obtenerVencimientos, esVencResuelto, guardarMarcas, saveNotes, saveRenewal, vencColor, vencRenewalMsg } from '../nucleo/datos.js';
 import { copyToClipboard, esc, showToast } from '../nucleo/dom.js';
 import { estado, replaceEntry } from '../nucleo/estado.js';
 import { MONTH_NAMES, diasFaltan, fmtMoney, fmtNotas, monthsAgo } from '../nucleo/formato.js';
@@ -260,11 +260,11 @@ export function iniciar() {
       const entry  = entryByDir(dir);
       const vd     = entry ? obtenerFechaVenc(entry) : null;
       estado.marks[`nr|${dir}`] = { date: formatearFecha(new Date()), desc, sigueActivo: sigue, hasta: vd ? D.aFechaISO(vd) : '' };
-      await saveMarks();
+      await guardarMarcas();
       pendientes.noRenueva = null;
       if (entry && desc) await saveNotes(entry, appendNote(entry, `NO RENUEVA${sigue ? ' (sigue en el apto)' : ''}: ${desc}`));
       if (entry && !sigue) {
-        try { replaceEntry(await call('inactivate', entry.id)); showToast('No renueva: el alquiler pasó a inactivo (Ctrl+Z para deshacer)', 'info'); }
+        try { replaceEntry(await call('inactivar', entry.id)); showToast('No renueva: el alquiler pasó a inactivo (Ctrl+Z para deshacer)', 'info'); }
         catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
       }
       render();
@@ -273,7 +273,7 @@ export function iniciar() {
 
     // ── un-nr (deshacer no renueva) ───────────────────────────────────────────
     const unNr = e.target.closest('[data-un-nr]');
-    if (unNr) { delete estado.marks[`nr|${unNr.dataset.unNr}`]; saveMarks(); render(); return; }
+    if (unNr) { delete estado.marks[`nr|${unNr.dataset.unNr}`]; guardarMarcas(); render(); return; }
 
     // ── copiar aviso de renovacion ───────────────────────────────────────────
     const copyVenc = e.target.closest('[data-copy-venc-msg]');
@@ -288,9 +288,9 @@ export function iniciar() {
 
     // ── un-ren / un-ren-r (deshacer renovacion desde card compacto) ──────────
     const unRen = e.target.closest('[data-un-ren]');
-    if (unRen) { delete estado.marks[`v|${unRen.dataset.unRen}`]; saveMarks(); render(); return; }
+    if (unRen) { delete estado.marks[`v|${unRen.dataset.unRen}`]; guardarMarcas(); render(); return; }
     const unRenR = e.target.closest('[data-un-ren-r]');
-    if (unRenR) { delete estado.marks[`vr|${unRenR.dataset.unRenR}`]; saveMarks(); render(); return; }
+    if (unRenR) { delete estado.marks[`vr|${unRenR.dataset.unRenR}`]; guardarMarcas(); render(); return; }
 
     // ── vstart / vstart-r ───────────────────────────────────────────────────────
     const vstart = e.target.closest('[data-vstart]');
@@ -310,7 +310,7 @@ export function iniciar() {
       const { d, years, desc } = _readVencInputs(defY);
       delete estado.marks[`nr|${dir}`];   // si no habia renovado pero seguia, ahora renovo
       estado.marks[`v|${dir}`] = { date: formatearFecha(new Date()), nuevaInicio: d ? formatearFecha(d) : '', renewYears: years };
-      saveMarks();
+      guardarMarcas();
       pendientes.venc  = null;
       if (entry) await saveRenewal(entry, years, desc);
       render();
@@ -327,7 +327,7 @@ export function iniciar() {
       const { d, years, desc } = _readVencInputs(defY);
       delete estado.marks[`nr|${dir}`];
       estado.marks[`vr|${dir}`] = { date: formatearFecha(new Date()), nuevaInicio: d ? formatearFecha(d) : '', renewYears: years };
-      saveMarks();
+      guardarMarcas();
       pendientes.venc  = null;
       if (entry) await saveRenewal(entry, years, desc);
       render();
@@ -339,11 +339,11 @@ export function iniciar() {
     if (vunc) {
       delete estado.marks[`v|${vunc.dataset.vunc}`];
       delete estado.marks[`vr|${vunc.dataset.vunc}`]; // tambien limpia el ciclo R si lo habia
-      saveMarks(); render(); return;
+      guardarMarcas(); render(); return;
     }
 
     // ── vunc-r (desmarcar solo ciclo post-renovacion) ─────────────────────────
     const vuncR = e.target.closest('[data-vunc-r]');
-    if (vuncR) { delete estado.marks[`vr|${vuncR.dataset.vuncR}`]; saveMarks(); render(); return; }
+    if (vuncR) { delete estado.marks[`vr|${vuncR.dataset.vuncR}`]; guardarMarcas(); render(); return; }
   });
 }

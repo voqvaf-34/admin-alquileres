@@ -4,7 +4,7 @@ import * as D from '../../../dominios/index.js';
 import { formatearFecha, normalizar, interpretarDMA, claveVenc, claveVencRenovado } from '../../../dominios/index.js';
 import { deleteEntry, showEditModal } from '../modales/alquiler.js';
 import { showTimeline } from '../modales/linea-tiempo.js';
-import { saveMarks, saveNotes } from '../nucleo/datos.js';
+import { guardarMarcas, saveNotes } from '../nucleo/datos.js';
 import { esc } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
 import { MONTH_NAMES, fmtMails, fmtMoney, fmtNames, garantiaBadge, telLink } from '../nucleo/formato.js';
@@ -303,7 +303,7 @@ export function iniciar() {
       const dir = dbVunc.dataset.dbVunc;
       delete estado.marks[`v|${dir}`];
       delete estado.marks[`vr|${dir}`];
-      saveMarks();
+      guardarMarcas();
       renderDBTable();
       return;
     }
@@ -311,7 +311,7 @@ export function iniciar() {
     if (dbVuncR) {
       e.stopPropagation();
       delete estado.marks[`vr|${dbVuncR.dataset.dbVuncR}`];
-      saveMarks();
+      guardarMarcas();
       renderDBTable();
       return;
     }

@@ -2,7 +2,7 @@ const D = require('../dominios/index.js');
 
 // Busca el IPC interanual publicado por el INE. Si la pagina del mes esperado
 // todavia no existe, prueba con el mes anterior.
-async function fetchLatestIPC({ now = new Date(), fetchImpl = fetch, timeoutMs = 15000 } = {}) {
+async function consultarUltimoIPC({ now = new Date(), fetchImpl = fetch, timeoutMs = 15000 } = {}) {
   let period = D.ultimoIPCPublicado(now);
   const errors = [];
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -27,4 +27,4 @@ async function fetchLatestIPC({ now = new Date(), fetchImpl = fetch, timeoutMs =
   return { ok: false, error: errors.join(' | ') };
 }
 
-module.exports = { fetchLatestIPC };
+module.exports = { consultarUltimoIPC };

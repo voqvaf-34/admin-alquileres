@@ -46,7 +46,7 @@ async function recorrer({ temas = ['clasico'], marca = null, a11y = null, soloAp
     if (marca || a11y) {
       await page.evaluate(async ({ marca, a11y }) => {
         if (a11y) A11y.set({ ...a11y, animaciones: 'no' });
-        if (marca) await window.api.saveConfig({ marca: { nombre: '', color: marca.color, color2: marca.color2 || '' } });
+        if (marca) await window.api.guardarConfig({ marca: { nombre: '', color: marca.color, color2: marca.color2 || '' } });
       }, { marca, a11y });
       await page.reload();
       await page.waitForSelector('#app-screen', { state: 'visible' });

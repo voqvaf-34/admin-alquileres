@@ -277,7 +277,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   await t.test('unificar propietarios y deshacer con Ctrl+Z / rehacer con Ctrl+Y', async () => {
     // Un duplicado: el mismo dueño cargado con otro nombre en un alquiler nuevo.
     await page.evaluate(async () => {
-      const r = await window.api.addContract({ direccion: 'E2E Duplicado 1', calle: 'E2E Duplicado 1', importeBase: 15000, propietario: 'A. Perez', inquilino: 'X', contratoStr: '2 años' });
+      const r = await window.api.agregarContrato({ direccion: 'E2E Duplicado 1', calle: 'E2E Duplicado 1', importeBase: 15000, propietario: 'A. Perez', inquilino: 'X', contratoStr: '2 años' });
       if (!r.ok) throw new Error(r.error);
     });
     await page.reload();
