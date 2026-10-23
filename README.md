@@ -21,8 +21,9 @@ listos para mandar por WhatsApp. Cada inmobiliaria la configura con su nombre, l
 | **Propietarios** | Dueños y copropietarios (se separan solos desde "A / B"), la persona de contacto con quien se habla, documentos y cuentas de cobro por apartamento. |
 | **Garantías y delegados** | Los contratos cuyos aumentos los gestiona la garantía (CGN, ANDA) o un tercero quedan fuera de las listas de trabajo. |
 | **Visor** | Una segunda instalación de solo lectura, por ejemplo para el dueño de la inmobiliaria. Lee una copia publicada en una carpeta compartida, se actualiza sola y marca lo nuevo desde la última vez que se miró. |
-| **Configuración** | Nombre, logo y color de la inmobiliaria (toda la interfaz se pinta con ese color, con contraste accesible) y plantillas editables de los mensajes. |
-| **Importar** | Planilla modelo de Excel o CSV, con columnas reconocidas por su nombre. También se puede empezar con la base vacía o con datos de ejemplo. |
+| **Tu marca** | Nombre, logo, color principal y secundario, seis temas (cada uno en claro y oscuro), seis tipografías e ícono de la app (prediseñado con tu color, tu logo o una imagen propia). Toda la interfaz se pinta con esos colores cuidando el contraste. La primera vez que se abre, un asistente guía estos pasos. |
+| **Mensajes** | Plantillas editables para los avisos de aumento y renovación, con datos que se completan solos. |
+| **Importar** | Planilla modelo de Excel o CSV, con columnas reconocidas por su nombre. Al empezar, o con la app en uso: sumarla a lo que ya hay (sin repetir) o reemplazar todo. |
 | **Cuidado de los datos** | Guardado automático, deshacer/rehacer (Ctrl+Z / Ctrl+Y), copias de respaldo rotativas y exportación a CSV. |
 
 <table>
@@ -97,8 +98,4 @@ npm run smoke        # abre los dos empaquetados y verifica que arranquen
 npm run capturas     # regenera las capturas de este README
 ```
 
-## Próximos pasos
-
-- Índice de ajuste configurable (hoy es el IPC del INE de Uruguay) y soporte para otros países.
-- Moneda y formato de teléfonos configurables.
-- Importar una planilla también con la app en uso, no solo al empezar.
+Pensada para inmobiliarias de Uruguay: aumentos por IPC del INE, pesos y dólares, teléfonos uruguayos para WhatsApp.

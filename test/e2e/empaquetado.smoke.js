@@ -15,7 +15,7 @@ const exe = visor
 (async () => {
   assert.ok(fs.existsSync(exe), `no existe ${exe} (correr antes npm run ${visor ? 'dist:visor' : 'dist'})`);
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alq-smoke-'));
-  const env = { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_DATA_DIR: dataDir, ADMIN_ALQ_SHARED_DIR: path.join(dataDir, 'compartida') };
+  const env = { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ADMIN_ALQ_DATA_DIR: dataDir, ADMIN_ALQ_SHARED_DIR: path.join(dataDir, 'compartida') };
   const app = await _electron.launch({ executablePath: exe, env });
   try {
     const page = await app.firstWindow();

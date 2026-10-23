@@ -23,8 +23,11 @@ const UNDO_LABELS = {
   'marks:save': 'Cambiar marca', 'owner:save': 'Guardar propietario', 'owner:delete': 'Eliminar propietario',
   'owner:merge': 'Unificar propietarios', 'owner:account': 'Cuenta de cobro', 'owner:addDocs': 'Agregar documento',
   'owner:deleteDoc': 'Eliminar documento', 'contract:setOwners': 'Cambiar propietarios',
-  'import:demo': 'Cargar datos de ejemplo', 'import:pick': 'Importar Excel', 'import:fromPath': 'Importar Excel', 'config:save': 'Cambiar configuración',
+  'import:demo': 'Cargar datos de ejemplo', 'import:pick': 'Importar Excel', 'import:fromPath': 'Importar Excel', 'import:add': 'Agregar planilla', 'import:replace': 'Reemplazar con planilla', 'config:save': 'Cambiar configuración',
 };
+
+// Cambios grandes: siempre un paso propio de deshacer (no se agrupan con el anterior).
+const UNDO_SEPARADOS = new Set(['import:demo', 'import:pick', 'import:fromPath', 'import:add', 'import:replace']);
 
 function notifyUndo() {
   if (ctx.win && !ctx.win.isDestroyed()) {
@@ -37,9 +40,10 @@ function notifyUndo() {
 function handle(channel, fn) {
   ipcMain.handle(channel, async (_evt, ...args) => {
     const label = UNDO_LABELS[channel];
-    const pushed = label && ctx.store ? ctx.store.checkpoint(label) : false;
+    const pushed = label && ctx.store ? ctx.store.checkpoint(label, !UNDO_SEPARADOS.has(channel)) : false;
     try {
       const data = await fn(...args);
+      if (data === null && pushed) ctx.store.dropCheckpoint();       // dialogo cancelado: no hubo cambio
       if (label) notifyUndo();
       return { ok: true, data };
     } catch (e) {
@@ -72,6 +76,22 @@ function registerHandlers() {
   });
 
   handle('import:demo',   () => estadoApp.loadDemo());
+  // Con la app en uso: elegir planilla y sumarla ("agregar") o reemplazar todo ("reemplazar").
+  const elegirPlanilla = async () => {
+    const res = await dialog.showOpenDialog(ctx.win, {
+      title: 'Seleccionar planilla de alquileres', properties: ['openFile'],
+      filters: [{ name: 'Planillas', extensions: ['xlsx', 'xlsm', 'xls', 'csv'] }],
+    });
+    return res.canceled || !res.filePaths[0] ? null : res.filePaths[0];
+  };
+  handle('import:add', async () => {
+    const file = await elegirPlanilla();
+    return file ? { result: estadoApp.addFrom(file), state: estadoApp.state() } : null;
+  });
+  handle('import:replace', async () => {
+    const file = await elegirPlanilla();
+    return file ? { counts: estadoApp.importFrom(file), state: estadoApp.state() } : null;
+  });
   handle('import:template', async () => {
     const res = await dialog.showSaveDialog(ctx.win, {
       title: 'Guardar planilla modelo', defaultPath: path.join(app.getPath('documents'), 'planilla-alquileres.xlsx'),
@@ -112,11 +132,13 @@ function registerHandlers() {
   handle('marks:save',   (m)      => { ctx.store.replaceMarks(m); return true; });
   handle('setting:set',  (k, v)   => { ctx.store.setSetting(k, v); return true; });
   // Configuracion (marca y plantillas de mensajes): se valida todo antes de guardar nada.
-  handle('config:save', ({ marca, mensajes } = {}) => {
-    ctx.store.setSettings({ ...(marca ? D.marcaASettings(marca) : {}), ...(mensajes ? D.mensajesASettings(mensajes) : {}) });
+  handle('config:save', ({ marca, mensajes, asistente } = {}) => {
+    ctx.store.setSettings({ ...(marca ? D.marcaASettings(marca) : {}), ...(mensajes ? D.mensajesASettings(mensajes) : {}),
+      ...(asistente ? { asistenteVisto: '1' } : {}) });
     return { settings: ctx.store.getSettings() };
   });
   handle('window:titleBarColor', (c, ink) => ventana.setTitleBarColor(c, ink));
+  handle('window:icon', (png) => ventana.setAppIcon(png));
   handle('ipc:fetch',    ()       => fetchLatestIPC());
 
   const ownersState = () => ({
@@ -174,6 +196,7 @@ function registerViewerHandlers() {
   handle('data:exportCsv',   () => exportCsv());
   handle('setting:set',      () => true);
   handle('window:titleBarColor', (c, ink) => ventana.setTitleBarColor(c, ink));
+  handle('window:icon', (png) => ventana.setAppIcon(png));
   handle('undo:status',      () => ctx.store ? ctx.store.undoStatus() : {});
 }
 

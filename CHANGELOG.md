@@ -2,6 +2,25 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
+## [0.7.0] - 2026-10-22
+
+### Agregado
+- **Modo claro u oscuro automático**: por defecto sigue al de Windows (y cambia junto con él). En Apariencia y en el
+  asistente se puede elegir Automático, Claro u Oscuro; el botón ☾ de arriba sigue funcionando como atajo.
+- **Asistente de primer uso**: al abrir la app por primera vez guía la marca (nombre, logo, ícono) y la apariencia.
+  Se puede saltear.
+- **Apariencia** en Configuración (ahora en pestañas: Marca, Apariencia, Mensajes):
+  - Color secundario para la pestaña activa, los avisos y los títulos.
+  - Seis temas, cada uno en claro y oscuro: Clásico, Cálido, Pizarra, Fresco, Con mi color y Alto contraste.
+  - Seis tipografías empaquetadas con la app (Rubik, Inter, Montserrat, Nunito, Lora y la de Windows).
+  - Vista previa más completa, que se puede ver en modo oscuro.
+- **Ícono de la app** (ventana, barra de tareas y bandeja): seis diseños prediseñados con el color que se elija,
+  generado desde el logo, o una imagen propia cuadrada.
+- **Importar planilla con la app en uso** (menú ☰): agregar a lo que ya hay sin repetir contratos, o reemplazar todo.
+
+### Corregido
+- Deshacer: las importaciones son siempre un paso propio, y cancelar el diálogo de archivo ya no deja un paso vacío.
+
 ## [0.6.0] - 2026-10-21
 
 ### Agregado

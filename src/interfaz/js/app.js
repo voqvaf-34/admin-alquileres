@@ -5,6 +5,8 @@ import * as baseDatos from './vistas/base-datos.js';
 import * as cabecera from './componentes/cabecera.js';
 import * as compartir from './componentes/compartir.js';
 import * as configuracion from './modales/configuracion.js';
+import { abrirAsistente } from './modales/configuracion.js';
+import * as importar from './modales/importar.js';
 import * as D from '../../dominios/index.js';
 import * as deshacer from './componentes/deshacer.js';
 import * as modales from './nucleo/modales.js';
@@ -190,7 +192,11 @@ export async function loadState() {
       return;
     }
     applyState(st);
-    if (st.needsImport) { showImportScreen(); return; }
+    if (st.needsImport) {
+      showImportScreen();
+      if (st.asistente) abrirAsistente(() => {});
+      return;
+    }
     showApp();
     fetchIPC();
   } catch (err) {
@@ -300,7 +306,7 @@ export function iniciar() {
 // los datos.
 
 for (const parte of [modales, compartir, operativo, propietarios, { iniciar }, deshacer, cabecera,
-                     baseDatos, administraciones, alquiler, configuracion]) parte.iniciar();
+                     baseDatos, administraciones, alquiler, configuracion, importar]) parte.iniciar();
 bindAutocomplete();
 loadState();
 

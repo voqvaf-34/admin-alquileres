@@ -6,7 +6,7 @@ const { readWorkbookFile } = require('./importador-excel');
 const share = require('./compartir');
 const { ctx } = require('./contexto');
 const { IS_VIEWER, MODE } = require('./config');
-const { ensureData } = require('./migraciones');
+const { ensureData, prepararImportado } = require('./migraciones');
 const publicacion = require('./publicacion');
 const { dbPath } = require('./rutas');
 const visor = require('./visor');
@@ -29,6 +29,8 @@ function state() {
     settings:  ctx.store.getSettings(),
     undo:      ctx.store.undoStatus(),
     needsImport: !IS_VIEWER && ctx.store.isEmpty() && ctx.store.getSettings().initialized !== '1',
+    // Asistente de primer uso (marca y apariencia). ADMIN_ALQ_SIN_ASISTENTE lo saltea (pruebas).
+    asistente: !IS_VIEWER && ctx.store.isEmpty() && !ctx.store.getSettings().asistenteVisto && !process.env.ADMIN_ALQ_SIN_ASISTENTE,
     dbPath:    dbPath(),
   };
 }
@@ -43,6 +45,17 @@ function importFrom(filePath) {
   ctx.store.setSetting('importedFrom', filePath);
   ctx.store.setSetting('importedAt', new Date().toISOString());
   return counts;
+}
+
+// Suma una planilla a lo que ya hay (con la app en uso): no toca lo cargado y saltea repetidos.
+function addFrom(filePath) {
+  const data = readWorkbookFile(filePath);
+  if (!data.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
+  const clasico = data.formato === 'clasico';
+  ctx.store.backup('pre-agregar');
+  const res = ctx.store.addImported({ contracts: data.contracts.map(c => prepararImportado(c, { clasico })), admins: data.admins }, D.nameKey);
+  ctx.store.setSetting('initialized', '1');
+  return res;
 }
 
 // Datos de ejemplo inventados (ver dominios/demo.js): pasan por las mismas normalizaciones que
@@ -65,4 +78,4 @@ async function openStore() {
   publicacion.attachSharing();
 }
 
-Object.assign(module.exports, { state, importFrom, loadDemo, openStore });
+Object.assign(module.exports, { state, importFrom, addFrom, loadDemo, openStore });

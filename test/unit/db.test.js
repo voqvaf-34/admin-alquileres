@@ -121,3 +121,30 @@ test('moneda: pesos por defecto, dolares para importes de hasta 4 cifras y se pu
   assert.equal(s.addContract({ ...sample, direccion: 'E 1', importeBase: 800, moneda: 'USD' }).moneda, 'USD');
   s.close();
 });
+
+test('agregar planilla: suma sin tocar lo cargado, saltea repetidos y vincula propietarios por nombre', async () => {
+  const s = await Store.open(path.join(tmpDir(), 'a.sqlite'));
+  const { nameKey } = require('../../src/dominios/index.js');
+  const prev = s.addContract(sample);
+  s.linkOwnersFromText(prev.id, 'Ana', '', '', nameKey);
+  s.saveAdmin({ nombre: 'Admin Sur', edificios: 'Torre Ceibo' });
+  const fila = (o) => ({ ...sample, importe: sample.importeBase, moneda: 'UYU', inactive: false, ...o });
+  const r = s.addImported({
+    contracts: [
+      fila({}),                                                               // repetido
+      fila({ direccion: 'Maldonado 1580 U2', inquilino: 'Camila', propietario: 'Ana / Bruno', moneda: 'USD', importeBase: 900, importe: 950 }),
+      fila({ direccion: 'Guayabo 1850 U3', inquilino: 'Dario', propietario: 'Bruno', inactive: true }),
+    ],
+    admins: [{ nombre: 'ADMIN SUR' }, { nombre: 'Consorcio Guayabo', edificios: 'Guayabo' }],
+  }, nameKey);
+  assert.deepEqual(r, { agregados: 2, repetidos: 1, admins: 1 });
+  const list = s.listContracts();
+  assert.equal(list.length, 3);
+  const mald = list.find(c => c.direccion === 'Maldonado 1580 U2');
+  assert.deepEqual([mald.moneda, mald.importe, mald.importeBase, mald.inactive], ['USD', 950, 900, false]);
+  assert.equal(list.find(c => c.direccion === 'Guayabo 1850 U3').inactive, true);
+  const owners = s.listOwners().map(o => o.nombre).sort();
+  assert.deepEqual(owners, ['Ana', 'Bruno'], 'Ana se reutiliza, Bruno se crea una sola vez');
+  assert.equal(s.listContractOwners().filter(l => l.contractId === mald.id).length, 2);
+  assert.deepEqual(s.listAdmins().map(a => a.nombre), ['Admin Sur', 'Consorcio Guayabo']);
+});

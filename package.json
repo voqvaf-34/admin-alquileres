@@ -1,7 +1,7 @@
 {
   "name": "admin-alquileres",
   "productName": "Admin Alquileres",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Gestion de alquileres para inmobiliarias: contratos, propietarios, aumentos por IPC y renovaciones.",
   "author": "Pablo Rodriguez",
   "private": true,
@@ -42,6 +42,10 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/lora": "^5.3.0",
+    "@fontsource/montserrat": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
     "@fontsource/rubik": "^5.3.0",
     "electron": "^44.8.0",
     "electron-builder": "^26.15.3",

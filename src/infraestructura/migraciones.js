@@ -78,4 +78,16 @@ function cleanContract(c) {
   return { ...c, edificio, calle, unidad, direccion, inquilino: D.titleCase(c.inquilino), propietario };
 }
 
-Object.assign(module.exports, { unidadFmt, ensureAddresses, ensureOwners, ensureCleanup, ensureGarantias, ensureMoneda, ensureData, cleanContract });
+// Una fila importada para sumar a lo que ya hay: mismo formato que un alquiler cargado a mano
+// (direccion normalizada, nombres en mayusculas iniciales) y garantias CGN/ANDA en su campo.
+// En la planilla clasica (sin moneda) los importes de hasta 4 cifras son dolares.
+function prepararImportado(c, { clasico = false } = {}) {
+  const a = normalizeAddress(c.direccion, ADDRESS_RULES);
+  const x = cleanContract({ ...c, edificio: a.edificio, calle: a.calle, unidad: a.unidad, direccionOriginal: c.direccion });
+  let garantia = String(c.garantia || '').trim(), remitente = String(c.remitente || '').trim();
+  if (!garantia && D.GARANTIAS_GESTIONAN.includes(remitente.toUpperCase())) { garantia = remitente.toUpperCase(); remitente = ''; }
+  const moneda = c.moneda || (clasico && c.importe > 0 && c.importe < 10000 ? 'USD' : 'UYU');
+  return { ...x, garantia, remitente: D.titleCase(remitente), moneda };
+}
+
+Object.assign(module.exports, { prepararImportado, unidadFmt, ensureAddresses, ensureOwners, ensureCleanup, ensureGarantias, ensureMoneda, ensureData, cleanContract });

@@ -162,11 +162,12 @@ class Store {
 
   // ── deshacer / rehacer ───────────────────────────────────────────────────
   // Guarda una copia de la base antes de un cambio. Cambios seguidos (< 1,5 s) se agrupan
-  // en un solo paso, ej. "marcar enviado" = importe + marca.
-  checkpoint(label) {
+  // en un solo paso, ej. "marcar enviado" = importe + marca; agrupar=false para cambios grandes
+  // (importaciones) que siempre son un paso propio.
+  checkpoint(label, agrupar = true) {
     const now = Date.now();
     const last = this.undoStack[this.undoStack.length - 1];
-    if (last && now - last.t < UNDO_GROUP_MS) { last.t = now; return false; }
+    if (agrupar && last && now - last.t < UNDO_GROUP_MS) { last.t = now; return false; }
     this.undoStack.push({ label, t: now, data: this.db.export() });
     this.db.run('PRAGMA foreign_keys = ON;');
     if (this.undoStack.length > UNDO_LIMIT) this.undoStack.shift();
@@ -588,24 +589,52 @@ class Store {
   // Vincula un contrato a partir del texto del modal ("A / B"): reutiliza propietarios
   // existentes por nombre y crea los que falten (con tel/mail si es uno solo).
   linkOwnersFromText(contractId, text, telefono, mail, nameKey) {
+    this.transaction(() => this._linkOwnersFromText(contractId, text, telefono, mail, nameKey));
+  }
+  _linkOwnersFromText(contractId, text, telefono, mail, nameKey) {
     const names = String(text || '').split(/\s*\/{1,}\s*/).map(x => x.trim()).filter(Boolean);
     const existing = this.listOwners();
-    this.transaction(() => {
-      const ids = names.map(n => {
-        const found = existing.find(o => nameKey(o.nombre) === nameKey(n));
-        if (found) {
-          if (names.length === 1 && (!found.telefono || !found.mail)) {
-            this.db.run('UPDATE owners SET telefono=?, mail=? WHERE id=?',
-              [found.telefono || s(telefono), found.mail || s(mail), found.id]);
-          }
-          return found.id;
+    const ids = names.map(n => {
+      const found = existing.find(o => nameKey(o.nombre) === nameKey(n));
+      if (found) {
+        if (names.length === 1 && (!found.telefono || !found.mail)) {
+          this.db.run('UPDATE owners SET telefono=?, mail=? WHERE id=?',
+            [found.telefono || s(telefono), found.mail || s(mail), found.id]);
         }
-        this.db.run('INSERT INTO owners (nombre, telefono, mail) VALUES (?,?,?)',
-          [n, names.length === 1 ? s(telefono) : '', names.length === 1 ? s(mail) : '']);
-        return this.lastId();
-      });
-      this._setContractOwners(contractId, ids);
+        return found.id;
+      }
+      this.db.run('INSERT INTO owners (nombre, telefono, mail) VALUES (?,?,?)',
+        [n, names.length === 1 ? s(telefono) : '', names.length === 1 ? s(mail) : '']);
+      return this.lastId();
     });
+    this._setContractOwners(contractId, ids);
+  }
+
+  // Suma alquileres y administraciones de una planilla a lo que ya hay, en un solo paso.
+  // Se saltean los repetidos (misma direccion, inquilino y fecha de inicio) y las administraciones
+  // con un nombre que ya existe. Los propietarios se vinculan por nombre (o se crean).
+  addImported({ contracts, admins = [] }, nameKey) {
+    const clave = c => [nameKey(c.direccion), nameKey(c.inquilino || ''), c.fechaInicio || ''].join('|');
+    const ya = new Set(this.listContracts().map(clave));
+    const adminsYa = new Set(this.listAdmins().map(a => nameKey(a.nombre)));
+    const res = { agregados: 0, repetidos: 0, admins: 0 };
+    this.transaction(() => {
+      for (const c of contracts) {
+        const k = clave(c);
+        if (ya.has(k)) { res.repetidos++; continue; }
+        ya.add(k);
+        const id = this._insertContract(c);
+        if (c.propietario) this._linkOwnersFromText(id, c.propietario, c.telProp, c.mailProp, nameKey);
+        res.agregados++;
+      }
+      for (const a of admins) {
+        if (adminsYa.has(nameKey(a.nombre))) continue;
+        adminsYa.add(nameKey(a.nombre));
+        this.db.run('INSERT INTO admins (nombre, edificios, telefono, mail) VALUES (?,?,?,?)', [s(a.nombre), s(a.edificios), s(a.telefono), s(a.mail)]);
+        res.admins++;
+      }
+    });
+    return res;
   }
 
   // Aplica el plan del unificador (reemplaza propietarios, contactos y vinculos).

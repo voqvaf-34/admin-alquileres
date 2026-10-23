@@ -6,15 +6,16 @@ const fs     = require('fs');
 const os     = require('os');
 const path   = require('path');
 const { _electron } = require('playwright-core');
-const { abrirConfiguracion } = require('./helpers');
+const { abrirConfiguracion, elegirColor } = require('./helpers');
 
 const ROOT      = path.join(__dirname, '..', '..');
 const SHOTS     = process.env.E2E_SCREENSHOTS || path.join(os.tmpdir(), 'alq-e2e-shots');
 
 async function launch(env) {
-  const app = await _electron.launch({ executablePath: require('electron'), args: [ROOT], cwd: ROOT, env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ...env } });
+  const app = await _electron.launch({ executablePath: require('electron'), args: [ROOT], cwd: ROOT, env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ...env } });
   const page = await app.firstWindow();
   page.setDefaultTimeout(20000);
+  await page.emulateMedia({ colorScheme: 'light' });
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   await page.evaluate(() => { window.confirm = () => true; });
@@ -33,7 +34,7 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     await editor.page.waitForSelector('#app-screen', { state: 'visible' });
     await abrirConfiguracion(editor.page);
     await editor.page.fill('#cfg-nombre', 'Inmobiliaria del Sur');
-    await editor.page.click('.cfg-swatch[data-color="#7C3AED"]');
+    await elegirColor(editor.page, '#7C3AED');
     await editor.page.click('#cfg-guardar');
     await editor.page.waitForSelector('#modal-config', { state: 'hidden' });
     await editor.page.waitForFunction(() => document.getElementById('share-dot').classList.contains('ok'));

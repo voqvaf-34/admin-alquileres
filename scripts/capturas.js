@@ -13,11 +13,12 @@ async function main() {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alq-capturas-'));
   const app = await _electron.launch({
     executablePath: require('electron'), args: [ROOT], cwd: ROOT,
-    env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_DATA_DIR: dataDir, ADMIN_ALQ_SHARED_DIR: path.join(dataDir, 'compartida') },
+    env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ADMIN_ALQ_DATA_DIR: dataDir, ADMIN_ALQ_SHARED_DIR: path.join(dataDir, 'compartida') },
   });
   const page = await app.firstWindow();
   page.setDefaultTimeout(20000);
   await page.setViewportSize({ width: 1280, height: 800 });
+  await page.emulateMedia({ colorScheme: 'light' });
   const shot = async name => { await page.waitForTimeout(250); await page.screenshot({ path: path.join(OUT, name + '.png') }); console.log('  ' + name); };
   const sinToast = () => page.evaluate(() => { document.getElementById('toast').className = ''; });
 
@@ -32,8 +33,8 @@ async function main() {
     await page.click('#btn-config');
     await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'cfg-nombre');
     await page.fill('#cfg-nombre', 'Inmobiliaria del Sur');
-    await page.click('.cfg-swatch[data-color="#0F766E"]');
-    await page.click('[data-msg="aumentoInquilino"] summary');
+    await page.click('[data-cfg-tab="apariencia"]');
+    await page.click('[data-color-picker="color"] .cfg-swatch[data-color="#0F766E"]');
     await shot('06-configuracion');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });

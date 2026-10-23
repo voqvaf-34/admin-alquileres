@@ -7,6 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Alquileres</title>
 <script src="tema.js"></script>
+<link rel="stylesheet" href="fuentes.css">
 <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
@@ -98,6 +99,7 @@
             <button class="menu-item" id="btn-export-csv">Exportar CSV</button>
             <button class="menu-item editor-only" id="btn-menu-share">Compartir con el Visor…</button>
             <button class="menu-item editor-only" id="btn-data-folder">Carpeta de datos y copias</button>
+            <button class="menu-item editor-only" id="btn-menu-importar">Importar planilla…</button>
             <button class="menu-item editor-only" id="btn-menu-template">Descargar planilla modelo</button>
             <button class="menu-item editor-only" id="btn-config">Configuración…</button>
           </div>
@@ -498,48 +500,172 @@
     </div>
   </div>
 
-  <!-- Modal: configuracion (marca de la inmobiliaria) -->
+  <!-- Modal: importar una planilla con la app en uso -->
+  <div id="modal-importar" class="modal" data-form>
+    <div class="modal-box">
+      <div class="modal-head">
+        <span class="modal-title">Importar planilla</span>
+        <button class="unmark-btn modal-x" data-close-modal="modal-importar">&times;</button>
+      </div>
+      <div class="imp-opciones">
+        <label class="imp-opcion">
+          <input type="radio" name="imp-modo" value="agregar" checked>
+          <span><strong>Agregar a lo que ya hay</strong>
+            <small>Suma los alquileres y administraciones de la planilla. Lo que ya está cargado no se toca, y se saltean
+              los alquileres repetidos (misma dirección, inquilino y fecha de inicio). Los propietarios se vinculan por nombre.</small></span>
+        </label>
+        <label class="imp-opcion">
+          <input type="radio" name="imp-modo" value="reemplazar">
+          <span><strong>Reemplazar todo</strong>
+            <small>Borra los alquileres y administraciones actuales y carga los de la planilla. Los datos de los propietarios
+              (cédula, documentos, cuentas) se conservan si el nombre coincide.</small></span>
+        </label>
+      </div>
+      <div class="field-hint">Las dos opciones se pueden deshacer (Ctrl+Z) y antes se hace una copia de respaldo.
+        Formato: Excel o CSV con encabezados — <button type="button" class="link-btn" id="imp-modelo">descargar planilla modelo</button>.</div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" data-close-modal="modal-importar">Cancelar</button>
+        <button class="btn-modal-submit" id="imp-elegir">Elegir planilla…</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: configuracion (marca, apariencia y mensajes). En el primer arranque es el asistente. -->
   <div id="modal-config" class="modal" data-form>
     <div class="modal-box">
       <div class="modal-head">
-        <span class="modal-title">Configuración</span>
+        <span class="modal-title" id="cfg-titulo">Configuración</span>
         <button class="unmark-btn modal-x" data-close-modal="modal-config">&times;</button>
       </div>
-      <div class="modal-section">Marca de la inmobiliaria</div>
-      <div class="modal-grid">
-        <div class="mfield mfull">
-          <label>Nombre de la inmobiliaria</label>
-          <input type="text" id="cfg-nombre" placeholder="Mi Inmobiliaria" autocomplete="off" maxlength="60">
-          <span class="field-hint">Se muestra arriba (si no hay logo) y en los mensajes para inquilinos y propietarios.</span>
-        </div>
-        <div class="mfield mfull">
-          <label>Color principal</label>
-          <div class="cfg-colores">
-            <div class="cfg-sugeridos" id="cfg-sugeridos"></div>
-            <input type="color" id="cfg-color" title="Elegir otro color">
-            <input type="text" id="cfg-color-hex" maxlength="7" spellcheck="false" autocomplete="off">
+      <div class="cfg-bienvenida" id="cfg-bienvenida" hidden>
+        <div class="cfg-bienvenida-titulo">¡Bienvenido!</div>
+        <div>Antes de empezar, dale a la app la cara de tu inmobiliaria. Todo se puede cambiar después desde el menú ☰ → Configuración.</div>
+      </div>
+      <div class="cfg-tabs" role="tablist">
+        <button type="button" class="cfg-tab" data-cfg-tab="marca" role="tab">Marca</button>
+        <button type="button" class="cfg-tab" data-cfg-tab="apariencia" role="tab">Apariencia</button>
+        <button type="button" class="cfg-tab" data-cfg-tab="mensajes" role="tab">Mensajes</button>
+      </div>
+
+      <section class="cfg-panel" data-cfg-panel="marca">
+        <div class="modal-grid">
+          <div class="mfield mfull">
+            <label>Nombre de la inmobiliaria</label>
+            <input type="text" id="cfg-nombre" placeholder="Mi Inmobiliaria" autocomplete="off" maxlength="60">
+            <span class="field-hint">Se muestra arriba (si no hay logo) y en los mensajes para inquilinos y propietarios.</span>
+          </div>
+          <div class="mfield mfull">
+            <label>Logo</label>
+            <div class="cfg-logo">
+              <div class="cfg-logo-preview" id="cfg-logo-preview"><img id="cfg-logo-img" alt="" hidden><span id="cfg-logo-vacio">Sin logo</span></div>
+              <button class="btn-modal-cancel" type="button" id="cfg-logo-elegir">Elegir imagen…</button>
+              <button class="btn-modal-cancel" type="button" id="cfg-logo-quitar">Quitar</button>
+              <input type="file" id="cfg-logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+            </div>
+            <span class="field-hint">Ideal: horizontal, con fondo transparente o del mismo color que la barra. Se ajusta solo a la altura de la barra.</span>
+          </div>
+          <div class="mfield mfull">
+            <label>Ícono de la app <span class="m-sum-hint">ventana, barra de tareas y bandeja de Windows</span></label>
+            <div class="cfg-icono">
+              <div class="cfg-icono-vista">
+                <img id="cfg-icono-img" alt="Ícono grande">
+                <img id="cfg-icono-chico" alt="Ícono chico">
+              </div>
+              <div class="cfg-icono-opciones">
+                <div class="seg cfg-icono-tipos" id="cfg-icono-tipos">
+                  <button type="button" class="seg-btn" data-icono-tipo="app">Prediseñado</button>
+                  <button type="button" class="seg-btn" data-icono-tipo="logo">Mi logo</button>
+                  <button type="button" class="seg-btn" data-icono-tipo="imagen">Imagen propia</button>
+                </div>
+                <div data-icono-panel="app">
+                  <div class="cfg-disenos" id="cfg-disenos"></div>
+                  <div class="cfg-colores" data-color-picker="iconoColor">
+                    <button type="button" class="cfg-mismo" id="cfg-iconoColor-mismo">Color principal</button>
+                    <div class="cfg-sugeridos"></div>
+                    <input type="color" class="cfg-color" title="Elegir otro color">
+                    <input type="text" class="cfg-color-hex" maxlength="7" spellcheck="false" autocomplete="off">
+                  </div>
+                </div>
+                <div data-icono-panel="logo">
+                  <span class="field-hint" id="cfg-icono-logo-hint">El logo centrado sobre el color principal. Si el logo es muy horizontal se va a ver chico: en ese caso conviene una imagen propia cuadrada.</span>
+                </div>
+                <div data-icono-panel="imagen">
+                  <button class="btn-modal-cancel" type="button" id="cfg-icono-elegir">Elegir imagen…</button>
+                  <input type="file" id="cfg-icono-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+                  <span class="field-hint">Una imagen cuadrada, por ejemplo solo el símbolo del logo (si no es cuadrada se recorta al centro).
+                    Si no tenés una, la podés armar gratis a partir de tu logo en <a href="https://www.canva.com/" target="_blank" rel="noopener">Canva</a>
+                    o en <a href="https://favicon.io/" target="_blank" rel="noopener">favicon.io</a>.</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="mfield mfull">
-          <label>Logo</label>
-          <div class="cfg-logo">
-            <div class="cfg-logo-preview" id="cfg-logo-preview"><img id="cfg-logo-img" alt="" hidden><span id="cfg-logo-vacio">Sin logo</span></div>
-            <button class="btn-modal-cancel" type="button" id="cfg-logo-elegir">Elegir imagen…</button>
-            <button class="btn-modal-cancel" type="button" id="cfg-logo-quitar">Quitar</button>
-            <input type="file" id="cfg-logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+      </section>
+
+      <section class="cfg-panel" data-cfg-panel="apariencia">
+        <div class="modal-grid">
+          <div class="mfield mfull">
+            <label>Modo <span class="m-sum-hint">de esta PC; también se cambia con el botón ☾ de arriba</span></label>
+            <div class="seg cfg-modos" id="cfg-modos">
+              <button type="button" class="seg-btn" data-modo="auto">Automático (como Windows)</button>
+              <button type="button" class="seg-btn" data-modo="light">Claro</button>
+              <button type="button" class="seg-btn" data-modo="dark">Oscuro</button>
+            </div>
           </div>
-          <span class="field-hint">Ideal: horizontal, con fondo transparente o del mismo color que la barra. Se ajusta solo a la altura de la barra.</span>
+          <div class="mfield mfull">
+            <label>Color principal <span class="m-sum-hint">barra superior y botones</span></label>
+            <div class="cfg-colores" data-color-picker="color">
+              <div class="cfg-sugeridos"></div>
+              <input type="color" class="cfg-color" title="Elegir otro color">
+              <input type="text" class="cfg-color-hex" maxlength="7" spellcheck="false" autocomplete="off">
+            </div>
+          </div>
+          <div class="mfield mfull">
+            <label>Color secundario <span class="m-sum-hint">pestaña activa, avisos y títulos</span></label>
+            <div class="cfg-colores" data-color-picker="color2">
+              <button type="button" class="cfg-mismo" id="cfg-color2-mismo">Igual al principal</button>
+              <div class="cfg-sugeridos"></div>
+              <input type="color" class="cfg-color" title="Elegir otro color">
+              <input type="text" class="cfg-color-hex" maxlength="7" spellcheck="false" autocomplete="off">
+            </div>
+          </div>
+          <div class="mfield mfull">
+            <label>Tema <span class="m-sum-hint">fondos y tarjetas; cada uno tiene modo claro y oscuro</span></label>
+            <div class="cfg-temas" id="cfg-temas"></div>
+          </div>
+          <div class="mfield mfull">
+            <label>Tipografía</label>
+            <div class="cfg-fuentes" id="cfg-fuentes"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cfg-panel" data-cfg-panel="mensajes">
+        <span class="field-hint">Textos que se copian para mandar por WhatsApp o mail. Las palabras entre llaves se completan solas.</span>
+        <div id="cfg-mensajes"></div>
+      </section>
+
+      <div class="cfg-preview-wrap" id="cfg-preview-wrap">
+        <div class="modal-section">Vista previa <button type="button" class="cfg-prev-modo" id="cfg-prev-modo">Ver en modo oscuro</button></div>
+        <div class="cfg-preview" id="cfg-preview">
+          <div class="cfg-preview-bar"><img class="logo-img" id="cfg-prev-logo" alt="" hidden><span class="logo-text" id="cfg-prev-nombre"></span><span class="cfg-prev-sub">Alquileres</span></div>
+          <div class="cfg-preview-tabs"><span class="cfg-prev-tab on">Base de Datos</span><span class="cfg-prev-tab">Aumentos <i class="cfg-prev-aviso">3</i></span><span class="cfg-prev-tab">Renovaciones</span></div>
+          <div class="cfg-preview-body">
+            <div class="cfg-prev-card">
+              <div class="cfg-prev-dir">Torre Ceibo - Av. Italia 2875 U403</div>
+              <div class="cfg-prev-det">Inquilino: Beto Gomez · Alquiler: $ 29.400</div>
+              <div class="cfg-prev-sec">Comentarios</div>
+            </div>
+            <button type="button" class="cfg-prev-btn" tabindex="-1">+ Agregar</button>
+          </div>
         </div>
       </div>
-      <div class="modal-section">Vista previa</div>
-      <div class="cfg-preview" id="cfg-preview">
-        <div class="cfg-preview-bar"><img class="logo-img" id="cfg-prev-logo" alt="" hidden><span class="logo-text" id="cfg-prev-nombre"></span><span class="cfg-prev-sub">Alquileres</span></div>
-        <div class="cfg-preview-body"><span class="cfg-prev-tab">Base de Datos</span><button type="button" class="cfg-prev-btn" tabindex="-1">+ Agregar</button></div>
-      </div>
-      <div class="modal-section">Mensajes <span class="field-hint">textos que se copian para mandar por WhatsApp o mail</span></div>
-      <div id="cfg-mensajes"></div>
+
       <div class="modal-footer">
-        <button class="btn-modal-cancel" data-close-modal="modal-config">Cancelar</button>
+        <button class="link-btn cfg-saltar" id="cfg-saltar" hidden>Saltar por ahora</button>
+        <button class="btn-modal-cancel" id="cfg-cancelar" data-close-modal="modal-config">Cancelar</button>
+        <button class="btn-modal-cancel" id="cfg-atras" hidden>Atrás</button>
+        <button class="btn-modal-submit" id="cfg-siguiente" hidden>Siguiente</button>
         <button class="btn-modal-submit" id="cfg-guardar">Guardar</button>
       </div>
     </div>

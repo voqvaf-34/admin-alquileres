@@ -34,6 +34,33 @@ function setTitleBarColor(color, ink) {
   return true;
 }
 
+// Icono propio (generado del logo en la pantalla): ventana, barra de tareas y bandeja. Se guarda
+// en un archivo para usarlo desde el arranque; sin archivo se usa el icono de la app.
+const iconoFile = () => path.join(app.getPath('userData'), 'icono.png');
+
+function iconoActual() {
+  try { if (fs.existsSync(iconoFile())) { const img = nativeImage.createFromPath(iconoFile()); if (!img.isEmpty()) return img; } } catch (_) {}
+  return null;
+}
+
+const iconoBandeja = img => (img ? img.resize({ width: 32, height: 32, quality: 'best' }) : nativeImage.createFromPath(TRAY_ICON));
+
+// png: data URL de una imagen PNG, o '' para volver al icono de la app.
+function setAppIcon(png) {
+  let img = null;
+  if (png) {
+    if (typeof png !== 'string' || !png.startsWith('data:image/png;base64,') || png.length > 2 * 1024 * 1024) throw new Error('Icono no valido.');
+    img = nativeImage.createFromDataURL(png);
+    if (img.isEmpty()) throw new Error('Icono no valido.');
+    fs.writeFileSync(iconoFile(), img.toPNG());
+  } else {
+    try { fs.unlinkSync(iconoFile()); } catch (_) {}
+  }
+  if (ctx.win && !ctx.win.isDestroyed()) ctx.win.setIcon(img || nativeImage.createFromPath(ICON));
+  if (tray && !tray.isDestroyed()) tray.setImage(iconoBandeja(img));
+  return true;
+}
+
 function showWindow() {
   if (!ctx.win) return;
   if (ctx.win.isMinimized()) ctx.win.restore();
@@ -68,7 +95,7 @@ function buildTrayMenu() {
 }
 
 function createTray() {
-  tray = new Tray(nativeImage.createFromPath(TRAY_ICON));
+  tray = new Tray(iconoBandeja(iconoActual()));
   tray.setToolTip(app.getName());
   tray.setContextMenu(buildTrayMenu());
   tray.on('click', showWindow);
@@ -80,7 +107,7 @@ function createWindow({ hidden = false } = {}) {
     width: 1400, height: 900, minWidth: 900, minHeight: 600,
     backgroundColor: barra.color,
     title: app.getName(),
-    icon: ICON,
+    icon: iconoActual() || ICON,
     show: false,
     autoHideMenuBar: true,
     // La barra de titulo de Windows se integra a la barra de color de la app: quedan solo los
@@ -127,4 +154,4 @@ function createWindow({ hidden = false } = {}) {
   ctx.win.loadFile(path.join(__dirname, '..', 'interfaz', 'index.html'));
 }
 
-Object.assign(module.exports, { setTitleBarColor, showWindow, quitApp, loginItemEnabled, buildTrayMenu, createTray, createWindow });
+Object.assign(module.exports, { setAppIcon, setTitleBarColor, showWindow, quitApp, loginItemEnabled, buildTrayMenu, createTray, createWindow });
