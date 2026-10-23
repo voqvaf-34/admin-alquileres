@@ -190,4 +190,4 @@ function registerViewerHandlers() {
   handle('setting:set',    () => true);
 }
 
-Object.assign(module.exports, { UNDO_LABELS, notifyUndo, handle, registerHandlers, registerViewerHandlers });
+Object.assign(module.exports, { registerHandlers, registerViewerHandlers });

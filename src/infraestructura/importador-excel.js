@@ -159,4 +159,4 @@ function templateWorkbook() {
 
 function writeTemplate(filePath) { XLSX.writeFile(templateWorkbook(), filePath); }
 
-module.exports = { readBuffer, readWorkbook, readWorkbookFile, parseContractsSheet, parseAdminSheet, templateWorkbook, writeTemplate };
+module.exports = { readBuffer, readWorkbook, readWorkbookFile, templateWorkbook, writeTemplate };

@@ -40,4 +40,4 @@ function docPreview(id) {
   return { image: true, dataUrl: `data:${MIME[ext]};base64,${fs.readFileSync(p).toString('base64')}` };
 }
 
-Object.assign(module.exports, { DOC_EXT, MIME, pickOwnerDocs, docFile, docPreview });
+Object.assign(module.exports, { pickOwnerDocs, docFile, docPreview });

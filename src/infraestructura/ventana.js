@@ -179,4 +179,4 @@ function createWindow({ hidden = false } = {}) {
   ctx.win.loadFile(path.join(__dirname, '..', 'interfaz', 'index.html'));
 }
 
-Object.assign(module.exports, { setZoom, setAppIcon, setTitleBarColor, showWindow, quitApp, loginItemEnabled, buildTrayMenu, createTray, createWindow });
+Object.assign(module.exports, { setZoom, setAppIcon, setTitleBarColor, showWindow, createTray, createWindow });

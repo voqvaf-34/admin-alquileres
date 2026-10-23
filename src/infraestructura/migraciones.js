@@ -67,4 +67,4 @@ function ensureData(force, { heuristicas = true } = {}) {
   if (heuristicas) ensureMoneda(force); else ctx.store.setSetting('monedaVersion', MONEDA_VERSION);
 }
 
-Object.assign(module.exports, { ensureAddresses, ensureOwners, ensureCleanup, ensureGarantias, ensureMoneda, ensureData });
+Object.assign(module.exports, { ensureData });

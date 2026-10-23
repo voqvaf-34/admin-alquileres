@@ -56,4 +56,4 @@ async function pickViewerDir() {
   return estadoApp.state();
 }
 
-Object.assign(module.exports, { viewerConfigFile, viewerStatus, loadViewer, startViewerPolling, pickViewerDir });
+Object.assign(module.exports, { viewerStatus, loadViewer, startViewerPolling, pickViewerDir });

@@ -50,4 +50,4 @@ function attachSharing() {
   setTimeout(publishNow, 2000);
 }
 
-Object.assign(module.exports, { shareState, sharedDir, shareStatus, notifyShare, publishNow, attachSharing });
+Object.assign(module.exports, { sharedDir, shareStatus, publishNow, attachSharing });

@@ -30,4 +30,4 @@ async function exportCsv() {
   return { dir, files: Object.keys(tables).length };
 }
 
-Object.assign(module.exports, { toCsv, exportCsv });
+Object.assign(module.exports, { exportCsv });
