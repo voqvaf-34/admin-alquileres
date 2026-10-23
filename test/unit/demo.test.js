@@ -10,7 +10,7 @@ function cartera(hoy) {
   // Lo mismo que hace la migracion de garantias: CGN/ANDA pasan del remitente a la garantia.
   const entries = contracts.map((c, i) => {
     const g = ['CGN', 'ANDA'].includes(c.remitente) ? c.remitente : '';
-    return D.hydrateContract({ ...c, id: i + 1, garantia: g, remitente: g ? '' : c.remitente.replace(/^MANDA\s+/, '') });
+    return D.hydrateContract({ ...c, id: i + 1, garantia: g, remitente: g ? '' : c.remitente });
   });
   return { entries, admins, marks };
 }
@@ -26,6 +26,7 @@ for (const hoy of DIAS) {
     assert.deepEqual(venc.sort(), ['Maldonado 1580 U2', 'Mirador del Parque - Av. Rivera 3300 U604', 'Torre Ceibo - Av. Italia 2875 U1104']);
     assert.deepEqual(D.getVencidosAtrasados(entries, m, y, marks).map(e => e.direccion), ['Residencial Guayabo - Guayabo 1850 U7']);
     assert.equal(entries.filter(e => D.gestionadoPor(e)).length, 3, 'dos garantias y un tercero');
+    assert.deepEqual(entries.map(e => e.remitente).filter(Boolean), ['Gestora Norte'], 'el delegado sin el prefijo de la planilla vieja');
     assert.equal(entries.filter(e => e.inactive).length, 2);
     assert.equal(admins.length, 3);
   });

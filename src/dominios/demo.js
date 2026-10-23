@@ -59,7 +59,7 @@ export function datosDemo(hoy = new Date()) {
     C('Canelones 1234 U801',                       'nora',  26700, enMes(hoy, 1, 10), '2 AÑOS', { remitente: 'ANDA' }),
     C('Mirador del Parque - Av. Rivera 3300 U902', 'gabi',  35200, enMes(hoy, 2, 25), '2 AÑOS', { remitente: 'CGN' }),
     // Aumentos que maneja otra persona.
-    C('Maldonado 1580 U9',                         'elena', 21000, enMes(hoy, 1, 14), '2 AÑOS', { remitente: 'MANDA Gestora Norte' }),
+    C('Maldonado 1580 U9',                         'elena', 21000, enMes(hoy, 1, 14), '2 AÑOS', { remitente: 'Gestora Norte' }),
     // Resto de la cartera.
     C('Torre Ceibo - Av. Italia 2875 U201',        'bruno', 29900, enMes(hoy, 1, 9, 4),  '2 AÑOS'),
     C('Residencial Guayabo - Guayabo 1850 U12',    'fede',  23800, enMes(hoy, 0, 2, -3), '2 AÑOS'),
