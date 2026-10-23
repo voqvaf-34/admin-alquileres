@@ -9,6 +9,12 @@ const { launch, tmpDir, shot } = require('./helpers');
 
 const DIR = 'E2E Prueba 999 U1';
 const esperarFoco = (page, id) => page.waitForFunction(i => document.activeElement && document.activeElement.id === i, id);
+// Despliega la primera fila de la Base de Datos solo si esta cerrada (un clic en una abierta la cierra).
+async function desplegarPrimeraFila(page) {
+  const fila = page.locator('#db-tbody .db-row').first();
+  if (!/expanded/.test(await fila.getAttribute('class'))) await fila.click();
+  await page.waitForSelector('#db-tbody .db-row.expanded');
+}
 
 test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) => {
   const dataDir = tmpDir();
@@ -150,7 +156,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   });
 
   await t.test('edicion y comentarios como viñetas', async () => {
-    await page.click('#db-tbody .db-row');
+    await desplegarPrimeraFila(page);
     await page.click('#db-tbody [data-edit-row]');
     await esperarFoco(page, 'm-importe');
     assert.equal(await page.locator('#m-inq-chips .chip:not(.chip-add)').count(), 2, 'al editar vuelven como viñetas');
@@ -459,8 +465,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   await t.test('marcar inactivo', async () => {
     await page.click('#tab-basedatos');
     await page.fill('#db-search', 'e2e prueba');
-    const row = page.locator('#db-tbody .db-row');
-    if (!/expanded/.test(await row.getAttribute('class'))) await row.click();
+    await desplegarPrimeraFila(page);
     await page.click('#db-tbody [data-delete-row]');
     await page.waitForFunction(d => app.estado.entries.find(e => e.direccion === d).inactive, DIR);
     assert.equal(await page.locator('#db-tbody .db-row').count(), 0, 'filtro activos lo oculta');
