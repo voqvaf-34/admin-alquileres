@@ -474,7 +474,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
       return { destroyed: w.isDestroyed(), visible: w.isVisible() };
     });
     assert.deepEqual(st, { destroyed: false, visible: false });
-    assert.equal(await app.evaluate(({ BrowserWindow }) => { const w = BrowserWindow.getAllWindows()[0]; w.show(); return w.isVisible(); }), true);
+    assert.equal(await app.evaluate(({ BrowserWindow }) => { const w = BrowserWindow.getAllWindows()[0]; w.showInactive(); return w.isVisible(); }), true);
   });
 
   assert.deepEqual(errors, [], 'sin errores de consola');

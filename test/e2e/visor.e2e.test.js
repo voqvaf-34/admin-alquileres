@@ -12,7 +12,7 @@ const ROOT      = path.join(__dirname, '..', '..');
 const SHOTS     = process.env.E2E_SCREENSHOTS || path.join(os.tmpdir(), 'alq-e2e-shots');
 
 async function launch(env) {
-  const app = await _electron.launch({ executablePath: require('electron'), args: [ROOT], cwd: ROOT, env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ...env } });
+  const app = await _electron.launch({ executablePath: require('electron'), args: [ROOT], cwd: ROOT, env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ADMIN_ALQ_FUERA_DE_PANTALLA: '1', ...env } });
   const page = await app.firstWindow();
   page.setDefaultTimeout(20000);
   await page.emulateMedia({ colorScheme: 'light' });
@@ -122,7 +122,7 @@ test('visor recien instalado (sin carpeta elegida) pide elegirla', { timeout: 60
   const env = { ...process.env };
   delete env.ADMIN_ALQ_SHARED_DIR;
   const app = await _electron.launch({ executablePath: require('electron'), args: [ROOT], cwd: ROOT,
-    env: { ...env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')) } });
+    env: { ...env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_FUERA_DE_PANTALLA: '1', ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')) } });
   try {
     const page = await app.firstWindow();
     await page.waitForSelector('#viewer-setup-screen', { state: 'visible' });

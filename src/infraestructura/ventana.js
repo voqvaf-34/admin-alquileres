@@ -7,6 +7,8 @@ const { ICON, START_HIDDEN_ARG, TITLEBAR_H, TRAY_ICON } = require('./config');
 
 let tray = null;
 
+const FUERA_DE_PANTALLA = !!process.env.ADMIN_ALQ_FUERA_DE_PANTALLA;
+
 let trayHintShown = false;
 
 // Color de la barra (el de la marca). Se recuerda en un archivo para usarlo al abrir la
@@ -111,6 +113,7 @@ function buildTrayMenu() {
 }
 
 function createTray() {
+  if (FUERA_DE_PANTALLA) return;
   tray = new Tray(iconoBandeja(iconoActual()));
   tray.setToolTip(app.getName());
   tray.setContextMenu(buildTrayMenu());
@@ -121,6 +124,9 @@ function createWindow({ hidden = false } = {}) {
   const barra = leerBarra();
   ctx.win = new BrowserWindow({
     width: 1400, height: 900, minWidth: 900, minHeight: 600,
+    // Pruebas automaticas: la ventana se abre fuera de la pantalla y sin aparecer en la barra de
+    // tareas, para no tapar lo que este haciendo quien corre las pruebas.
+    ...(FUERA_DE_PANTALLA ? { x: -20000, y: 0, skipTaskbar: true } : {}),
     backgroundColor: barra.color,
     title: app.getName(),
     icon: iconoActual() || ICON,
@@ -151,7 +157,10 @@ function createWindow({ hidden = false } = {}) {
   });
 
   // Se muestra cuando el tema ya esta aplicado (evita el destello inicial).
-  ctx.win.once('ready-to-show', () => { if (!hidden) ctx.win.show(); });
+  ctx.win.once('ready-to-show', () => {
+    if (hidden) return;
+    if (FUERA_DE_PANTALLA) ctx.win.showInactive(); else ctx.win.show();
+  });
 
   // Cerrar la ventana la oculta en la bandeja; solo "Cerrar" del menu de la bandeja sale.
   ctx.win.on('close', e => {
