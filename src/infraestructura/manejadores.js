@@ -25,6 +25,8 @@ const UNDO_LABELS = {
   'import:demo': 'Cargar datos de ejemplo', 'import:pick': 'Importar Excel', 'import:fromPath': 'Importar Excel', 'import:add': 'Agregar planilla', 'import:replace': 'Reemplazar con planilla', 'config:save': 'Cambiar configuración',
 };
 
+const EXTENSIONES_PLANILLA = ['xlsx', 'xlsm', 'xls', 'csv'];
+
 // Cambios grandes: siempre un paso propio de deshacer (no se agrupan con el anterior).
 const UNDO_SEPARADOS = new Set(['import:demo', 'import:pick', 'import:fromPath', 'import:add', 'import:replace']);
 
@@ -57,40 +59,30 @@ function handle(channel, fn) {
 function registerHandlers() {
   handle('state:get', () => estadoApp.state());
 
-  handle('import:pick', async () => {
+  // Planillas: elegir el archivo y reemplazar todo (al empezar o con la app en uso), o sumarla a
+  // lo que ya hay. null = se cancelo el dialogo.
+  const elegirPlanilla = async () => {
     const defaultPath = defaultExcelPaths().find(p => { try { return fs.existsSync(p); } catch (_) { return false; } });
     const res = await dialog.showOpenDialog(ctx.win, {
-      title: 'Seleccionar planilla de alquileres',
-      defaultPath,
-      filters: [{ name: 'Planillas', extensions: ['xlsx', 'xlsm', 'xls', 'csv'] }],
-      properties: ['openFile'],
-    });
-    if (res.canceled || !res.filePaths[0]) return null;
-    return { counts: estadoApp.importFrom(res.filePaths[0]), state: estadoApp.state() };
-  });
-
-  handle('import:fromPath', (filePath) => {
-    if (typeof filePath !== 'string' || !/\.(xlsm|xlsx|xls|csv)$/i.test(filePath)) throw new Error('Archivo no valido.');
-    return { counts: estadoApp.importFrom(filePath), state: estadoApp.state() };
-  });
-
-  handle('import:demo',   () => estadoApp.loadDemo());
-  // Con la app en uso: elegir planilla y sumarla ("agregar") o reemplazar todo ("reemplazar").
-  const elegirPlanilla = async () => {
-    const res = await dialog.showOpenDialog(ctx.win, {
-      title: 'Seleccionar planilla de alquileres', properties: ['openFile'],
-      filters: [{ name: 'Planillas', extensions: ['xlsx', 'xlsm', 'xls', 'csv'] }],
+      title: 'Seleccionar planilla de alquileres', defaultPath, properties: ['openFile'],
+      filters: [{ name: 'Planillas', extensions: EXTENSIONES_PLANILLA }],
     });
     return res.canceled || !res.filePaths[0] ? null : res.filePaths[0];
   };
+  const reemplazarCon = file => (file ? { counts: estadoApp.importFrom(file), state: estadoApp.state() } : null);
+
+  handle('import:pick',     async () => reemplazarCon(await elegirPlanilla()));
+  handle('import:replace',  async () => reemplazarCon(await elegirPlanilla()));
+  handle('import:fromPath', (filePath) => {
+    const ext = typeof filePath === 'string' && path.extname(filePath).slice(1).toLowerCase();
+    if (!EXTENSIONES_PLANILLA.includes(ext)) throw new Error('Archivo no valido.');
+    return reemplazarCon(filePath);
+  });
   handle('import:add', async () => {
     const file = await elegirPlanilla();
     return file ? { result: estadoApp.addFrom(file), state: estadoApp.state() } : null;
   });
-  handle('import:replace', async () => {
-    const file = await elegirPlanilla();
-    return file ? { counts: estadoApp.importFrom(file), state: estadoApp.state() } : null;
-  });
+  handle('import:demo', () => estadoApp.loadDemo());
   handle('import:template', async () => {
     const res = await dialog.showSaveDialog(ctx.win, {
       title: 'Guardar planilla modelo', defaultPath: path.join(app.getPath('documents'), 'planilla-alquileres.xlsx'),
