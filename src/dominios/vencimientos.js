@@ -69,3 +69,17 @@ export function isVencResuelto(e, marks) {
   if (marks[nrKey(e)] && noRenuevaVigente(e, marks)) return true;
   return !!(isRenCycle ? marks[vncKeyR(e)] : mk);
 }
+
+// Un vencimiento es urgente si faltan 10 dias o menos (o ya paso).
+export const DIAS_URGENTE = 10;
+
+// Dias desde hoy hasta la fecha: 0 = hoy, 1 = mañana, negativo = ya paso.
+export function diasHasta(fecha, hoy = new Date()) {
+  const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  return Math.round((fecha - inicioHoy) / 86400000);
+}
+
+// 'urgente' o 'proximo' (sin fecha: 'proximo').
+export function urgenciaVencimiento(fecha, hoy = new Date()) {
+  return fecha && diasHasta(fecha, hoy) <= DIAS_URGENTE ? 'urgente' : 'proximo';
+}

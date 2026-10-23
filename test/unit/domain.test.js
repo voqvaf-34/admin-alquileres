@@ -184,3 +184,12 @@ test('linea de tiempo: la misma renovacion como marca y como nota vieja cuenta u
   assert.equal(D.toISODate(renov[0].date), '2024-03-01', 'se muestra cuando empezo, no cuando se marco');
   assert.equal(renov[0].detalle, 'por 2 años · vence 01/03/2026');
 });
+
+test('vencimientos: dias que faltan y urgencia (10 dias o menos, o ya vencido)', () => {
+  const hoy = new Date(2026, 9, 22, 15, 30);              // la hora del dia no cuenta
+  const en = d => new Date(2026, 9, 22 + d);
+  assert.deepEqual([0, 1, 10, 11, -3].map(d => D.diasHasta(en(d), hoy)), [0, 1, 10, 11, -3]);
+  assert.deepEqual([-3, 0, 10, 11, 30].map(d => D.urgenciaVencimiento(en(d), hoy)), ['urgente', 'urgente', 'urgente', 'proximo', 'proximo']);
+  assert.equal(D.urgenciaVencimiento(null, hoy), 'proximo');
+  assert.equal(D.diasHasta(new Date(2026, 11, 31), new Date(2026, 11, 30, 23, 59)), 1, 'cruce de año');
+});

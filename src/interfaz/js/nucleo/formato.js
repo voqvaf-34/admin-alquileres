@@ -73,15 +73,13 @@ export function fmtEdificios(raw) {
   return out.length ? out.join(SEP) : NADA;
 }
 
+// Rojo si el vencimiento es urgente, amarillo si no (la regla esta en dominios/vencimientos.js).
 export function colorPorDias(vd) {
-  if (!vd) return 'var(--amber)';
-  const t = new Date(); t.setHours(0, 0, 0, 0);
-  return (vd - t) / 86400000 <= 10 ? 'var(--red)' : 'var(--amber)';
+  return D.urgenciaVencimiento(vd) === 'urgente' ? 'var(--red)' : 'var(--amber)';
 }
 
 export function diasFaltan(vd) {
-  const t = new Date(); t.setHours(0, 0, 0, 0);
-  const d = Math.round((vd - t) / 86400000);
+  const d = D.diasHasta(vd);
   return d > 1 ? ` &middot; faltan ${d} días` : d === 1 ? ' &middot; mañana' : d === 0 ? ' &middot; hoy' : '';
 }
 
