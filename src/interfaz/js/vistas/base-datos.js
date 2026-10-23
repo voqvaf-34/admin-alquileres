@@ -234,41 +234,41 @@ export function populateDBYears() {
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
   // Filtros Base de Datos
-  document.getElementById("db-search").addEventListener("input", e => {
+  document.getElementById('db-search').addEventListener('input', e => {
     estado.dbSearchText = e.target.value;
     e.target.closest('.search-wrap').classList.toggle('has-text', !!e.target.value);
     renderDBTable();
   });
-  document.getElementById("db-year").addEventListener("change", e => {
+  document.getElementById('db-year').addEventListener('change', e => {
     estado.dbFilterYear = +e.target.value;
     renderDBTable();
   });
-  document.getElementById("db-month").addEventListener("change", e => {
+  document.getElementById('db-month').addEventListener('change', e => {
     estado.dbFilterMonth = +e.target.value;
     renderDBTable();
   });
-  document.getElementById("db-show-active").addEventListener("change", e => {
+  document.getElementById('db-show-active').addEventListener('change', e => {
     estado.dbShowActive = e.target.checked;
-    if (estado.dbShowActive) { estado.dbShowInactive = false; document.getElementById("db-show-inactive").checked = false; }
+    if (estado.dbShowActive) { estado.dbShowInactive = false; document.getElementById('db-show-inactive').checked = false; }
     renderDBTable();
   });
-  document.getElementById("db-show-inactive").addEventListener("change", e => {
+  document.getElementById('db-show-inactive').addEventListener('change', e => {
     estado.dbShowInactive = e.target.checked;
-    if (estado.dbShowInactive) { estado.dbShowActive = false; document.getElementById("db-show-active").checked = false; }
+    if (estado.dbShowInactive) { estado.dbShowActive = false; document.getElementById('db-show-active').checked = false; }
     renderDBTable();
   });
 
   // Botones clear en buscadores
-  document.getElementById("db-search-clear").addEventListener("click", () => {
-    const inp = document.getElementById("db-search");
-    inp.value = ""; estado.dbSearchText = "";
+  document.getElementById('db-search-clear').addEventListener('click', () => {
+    const inp = document.getElementById('db-search');
+    inp.value = ''; estado.dbSearchText = '';
     inp.closest('.search-wrap').classList.remove('has-text');
     inp.focus(); renderDBTable();
   });
 
   // Acordeon Base de Datos (event delegation sobre tbody -- persiste entre renders)
   // Enter guarda el comentario (Shift+Enter no hace falta: cada comentario es una viñeta).
-  document.getElementById("db-tbody").addEventListener("keydown", e => {
+  document.getElementById('db-tbody').addEventListener('keydown', e => {
     if (e.key === 'Enter' && e.target.classList.contains('nota-textarea')) {
       e.preventDefault();
       e.target.closest('.nota-edit-section').querySelector('[data-nota-row]').click();
@@ -276,11 +276,11 @@ export function iniciar() {
       e.target.closest('.nota-edit-section').querySelector('[data-nota-cancel]').click();
     }
   });
-  document.getElementById("db-tbody").addEventListener("click", async e => {
+  document.getElementById('db-tbody').addEventListener('click', async e => {
     const byId = id => estado.entries && estado.entries.find(en => en.id === id);
 
     // ── Editar alquiler ──
-    const editBtn = e.target.closest("[data-edit-row]");
+    const editBtn = e.target.closest('[data-edit-row]');
     if (editBtn) {
       e.stopPropagation();
       const entry = byId(+editBtn.dataset.editRow);
@@ -289,7 +289,7 @@ export function iniciar() {
     }
 
     // ── Marcar inactivo ──
-    const delBtn = e.target.closest("[data-delete-row]");
+    const delBtn = e.target.closest('[data-delete-row]');
     if (delBtn) {
       e.stopPropagation();
       await deleteEntry(+delBtn.dataset.deleteRow, delBtn.dataset.deleteDir);
@@ -297,7 +297,7 @@ export function iniciar() {
     }
 
     // ── Desmarcar renovacion desde el panel DB ──
-    const dbVunc = e.target.closest("[data-db-vunc]");
+    const dbVunc = e.target.closest('[data-db-vunc]');
     if (dbVunc) {
       e.stopPropagation();
       const dir = dbVunc.dataset.dbVunc;
@@ -307,7 +307,7 @@ export function iniciar() {
       renderDBTable();
       return;
     }
-    const dbVuncR = e.target.closest("[data-db-vunc-r]");
+    const dbVuncR = e.target.closest('[data-db-vunc-r]');
     if (dbVuncR) {
       e.stopPropagation();
       delete estado.marks[`vr|${dbVuncR.dataset.dbVuncR}`];
@@ -317,19 +317,19 @@ export function iniciar() {
     }
 
     // ── Linea de tiempo ──
-    const tlBtn = e.target.closest("[data-timeline]");
+    const tlBtn = e.target.closest('[data-timeline]');
     if (tlBtn) { e.stopPropagation(); showTimeline(byId(+tlBtn.dataset.timeline)); return; }
 
     // ── Comentarios como viñetas: agregar, corregir, borrar ──
     // Los indices son sobre la lista completa (incluye las notas de renovacion, que no se muestran).
-    const notaSec = e.target.closest(".nota-edit-section");
+    const notaSec = e.target.closest('.nota-edit-section');
     const openNew = (sec, text, idx) => {
-      const box = sec.querySelector(".nota-new"), ta = box.querySelector("textarea");
-      box.hidden = false; sec.querySelector(".nota-bar").hidden = true;
+      const box = sec.querySelector('.nota-new'), ta = box.querySelector('textarea');
+      box.hidden = false; sec.querySelector('.nota-bar').hidden = true;
       ta.value = text || ''; ta.dataset.i = idx == null ? '' : idx; ta.focus();
     };
-    if (e.target.closest("[data-nota-add]")) { e.stopPropagation(); openNew(notaSec); return; }
-    const notaEdit = e.target.closest("[data-nota-edit]");
+    if (e.target.closest('[data-nota-add]')) { e.stopPropagation(); openNew(notaSec); return; }
+    const notaEdit = e.target.closest('[data-nota-edit]');
     if (notaEdit) {
       e.stopPropagation();
       if (document.body.classList.contains('viewer')) return;
@@ -337,12 +337,12 @@ export function iniciar() {
       openNew(notaSec, D.splitNotas(entry.notas)[+notaEdit.dataset.i], +notaEdit.dataset.i);
       return;
     }
-    if (e.target.closest("[data-nota-cancel]")) {
+    if (e.target.closest('[data-nota-cancel]')) {
       e.stopPropagation();
-      notaSec.querySelector(".nota-new").hidden = true; notaSec.querySelector(".nota-bar").hidden = false;
+      notaSec.querySelector('.nota-new').hidden = true; notaSec.querySelector('.nota-bar').hidden = false;
       return;
     }
-    const notaDel = e.target.closest("[data-nota-del]");
+    const notaDel = e.target.closest('[data-nota-del]');
     if (notaDel) {
       e.stopPropagation();
       const entry = byId(+notaDel.dataset.notaDel);
@@ -352,12 +352,12 @@ export function iniciar() {
       if (await saveNotes(entry, list.join(' | '), '&#10003; Comentario borrado')) renderDBTable();
       return;
     }
-    const notaBtn = e.target.closest("[data-nota-row]");
+    const notaBtn = e.target.closest('[data-nota-row]');
     if (notaBtn) {
       e.stopPropagation();
       const entry = byId(+notaBtn.dataset.notaRow);
       if (!entry) return;
-      const ta = notaBtn.closest(".nota-edit-section").querySelector(".nota-textarea");
+      const ta = notaBtn.closest('.nota-edit-section').querySelector('.nota-textarea');
       const txt = ta.value.replace(/\s*\n+\s*/g, ' ').replace(/\s*\|\s*/g, ' - ').trim();
       const list = D.splitNotas(entry.notas);
       if (ta.dataset.i !== '') { if (txt) list[+ta.dataset.i] = txt; else list.splice(+ta.dataset.i, 1); }
@@ -368,17 +368,17 @@ export function iniciar() {
 
     // ── Toggle acordeon (no si el click fue dentro de los comentarios) ──
     if (notaSec) return;
-    const row = e.target.closest(".db-row");
+    const row = e.target.closest('.db-row');
     if (!row) return;
     const id = +row.dataset.id;
     const detRow = document.querySelector(`.db-detail-row[data-detail-id="${id}"]`);
     if (estado.expandedRows.has(id)) {
       estado.expandedRows.delete(id);
-      row.classList.remove("expanded");
+      row.classList.remove('expanded');
       if (detRow) detRow.remove();
     } else {
       estado.expandedRows.add(id);
-      row.classList.add("expanded");
+      row.classList.add('expanded');
       const entry = byId(id);
       if (!detRow && entry) row.insertAdjacentHTML('afterend', filaDetalle(entry, D.indicePorDireccion(estado.entries)));
     }

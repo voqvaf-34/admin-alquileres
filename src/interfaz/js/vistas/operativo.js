@@ -176,7 +176,7 @@ export function footerVenc(e) {
     if (mkR) {
       // Ya se marco la segunda renovacion
       const renewYearsR = mkR.renewYears || 2;
-      let nuevaInfoR = "";
+      let nuevaInfoR = '';
       if (mkR.nuevaInicio) {
         const ni2 = parseDMY(mkR.nuevaInicio);
         if (ni2) {
@@ -212,7 +212,7 @@ export function footerVenc(e) {
   // ── CICLO ORIGINAL ─────────────────────────────────────────────────────────
   if (mk) {
     const renewYears = mk.renewYears || realDuration(e.contratoDuracion) || 2;
-    let nuevaInfo = "";
+    let nuevaInfo = '';
     if (mk.nuevaInicio) {
       const ni = parseDMY(mk.nuevaInicio);
       if (ni) {
@@ -271,7 +271,7 @@ export function cardAumento(e, m, y, ipcVal) {
   const mk     = estado.marks[cardKey];
   const naMk   = estado.marks[naKey(e, m, y)];
   const isDel  = Boolean(D.gestionadoPor(e));
-  const borderColor = mk ? "var(--green)" : naMk ? "rgba(150,150,150,0.3)" : isDel ? "var(--amber)" : D.comentarios(e).length ? "var(--orange)" : "rgba(var(--accent-rgb),0.3)";
+  const borderColor = mk ? 'var(--green)' : naMk ? 'rgba(150,150,150,0.3)' : isDel ? 'var(--amber)' : D.comentarios(e).length ? 'var(--orange)' : 'rgba(var(--accent-rgb),0.3)';
   return `
     <div class="card" data-card-key="${esc(cardKey)}" style="border-left:3px solid ${borderColor}${naMk ? ';filter:grayscale(1)' : ''}">
       <div class="card-top">
@@ -293,9 +293,9 @@ export function cardAumento(e, m, y, ipcVal) {
         <div><span class="lbl">Tel: </span>${telLink(e.telInq)}</div>
         <div><span class="lbl">Tel: </span>${telLink(e.telProp)}</div>
         ${contactRow(e, 'full')}
-        ${e.mailInq?`<div class="full"><span class="lbl">Mail: </span>${fmtMails(e.mailInq)}</div>`:""}
+        ${e.mailInq?`<div class="full"><span class="lbl">Mail: </span>${fmtMails(e.mailInq)}</div>`:''}
       </div>
-      <div class="card-meta">Inicio: ${fmtDate(e.fechaInicio)}${e.ultimoAumento ? ` &middot; Ultimo aumento: ${fmtDate(e.ultimoAumento)}` : ""} &middot; Contrato: ${esc(e.contratoStr||"-")}</div>
+      <div class="card-meta">Inicio: ${fmtDate(e.fechaInicio)}${e.ultimoAumento ? ` &middot; Ultimo aumento: ${fmtDate(e.ultimoAumento)}` : ''} &middot; Contrato: ${esc(e.contratoStr||'-')}</div>
       ${fmtNotas(e)}
       ${footerAumento(e, m, y, ipcVal)}
     </div>`;
@@ -309,7 +309,7 @@ export function cardVenc(e, color, overdue) {
   const vd          = getVencDate(e) || new Date(0);
   const activeMk    = isRenCycle ? mkR : mk;
   const nrMkC       = estado.marks[nrKey(e)];
-  const bcolor      = activeMk ? "var(--green)" : nrMkC ? "rgba(150,150,150,0.3)" : color;
+  const bcolor      = activeMk ? 'var(--green)' : nrMkC ? 'rgba(150,150,150,0.3)' : color;
   const inicioLabel = `Inicio original: ${fmtDate(e.fechaInicio)}`;
   const overdueTag  = overdue
     ? `<span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:color-mix(in srgb, var(--red) 75%, var(--text));background:rgba(var(--red-rgb),0.12);border:1px solid rgba(var(--red-rgb),0.3);border-radius:3px;padding:1px 6px;margin-left:6px;vertical-align:middle">VENCIDO ${monthsAgo(vd)}</span>`
@@ -327,7 +327,7 @@ export function cardVenc(e, color, overdue) {
         <div><span class="lbl">Tel: </span>${telLink(e.telProp)}</div>
         ${contactRow(e, 'full')}
       </div>
-      <div class="card-meta">${inicioLabel} &middot; Contrato: ${esc(e.contratoStr||"-")} &middot; Alquiler: ${fmtMoney(e.importe, e.moneda)}</div>
+      <div class="card-meta">${inicioLabel} &middot; Contrato: ${esc(e.contratoStr||'-')} &middot; Alquiler: ${fmtMoney(e.importe, e.moneda)}</div>
       ${fmtNotas(e)}
       <div style="padding:4px 0 2px">
         <button class="mark-btn" data-copy-venc-msg="${esc(vencRenewalMsg(e))}" style="font-size:11px">&#128203; Copiar aviso de renovaci&oacute;n</button>
@@ -338,10 +338,10 @@ export function cardVenc(e, color, overdue) {
 
 // Helper para leer los inputs de fecha/plazo del footer de vencimiento
 export function _readVencInputs(defaultYears) {
-  const inp     = document.getElementById("inp-venc-date");
-  const yearsEl = document.getElementById("inp-venc-years");
-  const descEl  = document.getElementById("inp-venc-desc");
-  const dateV   = inp ? inp.value : "";
+  const inp     = document.getElementById('inp-venc-date');
+  const yearsEl = document.getElementById('inp-venc-years');
+  const descEl  = document.getElementById('inp-venc-desc');
+  const dateV   = inp ? inp.value : '';
   const d       = dateV ? parseISO(dateV) : null;
   const years   = yearsEl ? +yearsEl.value : defaultYears;
   const desc    = descEl ? descEl.value.trim() : '';
@@ -383,8 +383,8 @@ async function deshacerAumentoEnviado(key) {
 
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
-  document.getElementById("content").addEventListener("change", async e => {
-    const chk = e.target.closest("[data-aum]");
+  document.getElementById('content').addEventListener('change', async e => {
+    const chk = e.target.closest('[data-aum]');
     if (!chk) return;
     chk.disabled = true;
     if (chk.checked) await marcarAumentoEnviado(chk.dataset.aum);
@@ -392,9 +392,9 @@ export function iniciar() {
     render();
   });
 
-  document.getElementById("content").addEventListener("click", async e => {
+  document.getElementById('content').addEventListener('click', async e => {
     // ── aumentos resueltos: desplegar el detalle / deshacer ─────────────────────
-    const aumUndo = e.target.closest("[data-aum-undo]");
+    const aumUndo = e.target.closest('[data-aum-undo]');
     if (aumUndo) {
       aumUndo.disabled = true;
       if (await deshacerAumentoEnviado(aumUndo.dataset.aumUndo)) {
@@ -404,7 +404,7 @@ export function iniciar() {
       render();
       return;
     }
-    const aumToggle = e.target.closest("[data-aum-toggle]");
+    const aumToggle = e.target.closest('[data-aum-toggle]');
     if (aumToggle) {
       const k = aumToggle.dataset.aumToggle;
       if (aumAbiertos.has(k)) aumAbiertos.delete(k); else aumAbiertos.add(k);
@@ -412,18 +412,18 @@ export function iniciar() {
       return;
     }
 
-    const copyBtn = e.target.closest("[data-copy]");
+    const copyBtn = e.target.closest('[data-copy]');
     if (copyBtn) {
       copyToClipboard(copyBtn.dataset.copy);
-      copyBtn.classList.add("copied");
+      copyBtn.classList.add('copied');
       const orig = copyBtn.textContent;
-      copyBtn.textContent = "✓";
-      setTimeout(() => { copyBtn.textContent = orig; copyBtn.classList.remove("copied"); }, 1800);
+      copyBtn.textContent = '✓';
+      setTimeout(() => { copyBtn.textContent = orig; copyBtn.classList.remove('copied'); }, 1800);
       return;
     }
 
     // ── na-start (iniciar "no aumenta") ──────────────────────────────────────
-    const naStart = e.target.closest("[data-na-start]");
+    const naStart = e.target.closest('[data-na-start]');
     if (naStart) {
       pendingNoAum = naStart.dataset.naStart;
       pendingNoRen = null;
@@ -431,10 +431,10 @@ export function iniciar() {
       setTimeout(() => { const el = document.getElementById('inp-na-desc'); if (el) el.focus(); }, 50);
       return;
     }
-    if (e.target.closest("[data-na-cancel]")) { pendingNoAum = null; render(); return; }
+    if (e.target.closest('[data-na-cancel]')) { pendingNoAum = null; render(); return; }
 
     // ── na-conf (confirmar no aumenta) ────────────────────────────────────────
-    const naConf = e.target.closest("[data-na-conf]");
+    const naConf = e.target.closest('[data-na-conf]');
     if (naConf) {
       const naKy   = naConf.dataset.naConf;
       const descEl = document.getElementById('inp-na-desc');
@@ -449,11 +449,11 @@ export function iniciar() {
     }
 
     // ── un-na (deshacer no aumenta) ───────────────────────────────────────────
-    const unNa = e.target.closest("[data-un-na]");
+    const unNa = e.target.closest('[data-un-na]');
     if (unNa) { delete estado.marks[unNa.dataset.unNa]; saveMarks(); render(); return; }
 
     // ── nr-start (iniciar "no renueva") ──────────────────────────────────────
-    const nrStart = e.target.closest("[data-nr-start]");
+    const nrStart = e.target.closest('[data-nr-start]');
     if (nrStart) {
       pendingNoRen = nrStart.dataset.nrStart;
       pendingVenc  = null;
@@ -462,10 +462,10 @@ export function iniciar() {
       setTimeout(() => { const el = document.getElementById('inp-nr-desc'); if (el) el.focus(); }, 50);
       return;
     }
-    if (e.target.closest("[data-nr-cancel]")) { pendingNoRen = null; render(); return; }
+    if (e.target.closest('[data-nr-cancel]')) { pendingNoRen = null; render(); return; }
 
     // ── nr-conf (confirmar no renueva) ────────────────────────────────────────
-    const nrConf = e.target.closest("[data-nr-conf]");
+    const nrConf = e.target.closest('[data-nr-conf]');
     if (nrConf) {
       const dir    = nrConf.dataset.nrConf;
       const descEl = document.getElementById('inp-nr-desc');
@@ -486,44 +486,44 @@ export function iniciar() {
     }
 
     // ── un-nr (deshacer no renueva) ───────────────────────────────────────────
-    const unNr = e.target.closest("[data-un-nr]");
+    const unNr = e.target.closest('[data-un-nr]');
     if (unNr) { delete estado.marks[`nr|${unNr.dataset.unNr}`]; saveMarks(); render(); return; }
 
     // ── copiar aviso de renovacion ───────────────────────────────────────────
-    const copyVenc = e.target.closest("[data-copy-venc-msg]");
+    const copyVenc = e.target.closest('[data-copy-venc-msg]');
     if (copyVenc) {
       copyToClipboard(copyVenc.dataset.copyVencMsg);
       const orig = copyVenc.innerHTML;
-      copyVenc.innerHTML = "&#10003; Copiado";
-      copyVenc.style.color = "var(--green)";
-      setTimeout(() => { copyVenc.innerHTML = orig; copyVenc.style.color = ""; }, 1800);
+      copyVenc.innerHTML = '&#10003; Copiado';
+      copyVenc.style.color = 'var(--green)';
+      setTimeout(() => { copyVenc.innerHTML = orig; copyVenc.style.color = ''; }, 1800);
       return;
     }
 
     // ── un-ren / un-ren-r (deshacer renovacion desde card compacto) ──────────
-    const unRen = e.target.closest("[data-un-ren]");
+    const unRen = e.target.closest('[data-un-ren]');
     if (unRen) { delete estado.marks[`v|${unRen.dataset.unRen}`]; saveMarks(); render(); return; }
-    const unRenR = e.target.closest("[data-un-ren-r]");
+    const unRenR = e.target.closest('[data-un-ren-r]');
     if (unRenR) { delete estado.marks[`vr|${unRenR.dataset.unRenR}`]; saveMarks(); render(); return; }
 
     // ── vstart / vstart-r ───────────────────────────────────────────────────────
-    const vstart = e.target.closest("[data-vstart]");
+    const vstart = e.target.closest('[data-vstart]');
     if (vstart) { pendingNoRen = null; pendingNoAum = null; pendingVenc = vstart.dataset.vstart; render(); return; }
 
-    const vstartR = e.target.closest("[data-vstart-r]");
+    const vstartR = e.target.closest('[data-vstart-r]');
     if (vstartR) { pendingNoRen = null; pendingNoAum = null; pendingVenc = 'R:' + vstartR.dataset.vstartR; render(); return; }
 
-    if (e.target.closest("[data-vcancel]")) { pendingVenc = null; render(); return; }
+    if (e.target.closest('[data-vcancel]')) { pendingVenc = null; render(); return; }
 
     // ── vconf (ciclo original) ─────────────────────────────────────────────────
-    const vconf = e.target.closest("[data-vconf]");
+    const vconf = e.target.closest('[data-vconf]');
     if (vconf) {
       const dir    = vconf.dataset.vconf;
       const entry  = entryByDir(dir);
       const defY   = entry ? (realDuration(entry.contratoDuracion) || 2) : 2;
       const { d, years, desc } = _readVencInputs(defY);
       delete estado.marks[`nr|${dir}`];   // si no habia renovado pero seguia, ahora renovo
-      estado.marks[`v|${dir}`] = { date: fmtDate(new Date()), nuevaInicio: d ? fmtDate(d) : "", renewYears: years };
+      estado.marks[`v|${dir}`] = { date: fmtDate(new Date()), nuevaInicio: d ? fmtDate(d) : '', renewYears: years };
       saveMarks();
       pendingVenc  = null;
       if (entry) await saveRenewal(entry, years, desc);
@@ -532,7 +532,7 @@ export function iniciar() {
     }
 
     // ── vconf-r (ciclo post-renovacion) ───────────────────────────────────────
-    const vconfR = e.target.closest("[data-vconf-r]");
+    const vconfR = e.target.closest('[data-vconf-r]');
     if (vconfR) {
       const dir    = vconfR.dataset.vconfR;
       const entry  = entryByDir(dir);
@@ -540,7 +540,7 @@ export function iniciar() {
       const defY   = mkPrev ? (mkPrev.renewYears || 2) : 2;
       const { d, years, desc } = _readVencInputs(defY);
       delete estado.marks[`nr|${dir}`];
-      estado.marks[`vr|${dir}`] = { date: fmtDate(new Date()), nuevaInicio: d ? fmtDate(d) : "", renewYears: years };
+      estado.marks[`vr|${dir}`] = { date: fmtDate(new Date()), nuevaInicio: d ? fmtDate(d) : '', renewYears: years };
       saveMarks();
       pendingVenc  = null;
       if (entry) await saveRenewal(entry, years, desc);
@@ -549,7 +549,7 @@ export function iniciar() {
     }
 
     // ── vunc (desmarcar ciclo original) ──────────────────────────────────────
-    const vunc = e.target.closest("[data-vunc]");
+    const vunc = e.target.closest('[data-vunc]');
     if (vunc) {
       delete estado.marks[`v|${vunc.dataset.vunc}`];
       delete estado.marks[`vr|${vunc.dataset.vunc}`]; // tambien limpia el ciclo R si lo habia
@@ -557,7 +557,7 @@ export function iniciar() {
     }
 
     // ── vunc-r (desmarcar solo ciclo post-renovacion) ─────────────────────────
-    const vuncR = e.target.closest("[data-vunc-r]");
+    const vuncR = e.target.closest('[data-vunc-r]');
     if (vuncR) { delete estado.marks[`vr|${vuncR.dataset.vuncR}`]; saveMarks(); render(); return; }
   });
 }

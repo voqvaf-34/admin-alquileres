@@ -33,9 +33,9 @@ export async function doUndo(redo) {
 export function iniciar() {
   // Deshacer / rehacer: botones, Ctrl+Z y Ctrl+Y (o Ctrl+Shift+Z).
   window.api.onUndoChanged(paintUndo);
-  document.getElementById("btn-undo").addEventListener("click", () => doUndo(false));
-  document.getElementById("btn-redo").addEventListener("click", () => doUndo(true));
-  document.addEventListener("keydown", e => {
+  document.getElementById('btn-undo').addEventListener('click', () => doUndo(false));
+  document.getElementById('btn-redo').addEventListener('click', () => doUndo(true));
+  document.addEventListener('keydown', e => {
     if (!e.ctrlKey || e.altKey || !estado.entries || document.body.classList.contains('viewer')) return;
     if (e.target.matches('input, textarea, select, [contenteditable="true"]')) return;   // deshacer de texto nativo
     const k = e.key.toLowerCase();

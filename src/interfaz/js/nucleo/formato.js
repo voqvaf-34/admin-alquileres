@@ -3,11 +3,11 @@ import * as D from '../../../dominios/index.js';
 import { Splitters } from '../../../dominios/index.js';
 import { esc } from './dom.js';
 
-export const MONTH_NAMES = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+export const MONTH_NAMES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
+  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
 // Importes en pesos ($) o dolares (US$) segun la moneda del alquiler.
-export function fmtMoney(n, moneda) { return (moneda === "USD" ? "US$ " : "$") + Math.round(n).toLocaleString("es-UY"); }
+export function fmtMoney(n, moneda) { return (moneda === 'USD' ? 'US$ ' : '$') + Math.round(n).toLocaleString('es-UY'); }
 
 export function monthsAgo(date) {
   const now = new Date();
@@ -79,9 +79,9 @@ export function fmtEdificios(raw) {
 }
 
 export function colorPorDias(vd) {
-  if (!vd) return "var(--amber)";
+  if (!vd) return 'var(--amber)';
   const t = new Date(); t.setHours(0, 0, 0, 0);
-  return (vd - t) / 86400000 <= 10 ? "var(--red)" : "var(--amber)";
+  return (vd - t) / 86400000 <= 10 ? 'var(--red)' : 'var(--amber)';
 }
 
 export function diasFaltan(vd) {

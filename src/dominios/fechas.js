@@ -5,24 +5,24 @@ export const MONTH_MAP = {
   JULIO:7, AGOSTO:8, SETIEMBRE:9, SEPTIEMBRE:9, OCTUBRE:10, NOVIEMBRE:11, DICIEMBRE:12,
 };
 
-export const MES_ES = ["","enero","febrero","marzo","abril","mayo","junio",
-  "julio","agosto","setiembre","octubre","noviembre","diciembre"];
+export const MES_ES = ['','enero','febrero','marzo','abril','mayo','junio',
+  'julio','agosto','setiembre','octubre','noviembre','diciembre'];
 
 export function excelDate(serial) {
-  if (!serial || typeof serial !== "number" || serial < 30000) return null;
+  if (!serial || typeof serial !== 'number' || serial < 30000) return null;
   const d = new Date((serial - 25569) * 86400000);
   if (isNaN(d.getTime())) return null;
   return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
 export function fmtDate(d) {
-  if (!d) return "-";
-  return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();
+  if (!d) return '-';
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
 }
 
 export function toISODate(d) {
   if (!d) return null;
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
 export function parseISO(str) {

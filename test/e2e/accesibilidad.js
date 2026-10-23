@@ -11,7 +11,7 @@ const ETIQUETAS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 async function revisar(page, pantalla, modo) {
   await page.waitForTimeout(100);
   const res = await page.evaluate(async etiquetas => {
-    // eslint-disable-next-line no-undef
+
     // Con una ventana abierta se revisa solo esa (lo de atras queda tapado a proposito).
     const abierta = document.querySelector('.modal.open, #modal-add.open, #modal-admin.open');
     const r = await axe.run(abierta || document, { runOnly: { type: 'tag', values: etiquetas }, resultTypes: ['violations'] });

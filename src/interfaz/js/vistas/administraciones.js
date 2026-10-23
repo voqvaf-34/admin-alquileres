@@ -7,7 +7,7 @@ import { esc, showToast } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
 import { fmtEdificios, linkMailsInText, linkPhonesInText } from '../nucleo/formato.js';
 
-export let adminSearchText  = "";
+export let adminSearchText  = '';
 
 export let adminEditRow     = null;  // id de la administracion en edicion (null = alta nueva)
 
@@ -109,15 +109,15 @@ export async function deleteAdminEntry(id, nombre) {
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
   // Buscador Administraciones
-  document.getElementById("admin-search").addEventListener("input", e => {
+  document.getElementById('admin-search').addEventListener('input', e => {
     adminSearchText = e.target.value;
     e.target.closest('.search-wrap').classList.toggle('has-text', !!e.target.value);
     renderAdminTable();
   });
 
-  document.getElementById("admin-search-clear").addEventListener("click", () => {
-    const inp = document.getElementById("admin-search");
-    inp.value = ""; adminSearchText = "";
+  document.getElementById('admin-search-clear').addEventListener('click', () => {
+    const inp = document.getElementById('admin-search');
+    inp.value = ''; adminSearchText = '';
     inp.closest('.search-wrap').classList.remove('has-text');
     inp.focus(); renderAdminTable();
   });

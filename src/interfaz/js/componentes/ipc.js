@@ -6,13 +6,13 @@ import { estado } from '../nucleo/estado.js';
 
 export function setIPC(value) {
   estado.ipc = value;
-  document.getElementById("inp-ipc").value = estado.ipc;
+  document.getElementById('inp-ipc').value = estado.ipc;
   call('setSetting', 'ipc', estado.ipc).catch(() => {});
 }
 
 export async function fetchIPC() {
-  const btn = document.getElementById("btn-ipc-fetch"), period = document.getElementById("ipc-period");
-  btn.textContent = "..."; btn.disabled = true; period.textContent = "";
+  const btn = document.getElementById('btn-ipc-fetch'), period = document.getElementById('ipc-period');
+  btn.textContent = '...'; btn.disabled = true; period.textContent = '';
   try {
     const r = await call('fetchIPC');
     if (r.ok) {
@@ -23,13 +23,13 @@ export async function fetchIPC() {
       render();
     } else {
       console.warn('IPC:', r.error);
-      period.textContent = "sin conexion";
+      period.textContent = 'sin conexion';
       period.title = r.error;
     }
   } catch (err) {
-    period.textContent = "error";
+    period.textContent = 'error';
     period.title = err.message;
   } finally {
-    btn.textContent = "↻"; btn.disabled = false;
+    btn.textContent = '↻'; btn.disabled = false;
   }
 }
