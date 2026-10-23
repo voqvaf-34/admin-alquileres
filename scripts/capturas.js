@@ -2,19 +2,19 @@
 // Uso: npm run capturas
 const fs   = require('fs');
 const path = require('path');
-const { ROOT, launch, tmpDir } = require('../test/e2e/helpers');
+const { ROOT, lanzar, carpetaTemporal } = require('../test/e2e/helpers');
 
 const OUT = path.join(ROOT, 'docs', 'capturas');
 
 async function main() {
   fs.mkdirSync(OUT, { recursive: true });
-  const { app, page } = await launch(tmpDir('alq-capturas-'), {}, { tamano: { width: 1280, height: 800 } });
-  const shot = async name => { await page.waitForTimeout(250); await page.screenshot({ path: path.join(OUT, name + '.png') }); console.log('  ' + name); };
+  const { app, page } = await lanzar(carpetaTemporal('alq-capturas-'), {}, { tamano: { width: 1280, height: 800 } });
+  const captura = async name => { await page.waitForTimeout(250); await page.screenshot({ path: path.join(OUT, name + '.png') }); console.log('  ' + name); };
   const sinToast = () => page.evaluate(() => { document.getElementById('toast').className = ''; });
 
   try {
     await page.waitForSelector('#upload-screen', { state: 'visible' });
-    await shot('01-inicio');
+    await captura('01-inicio');
     await page.click('#btn-start-demo');
     await page.waitForSelector('#app-screen', { state: 'visible' });
 
@@ -25,22 +25,22 @@ async function main() {
     await page.fill('#cfg-nombre', 'Inmobiliaria del Sur');
     await page.click('[data-cfg-tab="apariencia"]');
     await page.click('[data-color-picker="color"] .cfg-swatch[data-color="#0F766E"]');
-    await shot('06-configuracion');
+    await captura('06-configuracion');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });
     await sinToast();
 
     // Base de datos con una fila desplegada.
     await page.click('#db-tbody .db-row');
-    await shot('02-base-de-datos');
+    await captura('02-base-de-datos');
 
     await page.click('#tab-aumentos');
     await page.waitForSelector('#content .card');
-    await shot('03-aumentos');
+    await captura('03-aumentos');
 
     await page.click('#tab-vencimientos');
     await page.waitForSelector('#content .card');
-    await shot('04-renovaciones');
+    await captura('04-renovaciones');
 
     // Linea de tiempo del apto ya renovado.
     await page.click('#tab-basedatos');
@@ -48,18 +48,18 @@ async function main() {
     await page.click('#db-tbody .db-row');
     await page.click('[data-timeline]');
     await page.waitForSelector('#modal-timeline.open');
-    await shot('05-linea-de-tiempo');
+    await captura('05-linea-de-tiempo');
     await page.click('[data-close-modal="modal-timeline"]');
     await page.fill('#db-search', '');
 
     await page.click('#tab-propietarios');
-    await shot('07-propietarios');
+    await captura('07-propietarios');
 
     // Modo oscuro.
     await page.click('#btn-theme');
     await page.click('#tab-aumentos');
     await page.waitForSelector('#content .card');
-    await shot('08-modo-oscuro');
+    await captura('08-modo-oscuro');
   } finally {
     await app.close();
   }

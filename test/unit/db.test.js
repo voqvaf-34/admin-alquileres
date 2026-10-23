@@ -5,7 +5,7 @@ const os     = require('os');
 const path   = require('path');
 const { BaseDatos } = require('../../src/infraestructura/base-datos');
 
-function tmpDir() { return fs.mkdtempSync(path.join(os.tmpdir(), 'alq-db-')); }
+function carpetaTemporal() { return fs.mkdtempSync(path.join(os.tmpdir(), 'alq-db-')); }
 
 const sample = {
   direccion: 'CERRO LARGO 1234 AP 301', propietario: 'Ana', telProp: '099111222', mailProp: 'a@x.com',
@@ -14,7 +14,7 @@ const sample = {
 };
 
 test('crea la base, agrega y persiste en disco', async () => {
-  const dir = tmpDir(), file = path.join(dir, 'a.sqlite');
+  const dir = carpetaTemporal(), file = path.join(dir, 'a.sqlite');
   const s1 = await BaseDatos.open(file);
   assert.equal(s1.estaVacia(), true);
   const c = s1.agregarContrato(sample);
@@ -32,7 +32,7 @@ test('crea la base, agrega y persiste en disco', async () => {
 });
 
 test('validaciones de alta', async () => {
-  const s = await BaseDatos.open(path.join(tmpDir(), 'b.sqlite'));
+  const s = await BaseDatos.open(path.join(carpetaTemporal(), 'b.sqlite'));
   assert.throws(() => s.agregarContrato({ ...sample, direccion: '' }), /direccion/);
   assert.throws(() => s.agregarContrato({ ...sample, importeBase: 0 }), /importe/);
   assert.equal(s.estaVacia(), true, 'un alta invalida no deja registros');
@@ -40,7 +40,7 @@ test('validaciones de alta', async () => {
 });
 
 test('editar, patch de aumento/comentario e inactivar', async () => {
-  const s = await BaseDatos.open(path.join(tmpDir(), 'c.sqlite'));
+  const s = await BaseDatos.open(path.join(carpetaTemporal(), 'c.sqlite'));
   const c = s.agregarContrato(sample);
   const u = s.editarContrato(c.id, { ...sample, propietario: 'Ana Maria', importeBase: 26000 });
   assert.equal(u.propietario, 'Ana Maria');
@@ -58,7 +58,7 @@ test('editar, patch de aumento/comentario e inactivar', async () => {
 });
 
 test('marks: reemplazo completo y lectura', async () => {
-  const s = await BaseDatos.open(path.join(tmpDir(), 'd.sqlite'));
+  const s = await BaseDatos.open(path.join(carpetaTemporal(), 'd.sqlite'));
   s.reemplazarMarcas({ 'v|X': { date: '01/01/2026', nuevaInicio: '01/02/2026', renewYears: 2 }, 'nr|Y': { date: 'z', desc: 'se va' } });
   assert.deepEqual(Object.keys(s.obtenerMarcas()).sort(), ['nr|Y', 'v|X']);
   s.reemplazarMarcas({ 'a|X|3|2026': { date: 'q', xlSaved: true } });
@@ -67,7 +67,7 @@ test('marks: reemplazo completo y lectura', async () => {
 });
 
 test('administraciones: alta, edicion, baja', async () => {
-  const s = await BaseDatos.open(path.join(tmpDir(), 'e.sqlite'));
+  const s = await BaseDatos.open(path.join(carpetaTemporal(), 'e.sqlite'));
   const id = s.guardarAdmin({ nombre: 'ADMIN SUR', edificios: 'Torre Ceibo', telefono: '2401', mail: 'b@b' });
   s.guardarAdmin({ id, nombre: 'ADMIN SUR SRL', edificios: 'Torre Ceibo; Edificio Arazá', telefono: '2401', mail: 'b@b' });
   assert.equal(s.listarAdmins()[0].nombre, 'ADMIN SUR SRL');
@@ -78,7 +78,7 @@ test('administraciones: alta, edicion, baja', async () => {
 });
 
 test('importarDatos reemplaza todo y respaldar rota archivos', async () => {
-  const dir = tmpDir();
+  const dir = carpetaTemporal();
   const s = await BaseDatos.open(path.join(dir, 'f.sqlite'), { maxBackups: 3 });
   s.agregarContrato(sample);
   const res = s.importarDatos({ contracts: [{ ...sample, importe: 30000 }, { ...sample, direccion: 'OTRA', inactive: true }], admins: [{ nombre: 'A' }] });
@@ -94,7 +94,7 @@ test('importarDatos reemplaza todo y respaldar rota archivos', async () => {
 });
 
 test('garantia: se guarda, se edita y CGN/ANDA migran desde remitente', async () => {
-  const s = await BaseDatos.open(path.join(tmpDir(), 'g.sqlite'));
+  const s = await BaseDatos.open(path.join(carpetaTemporal(), 'g.sqlite'));
   const a = s.agregarContrato({ ...sample, garantia: 'Sura' });
   assert.equal(a.garantia, 'Sura');
   const b = s.agregarContrato({ ...sample, direccion: 'B 1', remitente: 'CGN' });
@@ -110,7 +110,7 @@ test('garantia: se guarda, se edita y CGN/ANDA migran desde remitente', async ()
 });
 
 test('moneda: pesos por defecto, dolares para importes de hasta 4 cifras y se puede cambiar', async () => {
-  const s = await BaseDatos.open(path.join(tmpDir(), 'm.sqlite'));
+  const s = await BaseDatos.open(path.join(carpetaTemporal(), 'm.sqlite'));
   const pesos = s.agregarContrato({ ...sample, importeBase: 25000 });
   const dolares = s.agregarContrato({ ...sample, direccion: 'D 1', importeBase: 1140 });
   assert.equal(pesos.moneda, 'UYU');
@@ -123,7 +123,7 @@ test('moneda: pesos por defecto, dolares para importes de hasta 4 cifras y se pu
 });
 
 test('agregar planilla: suma sin tocar lo cargado, saltea repetidos y vincula propietarios por nombre', async () => {
-  const s = await BaseDatos.open(path.join(tmpDir(), 'a.sqlite'));
+  const s = await BaseDatos.open(path.join(carpetaTemporal(), 'a.sqlite'));
   const { claveNombre } = require('../../src/dominios/index.js');
   const prev = s.agregarContrato(sample);
   s.vincularPropietariosDesdeTexto(prev.id, 'Ana', '', '', claveNombre);

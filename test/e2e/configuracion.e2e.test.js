@@ -2,14 +2,14 @@
 const test   = require('node:test');
 const assert = require('node:assert/strict');
 const path   = require('path');
-const { ROOT, launch, tmpDir, shot, empezarVacia, abrirConfiguracion, elegirColor } = require('./helpers');
+const { ROOT, lanzar, carpetaTemporal, captura, empezarVacia, abrirConfiguracion, elegirColor } = require('./helpers');
 
 const LOGO = path.join(ROOT, 'src', 'interfaz', 'recursos', 'icon.png');
 const cssVar = (page, name) => page.evaluate(n => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), name);
 
 test('configuracion: nombre, color y logo de la inmobiliaria', { timeout: 90000 }, async () => {
-  const dataDir = tmpDir();
-  let { app, page, errors } = await launch(dataDir);
+  const dataDir = carpetaTemporal();
+  let { app, page, errors } = await lanzar(dataDir);
   try {
     await empezarVacia(page);
     // Por defecto: nombre generico y azul.
@@ -22,7 +22,7 @@ test('configuracion: nombre, color y logo de la inmobiliaria', { timeout: 90000 
     // La vista previa cambia antes de guardar; la app todavia no.
     assert.equal(await page.textContent('#cfg-prev-nombre'), 'Inmobiliaria del Sur');
     assert.equal(await cssVar(page, '--m-header'), '#2563EB');
-    await shot(page, '10-configuracion');
+    await captura(page, '10-configuracion');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });
     assert.equal(await cssVar(page, '--m-header'), '#0F766E');
@@ -36,7 +36,7 @@ test('configuracion: nombre, color y logo de la inmobiliaria', { timeout: 90000 
     await page.click('#cfg-guardar');
     await page.waitForSelector('#hdr-logo img[data-marca-logo]:not([hidden])');
     assert.equal(await page.isHidden('#hdr-logo [data-marca-nombre]'), true);
-    await shot(page, '11-marca-aplicada');
+    await captura(page, '11-marca-aplicada');
 
     // Deshacer vuelve a la configuracion anterior (sin logo).
     await page.click('#btn-undo');
@@ -47,7 +47,7 @@ test('configuracion: nombre, color y logo de la inmobiliaria', { timeout: 90000 
   } finally { await app.close(); }
 
   // Al reabrir sigue la marca guardada.
-  ({ app, page, errors } = await launch(dataDir));
+  ({ app, page, errors } = await lanzar(dataDir));
   try {
     await page.waitForSelector('#app-screen', { state: 'visible' });
     assert.equal(await cssVar(page, '--m-header'), '#0F766E');
@@ -58,7 +58,7 @@ test('configuracion: nombre, color y logo de la inmobiliaria', { timeout: 90000 
 });
 
 test('configuracion: plantillas de mensajes', { timeout: 60000 }, async () => {
-  const { app, page, errors } = await launch(tmpDir());
+  const { app, page, errors } = await lanzar(carpetaTemporal());
   try {
     await empezarVacia(page);
     await abrirConfiguracion(page);
@@ -75,7 +75,7 @@ test('configuracion: plantillas de mensajes', { timeout: 60000 }, async () => {
     assert.equal(await page.inputValue(ta), 'Hola {inquilino}, vence el {vencimiento}. {nada}');
     assert.match(await page.textContent('[data-msg="renovacion"] .cfg-ejemplo'), /Hola Beto Gomez, vence el 01\/11\/2026\. \{nada\}/);
     assert.match(await page.textContent('[data-msg="renovacion"] .cfg-aviso'), /\{nada\}/);
-    await shot(page, '12-mensajes');
+    await captura(page, '12-mensajes');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });
     assert.equal(await page.evaluate(() => app.estado.appSettings.msgRenovacion), 'Hola {inquilino}, vence el {vencimiento}. {nada}');
@@ -96,8 +96,8 @@ test('configuracion: plantillas de mensajes', { timeout: 60000 }, async () => {
 const fs = require('fs');
 
 test('asistente de primer uso: marca y apariencia paso a paso', { timeout: 90000 }, async () => {
-  const dataDir = tmpDir();
-  let { app, page, errors } = await launch(dataDir, { ADMIN_ALQ_SIN_ASISTENTE: '' });
+  const dataDir = carpetaTemporal();
+  let { app, page, errors } = await lanzar(dataDir, { ADMIN_ALQ_SIN_ASISTENTE: '' });
   try {
     await page.waitForSelector('#modal-config.open.asistente');
     await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'cfg-nombre');
@@ -109,7 +109,7 @@ test('asistente de primer uso: marca y apariencia paso a paso', { timeout: 90000
     await page.waitForSelector('#cfg-logo-img:not([hidden])');
     await page.click('[data-icono-tipo="logo"]');
     await page.waitForSelector('[data-icono-tipo="logo"].active');
-    await shot(page, '13-asistente-paso1');
+    await captura(page, '13-asistente-paso1');
 
     await page.click('#cfg-siguiente');
     assert.equal(await page.isVisible('[data-cfg-panel="apariencia"]'), true);
@@ -120,7 +120,7 @@ test('asistente de primer uso: marca y apariencia paso a paso', { timeout: 90000
     // La vista previa ya muestra el tema; la app todavia no.
     assert.equal(await page.getAttribute('#cfg-preview', 'data-tema'), 'calido');
     assert.notEqual(await page.getAttribute('html', 'data-tema'), 'calido');
-    await shot(page, '14-asistente-paso2');
+    await captura(page, '14-asistente-paso2');
     await page.click('#cfg-siguiente');   // paso 3: accesibilidad
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });
@@ -133,12 +133,12 @@ test('asistente de primer uso: marca y apariencia paso a paso', { timeout: 90000
     // Icono propio guardado para el proximo arranque.
     for (let i = 0; i < 20 && !fs.existsSync(path.join(dataDir, 'icono.png')); i++) await page.waitForTimeout(100);
     assert.ok(fs.existsSync(path.join(dataDir, 'icono.png')), 'icono.png guardado');
-    await shot(page, '15-asistente-listo');
+    await captura(page, '15-asistente-listo');
     assert.deepEqual(errors, []);
   } finally { await app.close(); }
 
   // Al reabrir ya no aparece el asistente y se mantiene la apariencia.
-  ({ app, page, errors } = await launch(dataDir, { ADMIN_ALQ_SIN_ASISTENTE: '' }));
+  ({ app, page, errors } = await lanzar(dataDir, { ADMIN_ALQ_SIN_ASISTENTE: '' }));
   try {
     await page.waitForSelector('#upload-screen', { state: 'visible' });
     await page.waitForTimeout(300);
@@ -149,8 +149,8 @@ test('asistente de primer uso: marca y apariencia paso a paso', { timeout: 90000
 });
 
 test('asistente de primer uso: se puede saltear', { timeout: 60000 }, async () => {
-  const dataDir = tmpDir();
-  let { app, page, errors } = await launch(dataDir, { ADMIN_ALQ_SIN_ASISTENTE: '' });
+  const dataDir = carpetaTemporal();
+  let { app, page, errors } = await lanzar(dataDir, { ADMIN_ALQ_SIN_ASISTENTE: '' });
   try {
     await page.waitForSelector('#modal-config.open.asistente');
     await page.click('#cfg-saltar');
@@ -165,7 +165,7 @@ test('asistente de primer uso: se puede saltear', { timeout: 60000 }, async () =
     assert.equal(await page.isVisible('#cfg-saltar'), false);
     assert.deepEqual(errors, []);
   } finally { await app.close(); }
-  ({ app, page } = await launch(dataDir, { ADMIN_ALQ_SIN_ASISTENTE: '' }));
+  ({ app, page } = await lanzar(dataDir, { ADMIN_ALQ_SIN_ASISTENTE: '' }));
   try {
     await page.waitForSelector('#app-screen', { state: 'visible' });
     assert.equal(await page.isVisible('#modal-config'), false);
@@ -173,7 +173,7 @@ test('asistente de primer uso: se puede saltear', { timeout: 60000 }, async () =
 });
 
 test('apariencia: modo oscuro con tema y vista previa independiente', { timeout: 60000 }, async () => {
-  const { app, page, errors } = await launch(tmpDir());
+  const { app, page, errors } = await lanzar(carpetaTemporal());
   try {
     await empezarVacia(page);
     await abrirConfiguracion(page);
@@ -193,8 +193,8 @@ test('apariencia: modo oscuro con tema y vista previa independiente', { timeout:
 });
 
 test('icono de la app: prediseñado con color propio e imagen propia', { timeout: 60000 }, async () => {
-  const dataDir = tmpDir();
-  const { app, page, errors } = await launch(dataDir);
+  const dataDir = carpetaTemporal();
+  const { app, page, errors } = await lanzar(dataDir);
   try {
     await empezarVacia(page);
     await abrirConfiguracion(page);
@@ -207,7 +207,7 @@ test('icono de la app: prediseñado con color propio e imagen propia', { timeout
     await page.waitForFunction(a => document.getElementById('cfg-icono-img').src !== a, srcAntes);
     // Los botones de diseños se dibujan con el color elegido.
     await page.waitForFunction(() => [...document.querySelectorAll('.cfg-diseno img')].every(i => i.src.startsWith('data:image/png')));
-    await shot(page, '16-icono-prediseñado');
+    await captura(page, '16-icono-prediseñado');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });
     const st = await page.evaluate(() => app.estado.appSettings);
@@ -228,7 +228,7 @@ test('icono de la app: prediseñado con color propio e imagen propia', { timeout
 });
 
 test('modo de color: sigue a Windows por defecto y se elige en el asistente', { timeout: 60000 }, async () => {
-  const { app, page, errors } = await launch(tmpDir(), { ADMIN_ALQ_SIN_ASISTENTE: '' });
+  const { app, page, errors } = await lanzar(carpetaTemporal(), { ADMIN_ALQ_SIN_ASISTENTE: '' });
   const modo = () => page.evaluate(() => document.documentElement.dataset.theme || 'light');
   try {
     await page.waitForSelector('#modal-config.open.asistente');
@@ -246,7 +246,7 @@ test('modo de color: sigue a Windows por defecto y se elige en el asistente', { 
     await page.click('[data-modo="dark"]');
     assert.equal(await modo(), 'dark');
     assert.equal(await page.evaluate(() => document.getElementById('cfg-preview').classList.contains('oscuro')), true);
-    await shot(page, '17-asistente-modo-oscuro');
+    await captura(page, '17-asistente-modo-oscuro');
     await page.click('#cfg-siguiente');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#upload-screen', { state: 'visible' });
@@ -268,8 +268,8 @@ test('modo de color: sigue a Windows por defecto y se elige en el asistente', { 
 });
 
 test('accesibilidad: tamaño, negrita y contraste se aplican, se cancelan y se recuerdan', { timeout: 90000 }, async () => {
-  const dataDir = tmpDir();
-  let { app, page, errors } = await launch(dataDir);
+  const dataDir = carpetaTemporal();
+  let { app, page, errors } = await lanzar(dataDir);
   const zoom = a => a.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getZoomFactor());
   const pesoBody = () => page.evaluate(() => getComputedStyle(document.querySelector('#file-info')).fontWeight);
   try {
@@ -292,7 +292,7 @@ test('accesibilidad: tamaño, negrita y contraste se aplican, se cancelan y se r
     await page.check('[data-a11y="contraste"]');
     await page.check('[data-a11y="subrayar"]');
     await page.click('[data-anim="no"]');
-    await shot(page, '18-accesibilidad');
+    await captura(page, '18-accesibilidad');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });
     assert.equal(await zoom(app), 1.3);
@@ -302,7 +302,7 @@ test('accesibilidad: tamaño, negrita y contraste se aplican, se cancelan y se r
     assert.deepEqual(errors, []);
   } finally { await app.close(); }
 
-  ({ app, page, errors } = await launch(dataDir));
+  ({ app, page, errors } = await lanzar(dataDir));
   try {
     await page.waitForSelector('#app-screen', { state: 'visible' });
     await page.waitForFunction(() => document.documentElement.classList.contains('a11y-negrita'));

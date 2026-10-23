@@ -5,10 +5,10 @@ const assert = require('node:assert/strict');
 const fs     = require('fs');
 const os     = require('os');
 const path   = require('path');
-const { SHOTS, abrirConfiguracion, elegirColor, launch: abrirApp, tmpDir } = require('./helpers');
+const { SHOTS, abrirConfiguracion, elegirColor, lanzar: abrirApp, carpetaTemporal } = require('./helpers');
 
 // Editor o Visor, cada uno con su carpeta de datos (env.ADMIN_ALQ_DATA_DIR); los confirm() se aceptan.
-async function launch(env) {
+async function lanzar(env) {
   const r = await abrirApp(env.ADMIN_ALQ_DATA_DIR, env);
   await r.page.evaluate(() => { window.confirm = () => true; });
   return r;
@@ -17,7 +17,7 @@ async function launch(env) {
 test('editor publica y el visor muestra en solo lectura, actualizandose solo', { timeout: 120000 }, async () => {
   fs.mkdirSync(SHOTS, { recursive: true });
   const shared = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'alq-shared-')), 'Base Admin Alquileres');
-  const editor = await launch({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-ed-')),
+  const editor = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-ed-')),
     ADMIN_ALQ_SHARED_DIR: shared });
   let viewer;
   try {
@@ -33,7 +33,7 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     assert.ok(fs.existsSync(path.join(shared, 'alquileres.sqlite')), 'la base se publico');
     const total = await editor.page.evaluate(() => app.estado.entries.length);
 
-    viewer = await launch({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
+    viewer = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
       ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: shared, ADMIN_ALQ_POLL_MS: '500' });
     const vp = viewer.page;
     await vp.waitForSelector('#app-screen', { state: 'visible' });
@@ -101,7 +101,7 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
 });
 
 test('visor sin carpeta compartida pide elegirla', { timeout: 60000 }, async () => {
-  const v = await launch({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
+  const v = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
     ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: path.join(os.tmpdir(), 'no-existe-' + Date.now()) });
   try {
     await v.page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
@@ -111,7 +111,7 @@ test('visor sin carpeta compartida pide elegirla', { timeout: 60000 }, async () 
 });
 
 test('visor recien instalado (sin carpeta elegida) pide elegirla', { timeout: 60000 }, async () => {
-  const { app, page } = await abrirApp(tmpDir('alq-vi-'), { ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: undefined });
+  const { app, page } = await abrirApp(carpetaTemporal('alq-vi-'), { ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: undefined });
   try {
     await page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
     assert.match(await page.textContent('#viewer-setup-error'), /Todavía no se eligió la carpeta compartida/);

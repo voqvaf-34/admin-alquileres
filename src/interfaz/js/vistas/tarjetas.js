@@ -1,8 +1,8 @@
 // Lo comun a las pestañas Aumentos y Renovaciones: acciones a medio cargar, filtro de
 // resueltos y los datos de inquilino/propietario de cada tarjeta.
 import { estado } from '../nucleo/estado.js';
-import { fmtMails, fmtNames, telLink } from '../nucleo/formato.js';
-import { contactRow } from './propietarios.js';
+import { formatearMails, formatearNombres, enlaceTelefono } from '../nucleo/formato.js';
+import { filaContacto } from './propietarios.js';
 
 // Acciones que esperan un dato antes de confirmarse (fecha de renovacion, descripcion de
 // "no aumenta" / "no renueva"). Solo una a la vez: empezar una descarta las otras.
@@ -31,11 +31,11 @@ export function filtroResueltos() {
 // Inquilino y propietario con sus telefonos y contactos (y el mail del inquilino si se pide).
 export function datosPersonas(e, { conMail = false } = {}) {
   return `<div class="card-grid">
-        <div><span class="lbl">Inq: </span>${fmtNames(e.inquilino)}</div>
-        <div><span class="lbl">Prop: </span>${fmtNames(e.propietario)}</div>
-        <div><span class="lbl">Tel: </span>${telLink(e.telInq)}</div>
-        <div><span class="lbl">Tel: </span>${telLink(e.telProp)}</div>
-        ${contactRow(e, 'full')}
-        ${conMail && e.mailInq ? `<div class="full"><span class="lbl">Mail: </span>${fmtMails(e.mailInq)}</div>` : ''}
+        <div><span class="lbl">Inq: </span>${formatearNombres(e.inquilino)}</div>
+        <div><span class="lbl">Prop: </span>${formatearNombres(e.propietario)}</div>
+        <div><span class="lbl">Tel: </span>${enlaceTelefono(e.telInq)}</div>
+        <div><span class="lbl">Tel: </span>${enlaceTelefono(e.telProp)}</div>
+        ${filaContacto(e, 'full')}
+        ${conMail && e.mailInq ? `<div class="full"><span class="lbl">Mail: </span>${formatearMails(e.mailInq)}</div>` : ''}
       </div>`;
 }

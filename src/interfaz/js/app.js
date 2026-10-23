@@ -14,35 +14,35 @@ import * as aumentos from './vistas/aumentos.js';
 import * as renovaciones from './vistas/renovaciones.js';
 import * as propietarios from './vistas/propietarios.js';
 import { Separadores } from '../../dominios/index.js';
-import { bindAutocomplete } from './componentes/autocompletado.js';
+import { conectarAutocompletado } from './componentes/autocompletado.js';
 import { pintarAviso } from './componentes/avisos.js';
 import { aplicarMarca } from './componentes/marca.js';
 import { marcarVisto, pintarNovedades } from './componentes/novedades.js';
-import { paintSave, paintShare, paintViewer, viewerUseState } from './componentes/compartir.js';
-import { paintUndo } from './componentes/deshacer.js';
+import { pintarGuardado, pintarCompartir, pintarVisor, visorUsarEstado } from './componentes/compartir.js';
+import { pintarDeshacer } from './componentes/deshacer.js';
 import { consultarIPC } from './componentes/ipc.js';
 import { call } from './nucleo/api.js';
-import { entryByDir, saveNotes, vencColor } from './nucleo/datos.js';
-import { esc, showToast } from './nucleo/dom.js';
-import { applyOwners, estado } from './nucleo/estado.js';
-import { MONTH_NAMES, colorPorDias } from './nucleo/formato.js';
-import { renderAdminTable } from './vistas/administraciones.js';
-import { populateDBYears, renderDBTable } from './vistas/base-datos.js';
-import { contarPendientesAumentos, renderAumentos } from './vistas/aumentos.js';
-import { contarPendientesRenovaciones, renderRenovaciones } from './vistas/renovaciones.js';
-import { renderOwnersPanel } from './vistas/propietarios.js';
+import { entradaPorDireccion, guardarNotas, colorVenc } from './nucleo/datos.js';
+import { esc, mostrarAviso } from './nucleo/dom.js';
+import { aplicarPropietarios, estado } from './nucleo/estado.js';
+import { NOMBRES_MESES, colorPorDias } from './nucleo/formato.js';
+import { dibujarTablaAdmins } from './vistas/administraciones.js';
+import { llenarAniosBase, dibujarTablaBase } from './vistas/base-datos.js';
+import { contarPendientesAumentos, dibujarAumentos } from './vistas/aumentos.js';
+import { contarPendientesRenovaciones, dibujarRenovaciones } from './vistas/renovaciones.js';
+import { dibujarPanelPropietarios } from './vistas/propietarios.js';
 
-export function applyState(st) {
+export function aplicarEstado(st) {
   estado.entries  = st.contracts.map(D.hidratarContrato);
   estado.admins   = st.admins;
   estado.marks    = st.marks || {};
   estado.appSettings = st.settings || {};
   aplicarMarca(estado.appSettings);
-  applyOwners(st);
-  paintUndo(st.estadoDeshacer);
-  if (st.share) paintShare(st.share);
-  if (st.save) paintSave(st.save);
-  if (st.viewer) paintViewer(st.viewer);
+  aplicarPropietarios(st);
+  pintarDeshacer(st.estadoDeshacer);
+  if (st.share) pintarCompartir(st.share);
+  if (st.save) pintarGuardado(st.save);
+  if (st.viewer) pintarVisor(st.viewer);
   if (st.settings && st.settings.ipc) {
     estado.ipc = parseFloat(st.settings.ipc) || estado.ipc;
     const inp = document.getElementById('inp-ipc');
@@ -50,7 +50,7 @@ export function applyState(st) {
   }
 }
 
-export function render() {
+export function dibujar() {
   if (!estado.entries) return;
   const activos = estado.entries.filter(e => !e.inactive).length;
   document.getElementById('file-info').textContent = `${document.body.classList.contains('viewer') ? 'Base compartida' : 'Base local'} -- ${activos} activos / ${estado.entries.length} total`;
@@ -75,33 +75,33 @@ export function render() {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===estado.activeTab));
 
   if (isDB) {
-    renderDBTable();
+    dibujarTablaBase();
     return;
   }
   if (isAdmin) {
-    renderAdminTable();
+    dibujarTablaAdmins();
     return;
   }
   if (isOwners) {
-    renderOwnersPanel();
+    dibujarPanelPropietarios();
     return;
   }
 
   const content = document.getElementById('content');
-  if (estado.activeTab === 'aumentos') renderAumentos(content);
-  else renderRenovaciones(content);
+  if (estado.activeTab === 'aumentos') dibujarAumentos(content);
+  else dibujarRenovaciones(content);
 }
 
-export function showApp() {
+export function mostrarApp() {
   document.getElementById('autoload-screen').style.display = 'none';
   document.getElementById('upload-screen').style.display   = 'none';
   document.getElementById('app-screen').style.display      = 'block';
   document.body.classList.add('in-app');        // la cabecera pasa a ser la barra de titulo
-  populateDBYears();
-  render();
+  llenarAniosBase();
+  dibujar();
 }
 
-function showAutoLoad(msg) {
+function mostrarCargaAuto(msg) {
   document.getElementById('autoload-status').textContent   = msg || 'Abriendo base de datos...';
   document.getElementById('autoload-screen').style.display = 'flex';
   document.getElementById('upload-screen').style.display   = 'none';
@@ -109,7 +109,7 @@ function showAutoLoad(msg) {
   document.body.classList.remove('in-app');
 }
 
-function showImportScreen() {
+function mostrarPantallaImportar() {
   document.getElementById('drop-label').textContent        = 'o soltá la planilla acá';
   document.getElementById('autoload-screen').style.display = 'none';
   document.getElementById('upload-screen').style.display   = 'flex';
@@ -117,62 +117,62 @@ function showImportScreen() {
   document.body.classList.remove('in-app');
 }
 
-async function loadState() {
-  showAutoLoad();
+async function cargarEstado() {
+  mostrarCargaAuto();
   try {
     const st = await call('obtenerEstado');
     if (st.mode === 'viewer') {
       document.body.classList.add('viewer');
-      await viewerUseState(st);
+      await visorUsarEstado(st);
       if (!st.needsShared) consultarIPC();
       return;
     }
-    applyState(st);
+    aplicarEstado(st);
     if (st.needsImport) {
-      showImportScreen();
+      mostrarPantallaImportar();
       if (st.asistente) abrirAsistente(() => {});
       return;
     }
-    showApp();
+    mostrarApp();
     consultarIPC();
   } catch (err) {
-    showAutoLoad('Error al abrir la base de datos: ' + err.message);
+    mostrarCargaAuto('Error al abrir la base de datos: ' + err.message);
   }
 }
 
-async function runImport(promise) {
+async function ejecutarImportacion(promise) {
   try {
     const res = await promise;
     if (!res) return false;                         // dialogo cancelado
-    applyState(res.state);
+    aplicarEstado(res.state);
     estado.expandedRows.clear();
-    showApp();
-    showToast(`&#10003; Importados ${res.counts.contracts} alquileres y ${res.counts.admins} administraciones`, 'ok');
+    mostrarApp();
+    mostrarAviso(`&#10003; Importados ${res.counts.contracts} alquileres y ${res.counts.admins} administraciones`, 'ok');
     consultarIPC();
     return true;
   } catch (err) {
-    showToast('Error al importar: ' + esc(err.message), 'err');
+    mostrarAviso('Error al importar: ' + esc(err.message), 'err');
     document.getElementById('drop-label').textContent = 'Soltá la planilla acá';
     return false;
   }
 }
 
-export const elegirImportacion     = () => runImport(call('elegirImportacion'));
+export const elegirImportacion     = () => ejecutarImportacion(call('elegirImportacion'));
 
 export const importarDesdeArchivo = file => {
   document.getElementById('drop-label').textContent = 'Importando...';
-  return runImport(call('importarDesdeArchivo', file));
+  return ejecutarImportacion(call('importarDesdeArchivo', file));
 };
 
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
   // Meses del selector operativo
   const selMonthEl = document.getElementById('sel-month');
-  MONTH_NAMES.slice(1).forEach((name,i) => {
+  NOMBRES_MESES.slice(1).forEach((name,i) => {
     const o=document.createElement('option'); o.value=i+1; o.textContent=name;
     if(i+1===estado.selMonth) o.selected=true; selMonthEl.appendChild(o);
   });
-  selMonthEl.addEventListener('change', e => { estado.selMonth=+e.target.value; render(); });
+  selMonthEl.addEventListener('change', e => { estado.selMonth=+e.target.value; dibujar(); });
 
   const selYearEl = document.getElementById('sel-year');
   const curYear = new Date().getFullYear();
@@ -180,23 +180,23 @@ export function iniciar() {
     const o=document.createElement('option'); o.value=y; o.textContent=y;
     if(y===estado.selYear) o.selected=true; selYearEl.appendChild(o);
   });
-  selYearEl.addEventListener('change', e => { estado.selYear=+e.target.value; render(); });
+  selYearEl.addEventListener('change', e => { estado.selYear=+e.target.value; dibujar(); });
 
-  document.getElementById('inp-ipc').addEventListener('input', e => { estado.ipc=parseFloat(e.target.value)||0; render(); });
+  document.getElementById('inp-ipc').addEventListener('input', e => { estado.ipc=parseFloat(e.target.value)||0; dibujar(); });
   document.getElementById('inp-ipc').addEventListener('change', () => { call('guardarAjuste', 'ipc', estado.ipc).catch(() => {}); });
   document.getElementById('btn-ipc-fetch').addEventListener('click', consultarIPC);
-  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => { estado.activeTab=b.dataset.tab; marcarVisto(b.dataset.tab); render(); }));
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => { estado.activeTab=b.dataset.tab; marcarVisto(b.dataset.tab); dibujar(); }));
 
   // Filtros resuelto / sin resolver (tabs operativas)
   document.getElementById('op-show-sinresolver').addEventListener('change', e => {
     estado.opShowSinResolver = e.target.checked;
     if (estado.opShowSinResolver) { estado.opShowResuelto = false; document.getElementById('op-show-resuelto').checked = false; }
-    render();
+    dibujar();
   });
   document.getElementById('op-show-resuelto').addEventListener('change', e => {
     estado.opShowResuelto = e.target.checked;
     if (estado.opShowResuelto) { estado.opShowSinResolver = false; document.getElementById('op-show-sinresolver').checked = false; }
-    render();
+    dibujar();
   });
 
   // Importacion inicial / cabecera
@@ -219,14 +219,14 @@ export function iniciar() {
   document.getElementById('btn-export-csv').addEventListener('click', async () => {
     try {
       const r = await call('exportarCsv');
-      if (r) showToast(`&#10003; Exportados ${r.files} archivos CSV`, 'ok');
-    } catch (err) { showToast('Error al exportar: ' + esc(err.message), 'err'); }
+      if (r) mostrarAviso(`&#10003; Exportados ${r.files} archivos CSV`, 'ok');
+    } catch (err) { mostrarAviso('Error al exportar: ' + esc(err.message), 'err'); }
   });
 
-  document.getElementById('btn-start-demo').addEventListener('click', () => runImport(call('cargarDemo')));
+  document.getElementById('btn-start-demo').addEventListener('click', () => ejecutarImportacion(call('cargarDemo')));
 
   document.getElementById('btn-start-empty').addEventListener('click', async () => {
-    try { applyState(await call('empezarVacio')); showApp(); } catch (err) { showToast('Error: ' + esc(err.message), 'err'); }
+    try { aplicarEstado(await call('empezarVacio')); mostrarApp(); } catch (err) { mostrarAviso('Error: ' + esc(err.message), 'err'); }
   });
 }
 
@@ -237,10 +237,10 @@ export function iniciar() {
 
 for (const parte of [modales, compartir, aumentos, renovaciones, propietarios, { iniciar }, deshacer, cabecera,
                      baseDatos, administraciones, alquiler, configuracion, importar]) parte.iniciar();
-bindAutocomplete();
-loadState();
+conectarAutocompletado();
+cargarEstado();
 
 // Acceso de solo lectura al estado para revisar la app desde la consola y para las pruebas
 // automaticas (antes eran variables globales).
-window.app = Object.freeze({ estado, saveNotes, renderDBTable, entryByDir, colorPorDias, vencColor, Separadores });
+window.app = Object.freeze({ estado, guardarNotas, dibujarTablaBase, entradaPorDireccion, colorPorDias, colorVenc, Separadores });
 

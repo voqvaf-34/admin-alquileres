@@ -17,7 +17,7 @@ export const estado = {
 };
 
 // Recibe {owners, contacts, contractOwners} (completos o parciales) y re-vincula los contratos.
-export function applyOwners(st) {
+export function aplicarPropietarios(st) {
   if (st.owners)         estado.owners = st.owners;
   if (st.contacts)       estado.contacts = st.contacts;
   if (st.contractOwners) estado.contractOwners = st.contractOwners;
@@ -26,7 +26,7 @@ export function applyOwners(st) {
   if (estado.entries) D.adjuntarPropietarios(estado.entries, estado.owners, estado.contacts, estado.contractOwners);
 }
 
-export function replaceEntry(raw) {
+export function reemplazarEntrada(raw) {
   const h = D.hidratarContrato(raw);
   const i = estado.entries.findIndex(e => e.id === h.id);
   if (i >= 0) estado.entries[i] = h; else estado.entries.push(h);

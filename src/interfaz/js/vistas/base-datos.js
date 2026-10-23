@@ -2,15 +2,15 @@
 import { esNuevo, puntoNuevo } from '../componentes/novedades.js';
 import * as D from '../../../dominios/index.js';
 import { formatearFecha, normalizar, interpretarDMA, claveVenc, claveVencRenovado } from '../../../dominios/index.js';
-import { deleteEntry, showEditModal } from '../modales/alquiler.js';
-import { showTimeline } from '../modales/linea-tiempo.js';
-import { guardarMarcas, saveNotes } from '../nucleo/datos.js';
+import { borrarEntrada, mostrarModalEdicion } from '../modales/alquiler.js';
+import { mostrarLineaTiempo } from '../modales/linea-tiempo.js';
+import { guardarMarcas, guardarNotas } from '../nucleo/datos.js';
 import { esc } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
-import { MONTH_NAMES, fmtMails, fmtMoney, fmtNames, garantiaBadge, telLink } from '../nucleo/formato.js';
-import { contactRow } from './propietarios.js';
+import { NOMBRES_MESES, formatearMails, formatearDinero, formatearNombres, insigniaGarantia, enlaceTelefono } from '../nucleo/formato.js';
+import { filaContacto } from './propietarios.js';
 
-function getDBFiltered() {
+function baseFiltrada() {
   if (!estado.entries) return [];
   // ninguno seleccionado = mostrar todos; uno seleccionado = filtrar
   let list = (!estado.dbShowActive && !estado.dbShowInactive)
@@ -38,7 +38,7 @@ function getDBFiltered() {
 }
 
 // Genera la fila separadora de grupo
-function dbSepRow(label, count) {
+function filaSeparadoraBase(label, count) {
   return `<tr class="db-sep-row">
     <td colspan="5">
       <div class="db-sep-inner">
@@ -50,9 +50,9 @@ function dbSepRow(label, count) {
   </tr>`;
 }
 
-export function renderDBTable() {
+export function dibujarTablaBase() {
   if (!estado.entries) return;
-  const filtered = getDBFiltered();
+  const filtered = baseFiltrada();
   const porDireccion = D.indicePorDireccion(estado.entries);   // una vez por dibujo, no por fila
   // Ordenar cronologicamente por fecha de inicio (null al final)
   const sorted = filtered.slice().sort((a, b) => {
@@ -106,23 +106,23 @@ export function renderDBTable() {
   }
   function groupLabel(key, mode) {
     if (key === '__sin_fecha__') return 'Sin fecha';
-    return mode === 'year' ? key : MONTH_NAMES[+key + 1];
+    return mode === 'year' ? key : NOMBRES_MESES[+key + 1];
   }
 
   // Fila principal (+ detalle si esta abierta; si no, se arma al abrirla)
   const fila = e => {
     const isExp = estado.expandedRows.has(e.id);
     return `<tr class="db-row${isExp ? ' expanded' : ''}${e.inactive ? ' db-row-inactive' : ''}" data-id="${e.id}">
-      <td class="db-dir">${esc(e.direccion)}${e.inactive ? `<span class="inactive-badge">INACTIVO</span>` : ''}${garantiaBadge(e)}${e.remitente ? `<span class="delegado-badge" style="margin-left:8px;font-size:10px" title="Aumentos los hace ${esc(e.remitente)}">&#8618; ${esc(e.remitente)}</span>` : ''}</td>
-      <td>${fmtNames(e.propietario)}</td>
-      <td>${fmtNames(e.inquilino)}</td>
+      <td class="db-dir">${esc(e.direccion)}${e.inactive ? `<span class="inactive-badge">INACTIVO</span>` : ''}${insigniaGarantia(e)}${e.remitente ? `<span class="delegado-badge" style="margin-left:8px;font-size:10px" title="Aumentos los hace ${esc(e.remitente)}">&#8618; ${esc(e.remitente)}</span>` : ''}</td>
+      <td>${formatearNombres(e.propietario)}</td>
+      <td>${formatearNombres(e.inquilino)}</td>
       <td style="white-space:nowrap;color:var(--dim)">${formatearFecha(e.fechaInicio)}</td>
       <td class="db-chevron">${puntoNuevo('basedatos', e.id)}&#9658;</td>
     </tr>` + (isExp ? filaDetalle(e, porDireccion) : '');
   };
 
   let html = nuevos.length
-    ? dbSepRow('Nuevos', nuevos.length + (nuevos.length === 1 ? ' contrato' : ' contratos')) + nuevos.map(fila).join('')
+    ? filaSeparadoraBase('Nuevos', nuevos.length + (nuevos.length === 1 ? ' contrato' : ' contratos')) + nuevos.map(fila).join('')
     : '';
   let lastKey = Symbol(); // garantiza que el primer grupo siempre inserta separador
   for (const e of resto) {
@@ -133,7 +133,7 @@ export function renderDBTable() {
         lastKey = k;
         const lbl = groupLabel(k, groupBy);
         const cnt = groupCount.get(k) || 0;
-        html += dbSepRow(lbl, cnt + (cnt === 1 ? ' contrato' : ' contratos'));
+        html += filaSeparadoraBase(lbl, cnt + (cnt === 1 ? ' contrato' : ' contratos'));
       }
     }
     html += fila(e);
@@ -173,18 +173,18 @@ function filaDetalle(e, porDireccion) {
       <td colspan="5">
         <div class="db-detail-inner">
           <div class="db-detail-grid">
-            <div><span class="lbl">Alquiler: </span><strong>${fmtMoney(e.importe, e.moneda)}</strong></div>
+            <div><span class="lbl">Alquiler: </span><strong>${formatearDinero(e.importe, e.moneda)}</strong></div>
             <div><span class="lbl">Ult. aumento: </span>${e.ultimoAumento ? formatearFecha(e.ultimoAumento) : '<span style="color:var(--dim)">-</span>'}</div>
             <div><span class="lbl">Contrato: </span>${esc(e.contratoStr||'-')}</div>
             <div><span class="lbl">Garantía: </span>${e.garantia ? esc(e.garantia) : '<span class="missing">sin cargar</span>'}</div>
             <div><span class="lbl">Aumentos: </span>${D.gestionadoPor(e) ? esc(D.gestionadoPor(e)) : 'La inmobiliaria'}</div>
-            ${e.propietario ? `<div><span class="lbl">Propietario: </span>${fmtNames(e.propietario)}</div>` : ''}
-            <div><span class="lbl">Tel. Prop: </span>${telLink(e.telProp)}</div>
-            ${e.mailProp ? `<div><span class="lbl">Mail Prop: </span>${fmtMails(e.mailProp)}</div>` : ''}
-            ${contactRow(e, 'dfull')}
-            ${e.inquilino ? `<div><span class="lbl">Inquilino: </span>${fmtNames(e.inquilino)}</div>` : ''}
-            <div><span class="lbl">Tel. Inq: </span>${telLink(e.telInq)}</div>
-            ${e.mailInq ? `<div><span class="lbl">Mail Inq: </span>${fmtMails(e.mailInq)}</div>` : ''}
+            ${e.propietario ? `<div><span class="lbl">Propietario: </span>${formatearNombres(e.propietario)}</div>` : ''}
+            <div><span class="lbl">Tel. Prop: </span>${enlaceTelefono(e.telProp)}</div>
+            ${e.mailProp ? `<div><span class="lbl">Mail Prop: </span>${formatearMails(e.mailProp)}</div>` : ''}
+            ${filaContacto(e, 'dfull')}
+            ${e.inquilino ? `<div><span class="lbl">Inquilino: </span>${formatearNombres(e.inquilino)}</div>` : ''}
+            <div><span class="lbl">Tel. Inq: </span>${enlaceTelefono(e.telInq)}</div>
+            ${e.mailInq ? `<div><span class="lbl">Mail Inq: </span>${formatearMails(e.mailInq)}</div>` : ''}
           </div>
           ${insigniaRenovacion(e, dir)}
           ${e.direccionOriginal && e.direccionOriginal !== e.direccion ? `<div style="margin-top:8px;font-size:11px;color:var(--dim)">Registrado originalmente como: ${esc(e.direccionOriginal)}</div>` : ''}
@@ -215,7 +215,7 @@ function filaDetalle(e, porDireccion) {
 }
 
 // Inicializa el dropdown de anos del panel DB con los anos en entries
-export function populateDBYears() {
+export function llenarAniosBase() {
   const sel = document.getElementById('db-year');
   if (!sel || !estado.entries) return;
   const years = [...new Set(
@@ -237,25 +237,25 @@ export function iniciar() {
   document.getElementById('db-search').addEventListener('input', e => {
     estado.dbSearchText = e.target.value;
     e.target.closest('.search-wrap').classList.toggle('has-text', !!e.target.value);
-    renderDBTable();
+    dibujarTablaBase();
   });
   document.getElementById('db-year').addEventListener('change', e => {
     estado.dbFilterYear = +e.target.value;
-    renderDBTable();
+    dibujarTablaBase();
   });
   document.getElementById('db-month').addEventListener('change', e => {
     estado.dbFilterMonth = +e.target.value;
-    renderDBTable();
+    dibujarTablaBase();
   });
   document.getElementById('db-show-active').addEventListener('change', e => {
     estado.dbShowActive = e.target.checked;
     if (estado.dbShowActive) { estado.dbShowInactive = false; document.getElementById('db-show-inactive').checked = false; }
-    renderDBTable();
+    dibujarTablaBase();
   });
   document.getElementById('db-show-inactive').addEventListener('change', e => {
     estado.dbShowInactive = e.target.checked;
     if (estado.dbShowInactive) { estado.dbShowActive = false; document.getElementById('db-show-active').checked = false; }
-    renderDBTable();
+    dibujarTablaBase();
   });
 
   // Botones clear en buscadores
@@ -263,7 +263,7 @@ export function iniciar() {
     const inp = document.getElementById('db-search');
     inp.value = ''; estado.dbSearchText = '';
     inp.closest('.search-wrap').classList.remove('has-text');
-    inp.focus(); renderDBTable();
+    inp.focus(); dibujarTablaBase();
   });
 
   // Acordeon Base de Datos (event delegation sobre tbody -- persiste entre renders)
@@ -284,7 +284,7 @@ export function iniciar() {
     if (editBtn) {
       e.stopPropagation();
       const entry = byId(+editBtn.dataset.editRow);
-      if (entry) showEditModal(entry);
+      if (entry) mostrarModalEdicion(entry);
       return;
     }
 
@@ -292,7 +292,7 @@ export function iniciar() {
     const delBtn = e.target.closest('[data-delete-row]');
     if (delBtn) {
       e.stopPropagation();
-      await deleteEntry(+delBtn.dataset.deleteRow, delBtn.dataset.deleteDir);
+      await borrarEntrada(+delBtn.dataset.deleteRow, delBtn.dataset.deleteDir);
       return;
     }
 
@@ -304,7 +304,7 @@ export function iniciar() {
       delete estado.marks[`v|${dir}`];
       delete estado.marks[`vr|${dir}`];
       guardarMarcas();
-      renderDBTable();
+      dibujarTablaBase();
       return;
     }
     const dbVuncR = e.target.closest('[data-db-vunc-r]');
@@ -312,13 +312,13 @@ export function iniciar() {
       e.stopPropagation();
       delete estado.marks[`vr|${dbVuncR.dataset.dbVuncR}`];
       guardarMarcas();
-      renderDBTable();
+      dibujarTablaBase();
       return;
     }
 
     // ── Linea de tiempo ──
     const tlBtn = e.target.closest('[data-timeline]');
-    if (tlBtn) { e.stopPropagation(); showTimeline(byId(+tlBtn.dataset.timeline)); return; }
+    if (tlBtn) { e.stopPropagation(); mostrarLineaTiempo(byId(+tlBtn.dataset.timeline)); return; }
 
     // ── Comentarios como viñetas: agregar, corregir, borrar ──
     // Los indices son sobre la lista completa (incluye las notas de renovacion, que no se muestran).
@@ -349,7 +349,7 @@ export function iniciar() {
       const list = D.separarNotas(entry.notas);
       if (!confirm(`¿Borrar este comentario?\n\n${list[+notaDel.dataset.i]}`)) return;
       list.splice(+notaDel.dataset.i, 1);
-      if (await saveNotes(entry, list.join(' | '), '&#10003; Comentario borrado')) renderDBTable();
+      if (await guardarNotas(entry, list.join(' | '), '&#10003; Comentario borrado')) dibujarTablaBase();
       return;
     }
     const notaBtn = e.target.closest('[data-nota-row]');
@@ -362,7 +362,7 @@ export function iniciar() {
       const list = D.separarNotas(entry.notas);
       if (ta.dataset.i !== '') { if (txt) list[+ta.dataset.i] = txt; else list.splice(+ta.dataset.i, 1); }
       else if (txt) list.push(txt);
-      if (await saveNotes(entry, list.join(' | '), '&#10003; Comentario guardado')) renderDBTable();
+      if (await guardarNotas(entry, list.join(' | '), '&#10003; Comentario guardado')) dibujarTablaBase();
       return;
     }
 

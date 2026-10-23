@@ -1,20 +1,20 @@
 // Pestaña Administraciones: tabla y formulario.
 import { nuevosPrimero, puntoNuevo } from '../componentes/novedades.js';
 import { normalizar } from '../../../dominios/index.js';
-import { render } from '../app.js';
+import { dibujar } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { esc, showToast } from '../nucleo/dom.js';
+import { esc, mostrarAviso } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
-import { fmtEdificios, linkMailsInText, linkPhonesInText } from '../nucleo/formato.js';
+import { formatearEdificios, enlazarMailsEnTexto, enlazarTelefonosEnTexto } from '../nucleo/formato.js';
 
-let adminSearchText  = '';
+let textoBusquedaAdmins  = '';
 
-let adminEditRow     = null;  // id de la administracion en edicion (null = alta nueva)
+let filaAdminEditando     = null;  // id de la administracion en edicion (null = alta nueva)
 
-function getAdminFiltered() {
+function adminsFiltradas() {
   if (!estado.admins) return [];
-  if (!adminSearchText.trim()) return estado.admins;
-  const q = normalizar(adminSearchText);
+  if (!textoBusquedaAdmins.trim()) return estado.admins;
+  const q = normalizar(textoBusquedaAdmins);
   return estado.admins.filter(a =>
     normalizar(a.nombre).includes(q) ||
     normalizar(a.edificios).includes(q) ||
@@ -23,9 +23,9 @@ function getAdminFiltered() {
   );
 }
 
-export function renderAdminTable() {
+export function dibujarTablaAdmins() {
   if (!estado.admins) return;
-  const filtered = getAdminFiltered();
+  const filtered = adminsFiltradas();
   const countEl = document.getElementById('admin-count');
   if (countEl) countEl.textContent = `${filtered.length} / ${estado.admins.length} administraciones`;
 
@@ -40,9 +40,9 @@ export function renderAdminTable() {
   tbody.innerHTML = nuevosPrimero('administraciones', filtered).map(a => `
     <tr data-admin-row="${a.id}">
       <td style="font-weight:600">${esc(a.nombre)}</td>
-      <td>${fmtEdificios(a.edificios)}</td>
-      <td>${linkPhonesInText(a.telefono)}</td>
-      <td>${linkMailsInText(a.mail)}</td>
+      <td>${formatearEdificios(a.edificios)}</td>
+      <td>${enlazarTelefonosEnTexto(a.telefono)}</td>
+      <td>${enlazarMailsEnTexto(a.mail)}</td>
       <td style="white-space:nowrap;text-align:right">${puntoNuevo('administraciones', a.id)}
         <button class="unmark-btn" data-admin-edit="${a.id}" title="Editar">&#9998;</button>
         <button class="unmark-btn" data-admin-del="${a.id}" title="Eliminar">&times;</button>
@@ -50,8 +50,8 @@ export function renderAdminTable() {
     </tr>`).join('');
 }
 
-function showAdminModal(entry) {
-  adminEditRow = entry ? entry.id : null;
+function mostrarModalAdmin(entry) {
+  filaAdminEditando = entry ? entry.id : null;
   document.getElementById('modal-admin-title').textContent = entry ? 'Editar Administracion' : 'Nueva Administracion';
   document.getElementById('m-adm-nombre').value    = entry ? entry.nombre    : '';
   document.getElementById('m-adm-edificios').value = entry ? entry.edificios : '';
@@ -64,16 +64,16 @@ function showAdminModal(entry) {
   setTimeout(() => document.getElementById('m-adm-nombre').focus(), 80);
 }
 
-function hideAdminModal() {
+function ocultarModalAdmin() {
   document.getElementById('modal-admin').classList.remove('open');
 }
 
-async function submitAdminEntry() {
+async function enviarAdmin() {
   const nombre = (document.getElementById('m-adm-nombre').value || '').trim();
-  if (!nombre) { showToast('El nombre de la administracion es obligatorio.', 'err'); return; }
+  if (!nombre) { mostrarAviso('El nombre de la administracion es obligatorio.', 'err'); return; }
 
   const payload = {
-    id:        adminEditRow,
+    id:        filaAdminEditando,
     nombre,
     edificios: (document.getElementById('m-adm-edificios').value || '').trim(),
     telefono:  (document.getElementById('m-adm-telefono').value  || '').trim(),
@@ -85,24 +85,24 @@ async function submitAdminEntry() {
   btn.textContent = 'Guardando...';
   try {
     estado.admins = await call('guardarAdmin', payload);
-    showToast('&#10003; Administracion guardada', 'ok');
-    hideAdminModal();
-    render();
+    mostrarAviso('&#10003; Administracion guardada', 'ok');
+    ocultarModalAdmin();
+    dibujar();
   } catch (err) {
-    showToast('Error: ' + esc(err.message), 'err');
+    mostrarAviso('Error: ' + esc(err.message), 'err');
     btn.disabled    = false;
     btn.textContent = 'Guardar';
   }
 }
 
-async function deleteAdminEntry(id, nombre) {
+async function borrarEntradaAdmin(id, nombre) {
   if (!confirm(`Eliminar "${nombre}"?`)) return;
   try {
     estado.admins = await call('borrarAdmin', id);
-    showToast('&#10003; Administracion eliminada', 'ok');
-    render();
+    mostrarAviso('&#10003; Administracion eliminada', 'ok');
+    dibujar();
   } catch (err) {
-    showToast('Error: ' + esc(err.message), 'err');
+    mostrarAviso('Error: ' + esc(err.message), 'err');
   }
 }
 
@@ -110,23 +110,23 @@ async function deleteAdminEntry(id, nombre) {
 export function iniciar() {
   // Buscador Administraciones
   document.getElementById('admin-search').addEventListener('input', e => {
-    adminSearchText = e.target.value;
+    textoBusquedaAdmins = e.target.value;
     e.target.closest('.search-wrap').classList.toggle('has-text', !!e.target.value);
-    renderAdminTable();
+    dibujarTablaAdmins();
   });
 
   document.getElementById('admin-search-clear').addEventListener('click', () => {
     const inp = document.getElementById('admin-search');
-    inp.value = ''; adminSearchText = '';
+    inp.value = ''; textoBusquedaAdmins = '';
     inp.closest('.search-wrap').classList.remove('has-text');
-    inp.focus(); renderAdminTable();
+    inp.focus(); dibujarTablaAdmins();
   });
 
   // Modal agregar/editar administracion
-  document.getElementById('btn-add-admin').addEventListener('click', () => showAdminModal(null));
-  document.getElementById('modal-admin-close').addEventListener('click', hideAdminModal);
-  document.getElementById('modal-admin-cancel').addEventListener('click', hideAdminModal);
-  document.getElementById('modal-admin-submit').addEventListener('click', submitAdminEntry);
+  document.getElementById('btn-add-admin').addEventListener('click', () => mostrarModalAdmin(null));
+  document.getElementById('modal-admin-close').addEventListener('click', ocultarModalAdmin);
+  document.getElementById('modal-admin-cancel').addEventListener('click', ocultarModalAdmin);
+  document.getElementById('modal-admin-submit').addEventListener('click', enviarAdmin);
   // Los formularios (alta/edicion) solo se cierran con Cancelar o Guardar: un clic afuera
   // o Escape no hacen perder lo cargado.
 
@@ -135,14 +135,14 @@ export function iniciar() {
     const editBtn = e.target.closest('[data-admin-edit]');
     if (editBtn) {
       const entry = estado.admins && estado.admins.find(a => a.id === +editBtn.dataset.adminEdit);
-      if (entry) showAdminModal(entry);
+      if (entry) mostrarModalAdmin(entry);
       return;
     }
     const delBtn = e.target.closest('[data-admin-del]');
     if (delBtn) {
       const id    = +delBtn.dataset.adminDel;
       const entry = estado.admins && estado.admins.find(a => a.id === id);
-      deleteAdminEntry(id, entry ? entry.nombre : '');
+      borrarEntradaAdmin(id, entry ? entry.nombre : '');
       return;
     }
   });

@@ -3,11 +3,11 @@ const test   = require('node:test');
 const assert = require('node:assert/strict');
 const fs     = require('fs');
 const path   = require('path');
-const { launch, tmpDir, shot } = require('./helpers');
+const { lanzar, carpetaTemporal, captura } = require('./helpers');
 
 test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
-  const destino = path.join(tmpDir('alq-planilla-'), 'planilla-alquileres.xlsx');
-  let { app, page, errors } = await launch(tmpDir());
+  const destino = path.join(carpetaTemporal('alq-planilla-'), 'planilla-alquileres.xlsx');
+  let { app, page, errors } = await lanzar(carpetaTemporal());
   try {
     await page.waitForSelector('#upload-screen', { state: 'visible' });
     // El dialogo "Guardar como" se responde desde el proceso principal (no se abre la carpeta).
@@ -15,7 +15,7 @@ test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
       dialog.showSaveDialog = async () => ({ canceled: false, filePath: file });
       shell.showItemInFolder = () => {};
     }, destino);
-    await shot(page, '30-inicio-planilla');
+    await captura(page, '30-inicio-planilla');
     await page.click('#btn-template');
     await page.waitForSelector('#toast.show');
     assert.match(await page.textContent('#toast'), /Planilla modelo guardada/);
@@ -23,7 +23,7 @@ test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
     assert.deepEqual(errors, []);
   } finally { await app.close(); }
 
-  ({ app, page, errors } = await launch(tmpDir(), { ADMIN_ALQ_IMPORT_FILE: destino }));
+  ({ app, page, errors } = await lanzar(carpetaTemporal(), { ADMIN_ALQ_IMPORT_FILE: destino }));
   try {
     await page.waitForSelector('#app-screen', { state: 'visible' });
     const datos = await page.evaluate(() => ({
@@ -44,10 +44,10 @@ test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
 test('importar planilla con la app en uso: agregar (sin repetir), reemplazar y deshacer', { timeout: 90000 }, async () => {
   const XLSX = require('xlsx');
   const { libroModelo } = require('../../src/infraestructura/importador-excel');
-  const archivo = path.join(tmpDir('alq-planilla-'), 'mis-alquileres.xlsx');
+  const archivo = path.join(carpetaTemporal('alq-planilla-'), 'mis-alquileres.xlsx');
   XLSX.writeFile(libroModelo(), archivo);
 
-  const { app, page, errors } = await launch(tmpDir());
+  const { app, page, errors } = await lanzar(carpetaTemporal());
   try {
     await page.click('#btn-start-demo');
     await page.waitForSelector('#app-screen', { state: 'visible' });
@@ -60,7 +60,7 @@ test('importar planilla con la app en uso: agregar (sin repetir), reemplazar y d
     await page.click('#btn-menu');
     await page.click('#btn-menu-importar');
     await page.waitForSelector('#modal-importar.open');
-    await shot(page, '31-importar-con-la-app-en-uso');
+    await captura(page, '31-importar-con-la-app-en-uso');
     await page.click('#imp-elegir');
     await page.waitForSelector('#modal-importar', { state: 'hidden' });
     assert.match(await toast(), /Agregados 2 alquileres$/);

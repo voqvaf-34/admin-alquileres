@@ -1,19 +1,19 @@
 // Pestaña Aumentos: que alquileres aumentan en el mes, tarjetas y acciones (enviado, no aumenta).
 import * as D from '../../../dominios/index.js';
 import { claveAumento, formatearFecha, claveNoAumenta } from '../../../dominios/index.js';
-import { render } from '../app.js';
+import { dibujar } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { appendNote, entryByDir, obtenerAumentos, esAumentoResuelto, saveIncrease, guardarMarcas, saveNotes } from '../nucleo/datos.js';
-import { copyToClipboard, esc, showToast } from '../nucleo/dom.js';
-import { estado, replaceEntry } from '../nucleo/estado.js';
-import { MONTH_NAMES, fmtIPC, fmtMoney, fmtNames, fmtNotas } from '../nucleo/formato.js';
+import { agregarNota, entradaPorDireccion, obtenerAumentos, esAumentoResuelto, guardarAumento, guardarMarcas, guardarNotas } from '../nucleo/datos.js';
+import { copiarAlPortapapeles, esc, mostrarAviso } from '../nucleo/dom.js';
+import { estado, reemplazarEntrada } from '../nucleo/estado.js';
+import { NOMBRES_MESES, formatearIPC, formatearDinero, formatearNombres, formatearNotas } from '../nucleo/formato.js';
 import { datosPersonas, filtroResueltos, mesSiguiente, pendientes } from './tarjetas.js';
 
 // Aumentos resueltos (enviado / no aumenta): una linea con el resumen; al tocarla se despliega
 // el detalle con la opcion de deshacer (asi un clic de mas no deshace nada).
 const aumAbiertos = new Set();   // claves de marca de las tarjetas resueltas desplegadas
 
-function cardAumentoCompact(e, m, y) {
+function tarjetaAumentoCompacta(e, m, y) {
   const key  = claveAumento(e, m, y);
   const mk   = estado.marks[key];
   const naKy = claveNoAumenta(e, m, y);
@@ -22,20 +22,20 @@ function cardAumentoCompact(e, m, y) {
   const k = mk ? key : naKy;
   const abierto = aumAbiertos.has(k);
   const resumen = mk
-    ? `&#10003; Enviado ${mk.date}${mk.importeAnterior ? ` &middot; ${fmtMoney(mk.importeAnterior, e.moneda)} &rarr; ${fmtMoney(mk.importeNuevo, e.moneda)}` : ''}`
+    ? `&#10003; Enviado ${mk.date}${mk.importeAnterior ? ` &middot; ${formatearDinero(mk.importeAnterior, e.moneda)} &rarr; ${formatearDinero(mk.importeNuevo, e.moneda)}` : ''}`
     : `&#10005; No aumenta${naMk.desc ? ' &mdash; ' + esc(naMk.desc) : ''} &middot; ${naMk.date}`;
   const datos = mk
     ? `<div><span class="lbl">Alquiler: </span>${mk.importeAnterior
-          ? `${fmtMoney(mk.importeAnterior, e.moneda)} &rarr; <strong>${fmtMoney(mk.importeNuevo, e.moneda)}</strong>`
-          : fmtMoney(e.importe, e.moneda)}</div>
-       <div><span class="lbl">IPC aplicado: </span>${mk.ipc != null && mk.ipc !== '' ? fmtIPC(+mk.ipc) : '-'}</div>
+          ? `${formatearDinero(mk.importeAnterior, e.moneda)} &rarr; <strong>${formatearDinero(mk.importeNuevo, e.moneda)}</strong>`
+          : formatearDinero(e.importe, e.moneda)}</div>
+       <div><span class="lbl">IPC aplicado: </span>${mk.ipc != null && mk.ipc !== '' ? formatearIPC(+mk.ipc) : '-'}</div>
        <div><span class="lbl">Enviado: </span>${mk.date}</div>`
     : `<div class="full"><span class="lbl">Motivo: </span>${naMk.desc ? esc(naMk.desc) : '-'}</div>
        <div><span class="lbl">Marcado: </span>${naMk.date}</div>`;
   const detalle = !abierto ? '' : `
       <div class="card-grid">
-        <div><span class="lbl">Inq: </span>${fmtNames(e.inquilino)}</div>
-        <div><span class="lbl">Prop: </span>${fmtNames(e.propietario)}</div>
+        <div><span class="lbl">Inq: </span>${formatearNombres(e.inquilino)}</div>
+        <div><span class="lbl">Prop: </span>${formatearNombres(e.propietario)}</div>
         ${datos}
       </div>
       <div class="card-footer">
@@ -50,14 +50,14 @@ function cardAumentoCompact(e, m, y) {
     </div>`;
 }
 
-function footerAumento(e, m, y, ipcVal) {
+function pieAumento(e, m, y, ipcVal) {
   const nuevo    = D.nuevoImporte(e.importe, ipcVal);
   const key      = claveAumento(e, m, y);
   const naKy     = claveNoAumenta(e, m, y);
   const mk       = estado.marks[key];
   const naMk     = estado.marks[naKy];
-  const ipcStr   = fmtIPC(ipcVal);
-  const nuevoStr = fmtMoney(nuevo, e.moneda);
+  const ipcStr   = formatearIPC(ipcVal);
+  const nuevoStr = formatearDinero(nuevo, e.moneda);
 
   if (D.gestionadoPor(e)) {
     return `<div class="card-footer">
@@ -79,7 +79,7 @@ function footerAumento(e, m, y, ipcVal) {
         <input type="checkbox" class="chk" data-aum="${esc(key)}" checked>
         Enviado ${mk.date}
       </label>
-      ${mk.importeAnterior ? `<span class="change-tag">${fmtMoney(mk.importeAnterior, e.moneda)} &rarr; ${fmtMoney(mk.importeNuevo, e.moneda)}</span>` : ''}
+      ${mk.importeAnterior ? `<span class="change-tag">${formatearDinero(mk.importeAnterior, e.moneda)} &rarr; ${formatearDinero(mk.importeNuevo, e.moneda)}</span>` : ''}
       ${copyBtns}
     </div>`;
   }
@@ -112,7 +112,7 @@ function footerAumento(e, m, y, ipcVal) {
   </div>`;
 }
 
-function cardAumento(e, m, y, ipcVal) {
+function tarjetaAumento(e, m, y, ipcVal) {
   const nuevo  = D.nuevoImporte(e.importe, ipcVal);
   const diff   = nuevo - e.importe;
   const years  = y - e.fechaInicio.getFullYear();
@@ -130,16 +130,16 @@ function cardAumento(e, m, y, ipcVal) {
           ${isDel ? `<span class="delegado-badge" style="margin-left:8px">&#8618; ${esc(D.gestionadoPor(e))}</span>` : ''}
         </div>
         <div style="text-align:right;white-space:nowrap">
-          <span style="color:var(--dim)">${fmtMoney(e.importe, e.moneda)}</span>
+          <span style="color:var(--dim)">${formatearDinero(e.importe, e.moneda)}</span>
           <span style="margin:0 6px;color:var(--dim)">&rarr;</span>
-          <span style="color:var(--green);font-weight:600">${fmtMoney(nuevo, e.moneda)}</span>
-          <span style="font-size:11px;color:var(--dim);margin-left:6px">(+${fmtMoney(diff, e.moneda)})</span>
+          <span style="color:var(--green);font-weight:600">${formatearDinero(nuevo, e.moneda)}</span>
+          <span style="font-size:11px;color:var(--dim);margin-left:6px">(+${formatearDinero(diff, e.moneda)})</span>
         </div>
       </div>
       ${datosPersonas(e, { conMail: true })}
       <div class="card-meta">Inicio: ${formatearFecha(e.fechaInicio)}${e.ultimoAumento ? ` &middot; Ultimo aumento: ${formatearFecha(e.ultimoAumento)}` : ''} &middot; Contrato: ${esc(e.contratoStr||'-')}</div>
-      ${fmtNotas(e)}
-      ${footerAumento(e, m, y, ipcVal)}
+      ${formatearNotas(e)}
+      ${pieAumento(e, m, y, ipcVal)}
     </div>`;
 }
 
@@ -150,7 +150,7 @@ export function contarPendientesAumentos() {
 }
 
 // Lista del mes elegido y del siguiente, con el filtro de resueltos.
-export function renderAumentos(content) {
+export function dibujarAumentos(content) {
   const { m: nxM, y: nxY } = mesSiguiente(estado.selMonth, estado.selYear);
   const aumentos     = obtenerAumentos(estado.entries, estado.selMonth, estado.selYear);
   const aumentosProx = obtenerAumentos(estado.entries, nxM, nxY);
@@ -161,19 +161,19 @@ export function renderAumentos(content) {
   const proxPend = aumentosProx.filter(e => !esAumentoResuelto(e, nxM, nxY));
   const proxResv = aumentosProx.filter(e =>  esAumentoResuelto(e, nxM, nxY));
 
-  let h = `<div class="sec-title">${MONTH_NAMES[estado.selMonth]} ${estado.selYear}</div>`;
+  let h = `<div class="sec-title">${NOMBRES_MESES[estado.selMonth]} ${estado.selYear}</div>`;
   const visibleAum  = (showPend ? aumPend  : []).concat(showResv ? aumResv  : []);
   const visibleProx = (showPend ? proxPend : []).concat(showResv ? proxResv : []);
   if (visibleAum.length === 0) {
     h += `<div class="empty">Sin aumentos ${filtro.palabra} este mes</div>`;
   } else {
-    if (showPend && aumPend.length)  h += `<div class="card-list">${aumPend.map(e=>cardAumento(e,estado.selMonth,estado.selYear,estado.ipc)).join('')}</div>`;
-    if (showResv && aumResv.length)  h += `<div class="card-list">${aumResv.map(e=>cardAumentoCompact(e,estado.selMonth,estado.selYear)).join('')}</div>`;
+    if (showPend && aumPend.length)  h += `<div class="card-list">${aumPend.map(e=>tarjetaAumento(e,estado.selMonth,estado.selYear,estado.ipc)).join('')}</div>`;
+    if (showResv && aumResv.length)  h += `<div class="card-list">${aumResv.map(e=>tarjetaAumentoCompacta(e,estado.selMonth,estado.selYear)).join('')}</div>`;
   }
   if (visibleProx.length > 0) {
-    h += `<div class="sec-title sep">Proximo: ${MONTH_NAMES[nxM]} ${nxY} (${visibleProx.length})</div>`;
-    if (showPend && proxPend.length) h += `<div class="card-list dim">${proxPend.map(e=>cardAumento(e,nxM,nxY,estado.ipc)).join('')}</div>`;
-    if (showResv && proxResv.length) h += `<div class="card-list dim">${proxResv.map(e=>cardAumentoCompact(e,nxM,nxY)).join('')}</div>`;
+    h += `<div class="sec-title sep">Proximo: ${NOMBRES_MESES[nxM]} ${nxY} (${visibleProx.length})</div>`;
+    if (showPend && proxPend.length) h += `<div class="card-list dim">${proxPend.map(e=>tarjetaAumento(e,nxM,nxY,estado.ipc)).join('')}</div>`;
+    if (showResv && proxResv.length) h += `<div class="card-list dim">${proxResv.map(e=>tarjetaAumentoCompacta(e,nxM,nxY)).join('')}</div>`;
   }
   content.innerHTML = h;
 }
@@ -181,12 +181,12 @@ export function renderAumentos(content) {
 // "Marcar enviado": aplica el aumento al alquiler y guarda la marca (con el importe anterior,
 // para poder deshacer).
 async function marcarAumentoEnviado(key) {
-  const entry = entryByDir(key.split('|')[1]);
+  const entry = entradaPorDireccion(key.split('|')[1]);
   if (!entry) return;
   const today     = new Date();
   const newAmount = D.nuevoImporte(entry.importe, estado.ipc);
   const prev = { importeAnterior: entry.importe, ultimoAumentoAnterior: D.aFechaISO(entry.ultimoAumento) };
-  if (await saveIncrease(entry, newAmount, today)) {
+  if (await guardarAumento(entry, newAmount, today)) {
     estado.marks[key] = { date: formatearFecha(today), importeNuevo: newAmount, ipc: estado.ipc, ...prev };
     await guardarMarcas();
   }
@@ -194,15 +194,15 @@ async function marcarAumentoEnviado(key) {
 
 // Deshacer "enviado": vuelve el alquiler al importe anterior y saca la marca.
 async function deshacerAumentoEnviado(key) {
-  const entry = entryByDir(key.split('|')[1]);
+  const entry = entradaPorDireccion(key.split('|')[1]);
   const mk = estado.marks[key];
   // Revierte el importe solo si la marca guardo el estado previo (las importadas no lo tienen).
   if (entry && mk && mk.importeAnterior) {
     try {
-      replaceEntry(await call('modificarContrato', entry.id,
+      reemplazarEntrada(await call('modificarContrato', entry.id,
         { importe: mk.importeAnterior, ultimoAumento: mk.ultimoAumentoAnterior || null }));
     } catch (err) {
-      showToast('Error al revertir el aumento: ' + esc(err.message), 'err');
+      mostrarAviso('Error al revertir el aumento: ' + esc(err.message), 'err');
       return false;
     }
   }
@@ -219,7 +219,7 @@ export function iniciar() {
     chk.disabled = true;
     if (chk.checked) await marcarAumentoEnviado(chk.dataset.aum);
     else await deshacerAumentoEnviado(chk.dataset.aum);
-    render();
+    dibujar();
   });
 
   document.getElementById('content').addEventListener('click', async e => {
@@ -229,22 +229,22 @@ export function iniciar() {
       aumUndo.disabled = true;
       if (await deshacerAumentoEnviado(aumUndo.dataset.aumUndo)) {
         aumAbiertos.delete(aumUndo.dataset.aumUndo);
-        showToast('&#8617; Aumento deshecho: el alquiler volvió al importe anterior', 'info');
+        mostrarAviso('&#8617; Aumento deshecho: el alquiler volvió al importe anterior', 'info');
       }
-      render();
+      dibujar();
       return;
     }
     const aumToggle = e.target.closest('[data-aum-toggle]');
     if (aumToggle) {
       const k = aumToggle.dataset.aumToggle;
       if (aumAbiertos.has(k)) aumAbiertos.delete(k); else aumAbiertos.add(k);
-      render();
+      dibujar();
       return;
     }
 
     const copyBtn = e.target.closest('[data-copy]');
     if (copyBtn) {
-      copyToClipboard(copyBtn.dataset.copy);
+      copiarAlPortapapeles(copyBtn.dataset.copy);
       copyBtn.classList.add('copied');
       const orig = copyBtn.textContent;
       copyBtn.textContent = '✓';
@@ -257,11 +257,11 @@ export function iniciar() {
     if (naStart) {
       pendientes.noAumenta = naStart.dataset.naStart;
       pendientes.noRenueva = null;
-      render();
+      dibujar();
       setTimeout(() => { const el = document.getElementById('inp-na-desc'); if (el) el.focus(); }, 50);
       return;
     }
-    if (e.target.closest('[data-na-cancel]')) { pendientes.noAumenta = null; render(); return; }
+    if (e.target.closest('[data-na-cancel]')) { pendientes.noAumenta = null; dibujar(); return; }
 
     // ── na-conf (confirmar no aumenta) ────────────────────────────────────────
     const naConf = e.target.closest('[data-na-conf]');
@@ -269,18 +269,18 @@ export function iniciar() {
       const naKy   = naConf.dataset.naConf;
       const descEl = document.getElementById('inp-na-desc');
       const desc   = descEl ? descEl.value.trim() : '';
-      const entry  = entryByDir(naKy.split('|')[1]);   // na|dir|m|y
+      const entry  = entradaPorDireccion(naKy.split('|')[1]);   // na|dir|m|y
       estado.marks[naKy]  = { date: formatearFecha(new Date()), desc };
       guardarMarcas();
       pendientes.noAumenta = null;
-      if (entry && desc) await saveNotes(entry, appendNote(entry, `NO AUMENTA: ${desc}`));
-      render();
+      if (entry && desc) await guardarNotas(entry, agregarNota(entry, `NO AUMENTA: ${desc}`));
+      dibujar();
       return;
     }
 
     // ── un-na (deshacer no aumenta) ───────────────────────────────────────────
     const unNa = e.target.closest('[data-un-na]');
-    if (unNa) { delete estado.marks[unNa.dataset.unNa]; guardarMarcas(); render(); return; }
+    if (unNa) { delete estado.marks[unNa.dataset.unNa]; guardarMarcas(); dibujar(); return; }
 
   });
 }

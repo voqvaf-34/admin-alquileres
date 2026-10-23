@@ -9,7 +9,7 @@ const SHOTS = process.env.E2E_SCREENSHOTS || path.join(os.tmpdir(), 'alq-e2e-sho
 
 // Abre la app (o un .exe empaquetado) fuera de la pantalla, sin abrir links externos ni el
 // asistente, con los datos en dataDir. extraEnv suma o pisa variables (undefined = quitarla).
-async function launch(dataDir, extraEnv = {}, { ejecutable = null, tamano = { width: 1400, height: 900 } } = {}) {
+async function lanzar(dataDir, extraEnv = {}, { ejecutable = null, tamano = { width: 1400, height: 900 } } = {}) {
   const env = { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ADMIN_ALQ_FUERA_DE_PANTALLA: '1',
     ADMIN_ALQ_DATA_DIR: dataDir, ADMIN_ALQ_SHARED_DIR: path.join(dataDir, 'compartida'), ...extraEnv };
   for (const k of Object.keys(env)) if (env[k] === undefined) delete env[k];
@@ -27,9 +27,9 @@ async function launch(dataDir, extraEnv = {}, { ejecutable = null, tamano = { wi
   return { app, page, errors };
 }
 
-const tmpDir = (prefix = 'alq-e2e-') => fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+const carpetaTemporal = (prefix = 'alq-e2e-') => fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 
-function shot(page, name) {
+function captura(page, name) {
   fs.mkdirSync(SHOTS, { recursive: true });
   return page.screenshot({ path: path.join(SHOTS, name + '.png') });
 }
@@ -56,4 +56,4 @@ async function elegirColor(page, color, campo = 'color') {
   await page.click(`[data-color-picker="${campo}"] .cfg-swatch[data-color="${color}"]`);
 }
 
-module.exports = { ROOT, SHOTS, launch, tmpDir, shot, empezarVacia, abrirConfiguracion, elegirColor };
+module.exports = { ROOT, SHOTS, lanzar, carpetaTemporal, captura, empezarVacia, abrirConfiguracion, elegirColor };

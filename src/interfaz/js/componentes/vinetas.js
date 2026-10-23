@@ -6,7 +6,7 @@
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
 
-export function makeChips(id, opts) {
+export function armarChips(id, opts) {
   const store = document.getElementById(id);
   const { split, join, placeholder = 'Agregar...', addLabel = 'Agregar', isBusy = () => false } = opts;
   let items = split(store.value || '');
@@ -83,8 +83,8 @@ export function makeChips(id, opts) {
 // Elegir UNA opcion entre viñetas (garantia, duracion). Usa el <select> original (oculto)
 // como dato: sus <option> son las viñetas. Tocar la elegida la deselecciona. La viñeta
 // "+" permite escribir otra opcion; onAdd(nombre) la agrega al select y la elige.
-const selProto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
-export function makePicker(id, { onAdd, addLabel = 'Otra', placeholder = 'Escribí y Enter' }) {
+const selectorModelo = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+export function armarSelector(id, { onAdd, addLabel = 'Otra', placeholder = 'Escribí y Enter' }) {
   const sel = document.getElementById(id);
   const box = document.createElement('div');
   box.className = 'chips picker';
@@ -92,7 +92,7 @@ export function makePicker(id, { onAdd, addLabel = 'Otra', placeholder = 'Escrib
   sel.hidden = true;
   sel.after(box);
   const paint = () => {
-    const v = selProto.get.call(sel);
+    const v = selectorModelo.get.call(sel);
     box.innerHTML = [...sel.options].filter(o => o.value).map(o =>
       `<button type="button" class="chip pick${o.value === v ? ' on' : ''}" data-v="${esc(o.value)}">${esc(o.textContent)}</button>`).join('')
       + `<button type="button" class="chip chip-add" data-add>&#65291; ${esc(addLabel)}</button>`
@@ -100,13 +100,13 @@ export function makePicker(id, { onAdd, addLabel = 'Otra', placeholder = 'Escrib
   };
   Object.defineProperty(sel, 'value', {
     configurable: true,
-    get: () => selProto.get.call(sel),
-    set: v => { selProto.set.call(sel, v); paint(); },
+    get: () => selectorModelo.get.call(sel),
+    set: v => { selectorModelo.set.call(sel, v); paint(); },
   });
-  const pick = v => { selProto.set.call(sel, v); paint(); sel.dispatchEvent(new Event('change')); };
+  const pick = v => { selectorModelo.set.call(sel, v); paint(); sel.dispatchEvent(new Event('change')); };
   box.addEventListener('click', e => {
     const b = e.target.closest('.pick');
-    if (b) { pick(b.dataset.v === selProto.get.call(sel) ? '' : b.dataset.v); return; }
+    if (b) { pick(b.dataset.v === selectorModelo.get.call(sel) ? '' : b.dataset.v); return; }
     const add = e.target.closest('[data-add]');
     if (add) {
       const inp = box.querySelector('.chips-entry');

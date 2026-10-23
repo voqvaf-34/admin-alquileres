@@ -2,7 +2,7 @@
 // app con datos de ejemplo, en modo claro y oscuro, y devuelve lo que no cumple.
 // La usan la prueba accesibilidad.e2e.test.js y el diagnostico: node test/e2e/accesibilidad.js
 const fs   = require('fs');
-const { launch, tmpDir } = require('./helpers');
+const { lanzar, carpetaTemporal } = require('./helpers');
 
 const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const ETIQUETAS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
@@ -26,7 +26,7 @@ async function revisar(page, pantalla, modo) {
 // marca: { color, color2 } para probar con colores de marca; a11y: opciones de Accesibilidad.
 async function recorrer({ temas = ['clasico'], marca = null, a11y = null, soloApp = false, alPaso } = {}) {
   const problemas = [];
-  const { app, page } = await launch(tmpDir());
+  const { app, page } = await lanzar(carpetaTemporal());
   const paso = async (pantalla, modo) => {
     const r = await revisar(page, pantalla, modo);
     problemas.push(...r);

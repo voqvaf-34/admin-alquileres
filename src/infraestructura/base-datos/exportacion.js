@@ -2,15 +2,15 @@
 class MetodosExportacion {
   // ── exportacion ──────────────────────────────────────────────────────────
   exportarTablas() {
-    const ownersByContract = new Map(), contractsByOwner = new Map();
+    const ownersByContract = new Map(), contratosPorPropietario = new Map();
     const owners = new Map(this.listarPropietarios().map(o => [o.id, o]));
     const contracts = this.listarContratos();
     const cById = new Map(contracts.map(c => [c.id, c]));
     for (const l of this.listarPropietariosDeContratos()) {
       if (!ownersByContract.has(l.contractId)) ownersByContract.set(l.contractId, []);
       ownersByContract.get(l.contractId).push(owners.get(l.ownerId).nombre);
-      if (!contractsByOwner.has(l.ownerId)) contractsByOwner.set(l.ownerId, new Set());
-      contractsByOwner.get(l.ownerId).add(cById.get(l.contractId).direccion);
+      if (!contratosPorPropietario.has(l.ownerId)) contratosPorPropietario.set(l.ownerId, new Set());
+      contratosPorPropietario.get(l.ownerId).add(cById.get(l.contractId).direccion);
     }
     const contacts = new Map(this.listarContactos().map(c => [c.id, c]));
     const accounts = new Map();
@@ -31,7 +31,7 @@ class MetodosExportacion {
         celular: o.telefono, mail: o.mail,
         contacto: o.contactId ? `${contacts.get(o.contactId).nombre} (${contacts.get(o.contactId).rol})` : '',
         cuenta_cobro: o.cuentaCobro, cuentas_por_apto: (accounts.get(o.id) || []).join(' | '), notas: o.notas,
-        aptos: [...(contractsByOwner.get(o.id) || [])].join(' | '),
+        aptos: [...(contratosPorPropietario.get(o.id) || [])].join(' | '),
       })),
       contactos: [...contacts.values()],
       administraciones: this.listarAdmins(),

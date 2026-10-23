@@ -5,7 +5,7 @@ const test   = require('node:test');
 const assert = require('node:assert/strict');
 const fs     = require('fs');
 const path   = require('path');
-const { launch, tmpDir, shot } = require('./helpers');
+const { lanzar, carpetaTemporal, captura } = require('./helpers');
 
 const DIR = 'E2E Prueba 999 U1';
 const esperarFoco = (page, id) => page.waitForFunction(i => document.activeElement && document.activeElement.id === i, id);
@@ -17,8 +17,8 @@ async function desplegarPrimeraFila(page) {
 }
 
 test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) => {
-  const dataDir = tmpDir();
-  const { app, page, errors } = await launch(dataDir);
+  const dataDir = carpetaTemporal();
+  const { app, page, errors } = await lanzar(dataDir);
   await page.evaluate(() => { window.confirm = () => true; });
   // Los formularios solo se cierran con Cancelar/Guardar: si una prueba falla con uno abierto,
   // se cierra antes de la siguiente para que no queden todas trabadas.
@@ -147,7 +147,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.click('#m-opt-rem > summary');
     await page.click('#m-opt-notas > summary');
     assert.deepEqual([await page.isVisible('#m-remitente'), await page.isVisible('#m-notas-chips')], [true, true], 'se despliegan');
-    await shot(page, '40-recorrido-alta');
+    await captura(page, '40-recorrido-alta');
     await page.click('#modal-submit');
     await page.waitForSelector('#modal-add', { state: 'hidden' });
     await page.fill('#db-search', 'e2e prueba');
@@ -187,9 +187,9 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     const id = await page.evaluate(d => app.estado.entries.find(e => e.direccion === d).id, DIR);
     const y0 = new Date().getFullYear() - 1, mm = String(new Date().getMonth() + 1).padStart(2, '0');
     const viejas = `20/${mm}/${y0} Renovacion 2 años | comentario e2e | En fecha 25/${mm}/${y0 + 1} se renovo a 2 años`;
-    await page.evaluate(([i, n]) => app.saveNotes(app.estado.entries.find(e => e.id === i), n), [id, viejas]);
+    await page.evaluate(([i, n]) => app.guardarNotas(app.estado.entries.find(e => e.id === i), n), [id, viejas]);
     await page.waitForFunction(i => /Renovacion/.test(app.estado.entries.find(e => e.id === i).notas), id);
-    await page.evaluate(() => app.renderDBTable());
+    await page.evaluate(() => app.dibujarTablaBase());
     assert.equal(await page.locator(`[data-detail-id="${id}"] .nota-chip`).count(), 1, 'las renovaciones no aparecen como comentario');
     await page.click(`[data-detail-id="${id}"] [data-timeline]`);
     await page.waitForSelector('#modal-timeline.open');
@@ -206,8 +206,8 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.waitForSelector('#modal-add', { state: 'hidden' });
     const notas = await page.evaluate(i => app.estado.entries.find(e => e.id === i).notas, id);
     for (const x of ['Renovacion 2 años', 'comentario e2e', 'se renovo a 2 años']) assert.ok(notas.includes(x), notas);
-    await page.evaluate(i => app.saveNotes(app.estado.entries.find(e => e.id === i), 'comentario e2e'), id);
-    await page.evaluate(() => app.renderDBTable());
+    await page.evaluate(i => app.guardarNotas(app.estado.entries.find(e => e.id === i), 'comentario e2e'), id);
+    await page.evaluate(() => app.dibujarTablaBase());
   });
 
   await t.test('garantia, moneda y el formulario no se cierra solo', async () => {
@@ -377,15 +377,15 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     assert.match(clip, /^Hola! Te escribo desde Mi Inmobiliaria\. Te avisamos que el contrato de arrendamiento vence el \d{2}\/\d{2}\/\d{4}/);
     const card = page.locator('.card:not(.card-compact)').filter({ has: page.locator('[data-vstart]') }).first();
     const dir = (await card.locator('.card-top span').first().textContent()).replace(/VENCIDO.*/, '').trim();
-    const notasAntes = await page.evaluate(d => app.entryByDir(d).notas, dir);
+    const notasAntes = await page.evaluate(d => app.entradaPorDireccion(d).notas, dir);
     await card.locator('[data-vstart]').click();
     await page.fill('#inp-venc-date', `${new Date().getFullYear()}-01-01`);
     await page.click('[data-vconf]');
     await page.waitForFunction(d => !!app.estado.marks['v|' + d], dir);
-    assert.equal(await page.evaluate(d => app.entryByDir(d).notas, dir), notasAntes, 'la renovacion no se escribe en comentarios');
+    assert.equal(await page.evaluate(d => app.entradaPorDireccion(d).notas, dir), notasAntes, 'la renovacion no se escribe en comentarios');
     await page.click('#tab-basedatos');
     await page.fill('#db-search', dir);
-    const id = await page.evaluate(d => app.entryByDir(d).id, dir);
+    const id = await page.evaluate(d => app.entradaPorDireccion(d).id, dir);
     await page.click(`#db-tbody .db-row[data-id="${id}"]`);
     await page.click(`[data-detail-id="${id}"] [data-db-vunc]`);
     await page.waitForFunction(d => !app.estado.marks['v|' + d], dir);
@@ -402,16 +402,16 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.check('#inp-nr-sigue');
     await page.click('[data-nr-conf]');
     await page.waitForFunction(d => app.estado.marks['nr|' + d] && app.estado.marks['nr|' + d].sigueActivo, dir);
-    assert.equal(await page.evaluate(d => app.entryByDir(d).inactive, dir), false, 'sigue activo');
+    assert.equal(await page.evaluate(d => app.entradaPorDireccion(d).inactive, dir), false, 'sigue activo');
     await page.click('#btn-undo');
     await page.waitForFunction(d => !app.estado.marks['nr|' + d], dir);
     dir = await pick();
     await espera(1600);
     await page.click(`[data-nr-start="${dir}"]`);
     await page.click('[data-nr-conf]');
-    await page.waitForFunction(d => app.entryByDir(d) && app.entryByDir(d).inactive, dir);
+    await page.waitForFunction(d => app.entradaPorDireccion(d) && app.entradaPorDireccion(d).inactive, dir);
     await page.click('#btn-undo');                         // marca + inactivo = un solo paso
-    await page.waitForFunction(d => !app.estado.marks['nr|' + d] && !app.entryByDir(d).inactive, dir);
+    await page.waitForFunction(d => !app.estado.marks['nr|' + d] && !app.entradaPorDireccion(d).inactive, dir);
   });
 
   await t.test('administraciones: alta con viñetas, edicion y baja', async () => {
@@ -449,7 +449,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   });
 
   await t.test('exportar CSV', async () => {
-    const carpeta = tmpDir('alq-csv-');
+    const carpeta = carpetaTemporal('alq-csv-');
     await app.evaluate(({ dialog, shell }, dir) => {
       dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [dir] });
       shell.openPath = async () => '';
@@ -486,7 +486,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   await app.close();
 
   await t.test('los datos persisten al reabrir la app', async () => {
-    const r = await launch(dataDir);
+    const r = await lanzar(dataDir);
     try {
       await r.page.waitForSelector('#app-screen', { state: 'visible' });
       const c = await r.page.evaluate(d => app.estado.entries.find(e => e.direccion === d), DIR);

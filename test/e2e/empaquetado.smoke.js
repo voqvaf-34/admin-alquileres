@@ -4,7 +4,7 @@
 const assert = require('node:assert/strict');
 const fs     = require('fs');
 const path   = require('path');
-const { launch, tmpDir } = require('./helpers');
+const { lanzar, carpetaTemporal } = require('./helpers');
 
 const visor = process.argv[2] === 'visor';
 const exe = visor
@@ -13,7 +13,7 @@ const exe = visor
 
 (async () => {
   assert.ok(fs.existsSync(exe), `no existe ${exe} (correr antes npm run ${visor ? 'dist:visor' : 'dist'})`);
-  const { app, page } = await launch(tmpDir('alq-smoke-'), {}, { ejecutable: exe });
+  const { app, page } = await lanzar(carpetaTemporal('alq-smoke-'), {}, { ejecutable: exe });
   try {
     if (visor) {
       await page.waitForSelector('#viewer-setup-screen', { state: 'visible' });

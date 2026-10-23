@@ -6,9 +6,9 @@ import { COLORES_SUGERIDOS, FUENTES, ICONOS_APP, colorConPocoContraste, PLANTILL
 import { claveDisenos, claveIcono, dibujarIcono, imagenCuadrada } from '../componentes/iconos.js';
 import { aplicarMarca, pintarApariencia } from '../componentes/marca.js';
 import { call } from '../nucleo/api.js';
-import { $, cargarImagen, esc, leerComoDataURL, showToast } from '../nucleo/dom.js';
+import { $, cargarImagen, esc, leerComoDataURL, mostrarAviso } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
-import { closeModal, openModal } from '../nucleo/modales.js';
+import { cerrarModal, abrirModal } from '../nucleo/modales.js';
 
 // Lo que se esta editando (el icono "aplanado": iconoTipo, iconoDiseno, iconoColor, iconoImagen).
 let borrador = {};
@@ -134,7 +134,7 @@ function armarIcono() {
     try {
       borrador.iconoImagen = await imagenCuadrada(await leerComoDataURL(file));
       borrador.iconoTipo = 'imagen';
-    } catch (_) { showToast('No se pudo leer la imagen.', 'err'); }
+    } catch (_) { mostrarAviso('No se pudo leer la imagen.', 'err'); }
     pintarBorrador();
   });
 }
@@ -237,11 +237,11 @@ function armarApariencia() {
 }
 
 // ── Mensajes ──
-const msgArea = id => document.querySelector(`[data-msg="${id}"] textarea`);
+const areaMensaje = id => document.querySelector(`[data-msg="${id}"] textarea`);
 
 function pintarEjemplo(id) {
   const box = document.querySelector(`[data-msg="${id}"]`);
-  const texto = msgArea(id).value;
+  const texto = areaMensaje(id).value;
   const nombre = leerMarca({ marcaNombre: borrador.nombre }).nombre;
   const datos = Object.fromEntries(Object.entries({ inmobiliaria: nombre, ...EJEMPLO }).map(([k, v]) => [k, `<b>${esc(v)}</b>`]));
   box.querySelector('.cfg-ejemplo').innerHTML = 'Ejemplo: ' + rellenar(esc(texto), datos);
@@ -287,7 +287,7 @@ function cargar() {
     iconoTipo: icono.tipo, iconoDiseno: icono.diseno, iconoColor: icono.color, iconoImagen: icono.imagen };
   $('cfg-nombre').value = borrador.nombre;
   for (const id of Object.keys(PLANTILLAS)) {
-    msgArea(id).value = textoPlantilla(estado.appSettings, id);
+    areaMensaje(id).value = textoPlantilla(estado.appSettings, id);
     document.querySelector(`[data-msg="${id}"]`).open = false;
   }
   modoAlAbrir = Theme.getModo();
@@ -318,7 +318,7 @@ export function abrirConfiguracion() {
   modoAsistente(false);
   cargar();
   mostrarPestana('marca');
-  openModal('modal-config');
+  abrirModal('modal-config');
   setTimeout(() => $('cfg-nombre').focus(), 80);
 }
 
@@ -328,14 +328,14 @@ export function abrirAsistente(alTerminar) {
   modoAsistente(true);
   cargar();
   mostrarPestana('marca');
-  openModal('modal-config');
+  abrirModal('modal-config');
   setTimeout(() => $('cfg-nombre').focus(), 80);
 }
 
 function terminarAsistente() {
   const fin = asistente && asistente.alTerminar;
   asistente = null;
-  closeModal('modal-config');
+  cerrarModal('modal-config');
   modoAsistente(false);
   if (fin) fin();
 }
@@ -358,7 +358,7 @@ async function leerLogo(file) {
 
 async function guardar() {
   try {
-    const mensajes = Object.fromEntries(Object.keys(PLANTILLAS).map(id => [id, msgArea(id).value]));
+    const mensajes = Object.fromEntries(Object.keys(PLANTILLAS).map(id => [id, areaMensaje(id).value]));
     const m = marcaBorrador();
     const marca = { nombre: $('cfg-nombre').value.trim(), color: m.color, color2: m.color2, logo: m.logo, tema: m.tema,
       fuente: m.fuente, icono: { ...m.icono, imagen: borrador.iconoImagen } };
@@ -366,9 +366,9 @@ async function guardar() {
     estado.appSettings = st.settings;
     aplicarMarca(estado.appSettings);
     if (asistente) return terminarAsistente();
-    closeModal('modal-config');
-    showToast('&#10003; Configuración guardada', 'ok');
-  } catch (err) { showToast('Error al guardar: ' + esc(err.message), 'err'); }
+    cerrarModal('modal-config');
+    mostrarAviso('&#10003; Configuración guardada', 'ok');
+  } catch (err) { mostrarAviso('Error al guardar: ' + esc(err.message), 'err'); }
 }
 
 // Conecta los eventos de esta parte de la pantalla.
@@ -385,7 +385,7 @@ export function iniciar() {
     const file = e.target.files[0]; e.target.value = '';
     if (!file) return;
     try { borrador.logo = await leerLogo(file); pintarBorrador(); }
-    catch (err) { showToast(esc(err.message), 'err'); }
+    catch (err) { mostrarAviso(esc(err.message), 'err'); }
   });
   $('cfg-logo-quitar').addEventListener('click', () => { borrador.logo = ''; if (borrador.iconoTipo === 'logo') borrador.iconoTipo = 'app'; pintarBorrador(); });
 

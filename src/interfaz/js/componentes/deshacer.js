@@ -1,13 +1,13 @@
 // Deshacer / rehacer (botones y Ctrl+Z / Ctrl+Y).
-import { applyState, render } from '../app.js';
+import { aplicarEstado, dibujar } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { _marksSaving } from '../nucleo/datos.js';
-import { esc, showToast } from '../nucleo/dom.js';
+import { _guardandoMarcas } from '../nucleo/datos.js';
+import { esc, mostrarAviso } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
-import { populateDBYears } from '../vistas/base-datos.js';
+import { llenarAniosBase } from '../vistas/base-datos.js';
 import { limpiarPendientes } from '../vistas/tarjetas.js';
 
-export function paintUndo(st) {
+export function pintarDeshacer(st) {
   if (!st) return;
   const u = document.getElementById('btn-undo'), r = document.getElementById('btn-redo');
   u.disabled = !st.canUndo; r.disabled = !st.canRedo;
@@ -15,31 +15,31 @@ export function paintUndo(st) {
   r.title = st.canRedo ? `Rehacer: ${st.redoLabel} (Ctrl+Y)` : 'Nada para rehacer';
 }
 
-async function doUndo(rehacer) {
+async function ejecutarDeshacer(rehacer) {
   try {
-    await _marksSaving;
+    await _guardandoMarcas;
     const r = await call(rehacer ? 'rehacerCambio' : 'deshacerCambio');
     limpiarPendientes();
-    applyState(r.state);
-    populateDBYears();
-    render();
-    showToast(`${rehacer ? '&#8631; Rehecho' : '&#8630; Deshecho'}: ${esc(r.label)}`, 'info');
+    aplicarEstado(r.state);
+    llenarAniosBase();
+    dibujar();
+    mostrarAviso(`${rehacer ? '&#8631; Rehecho' : '&#8630; Deshecho'}: ${esc(r.label)}`, 'info');
   } catch (err) {
-    showToast(esc(err.message), 'info');
+    mostrarAviso(esc(err.message), 'info');
   }
 }
 
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
   // Deshacer / rehacer: botones, Ctrl+Z y Ctrl+Y (o Ctrl+Shift+Z).
-  window.api.alCambiarDeshacer(paintUndo);
-  document.getElementById('btn-undo').addEventListener('click', () => doUndo(false));
-  document.getElementById('btn-redo').addEventListener('click', () => doUndo(true));
+  window.api.alCambiarDeshacer(pintarDeshacer);
+  document.getElementById('btn-undo').addEventListener('click', () => ejecutarDeshacer(false));
+  document.getElementById('btn-redo').addEventListener('click', () => ejecutarDeshacer(true));
   document.addEventListener('keydown', e => {
     if (!e.ctrlKey || e.altKey || !estado.entries || document.body.classList.contains('viewer')) return;
     if (e.target.matches('input, textarea, select, [contenteditable="true"]')) return;   // deshacer de texto nativo
     const k = e.key.toLowerCase();
-    if (k === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(false); }
-    else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); doUndo(true); }
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); ejecutarDeshacer(false); }
+    else if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); ejecutarDeshacer(true); }
   });
 }

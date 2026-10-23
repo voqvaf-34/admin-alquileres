@@ -6,11 +6,11 @@ const path   = require('path');
 const share  = require('../../src/infraestructura/compartir');
 const { BaseDatos } = require('../../src/infraestructura/base-datos');
 
-const tmpDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'alq-share-'));
+const carpetaTemporal = () => fs.mkdtempSync(path.join(os.tmpdir(), 'alq-share-'));
 const base = { importeBase: 20000, contratoStr: '2 AÑOS', fechaInicio: '2024-01-01' };
 
 test('publicar copia la base y las fotos sin dejar temporales', async () => {
-  const local = tmpDir(), shared = path.join(tmpDir(), 'Base Admin Alquileres');
+  const local = carpetaTemporal(), shared = path.join(carpetaTemporal(), 'Base Admin Alquileres');
   const s = await BaseDatos.open(path.join(local, 'alquileres.sqlite'));
   s.agregarContrato({ ...base, direccion: 'A 1' });
   fs.mkdirSync(path.join(local, 'documentos'));
@@ -24,7 +24,7 @@ test('publicar copia la base y las fotos sin dejar temporales', async () => {
 });
 
 test('el visor abre la base en solo lectura y nunca la modifica', async () => {
-  const local = tmpDir(), shared = tmpDir();
+  const local = carpetaTemporal(), shared = carpetaTemporal();
   const s = await BaseDatos.open(path.join(local, 'alquileres.sqlite'));
   s.agregarContrato({ ...base, direccion: 'A 1' });
   share.publicar({ dbFile: s.filePath, sharedDir: shared });
@@ -41,7 +41,7 @@ test('el visor abre la base en solo lectura y nunca la modifica', async () => {
 });
 
 test('cada guardado avisa para publicar', async () => {
-  const s = await BaseDatos.open(path.join(tmpDir(), 'alquileres.sqlite'));
+  const s = await BaseDatos.open(path.join(carpetaTemporal(), 'alquileres.sqlite'));
   let n = 0;
   s.onPersist = () => { n++; };
   s.agregarContrato({ ...base, direccion: 'A 1' });

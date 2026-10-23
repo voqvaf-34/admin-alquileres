@@ -3,15 +3,15 @@ import * as D from '../../../dominios/index.js';
 import { formatearFecha } from '../../../dominios/index.js';
 import { esc } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
-import { fmtNames } from '../nucleo/formato.js';
+import { formatearNombres } from '../nucleo/formato.js';
 
 // Historia de UN contrato: cuando entro, cuando vencio y cada renovacion (solo si renovo).
-export function showTimeline(e) {
+export function mostrarLineaTiempo(e) {
   if (!e) return;
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
   const ev = D.lineaTiempo(e, estado.marks, estado.entries);
   document.getElementById('tl-dir').innerHTML =
-    `<strong>${esc(e.direccion)}</strong> &middot; ${fmtNames(e.inquilino)}${e.inactive ? ' <span class="inactive-badge">INACTIVO</span>' : ''}`;
+    `<strong>${esc(e.direccion)}</strong> &middot; ${formatearNombres(e.inquilino)}${e.inactive ? ' <span class="inactive-badge">INACTIVO</span>' : ''}`;
   document.getElementById('tl-list').innerHTML = ev.map(x => `
     <div class="tl-item tl-${x.tipo}${x.date && x.date > hoy ? ' tl-futuro' : ''}">
       <div class="tl-date">${x.date ? formatearFecha(x.date) : ''}</div>
