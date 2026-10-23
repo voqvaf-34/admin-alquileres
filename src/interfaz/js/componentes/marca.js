@@ -1,7 +1,7 @@
 // Marca de la inmobiliaria en pantalla: colores, tema, tipografia, nombre/logo de la barra,
 // titulo e icono de la ventana.
 import { FUENTES, leerMarca, paleta } from '../../../dominios/index.js';
-import { dibujarIcono } from './iconos.js';
+import { claveIcono, dibujarIcono } from './iconos.js';
 
 const CACHE = 'alq-marca';   // tema.js la aplica antes del primer pintado (evita el destello de otro color)
 
@@ -49,7 +49,7 @@ export function aplicarMarca(settings) {
     window.api.setTitleBarColor(p.header, p.headerInk).catch(() => {});
   }
   // Icono: se vuelve a dibujar solo si cambio algo que lo afecta.
-  const clave = JSON.stringify([marca.icono, marca.icono.tipo === 'logo' ? marca.logo : '', marca.color, marca.nombre[0], marca.fuente]);
+  const clave = claveIcono(marca);
   if (clave !== ultimoIcono) {
     ultimoIcono = clave;
     dibujarIcono(marca).then(png => window.api.setAppIcon(png)).catch(() => {});

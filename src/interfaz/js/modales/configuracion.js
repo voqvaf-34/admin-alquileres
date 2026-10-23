@@ -3,7 +3,7 @@
 // En el primer arranque se abre como asistente: Marca y Apariencia como pasos 1 y 2.
 import { COLORES_SUGERIDOS, FUENTES, ICONOS_APP, colorConPocoContraste, PLANTILLAS, TEMAS, esColor, leerMarca, paleta, rellenar, textoPlantilla,
   variablesDesconocidas } from '../../../dominios/index.js';
-import { dibujarIcono, imagenCuadrada } from '../componentes/iconos.js';
+import { claveDisenos, claveIcono, dibujarIcono, imagenCuadrada } from '../componentes/iconos.js';
 import { aplicarMarca, pintarApariencia } from '../componentes/marca.js';
 import { call } from '../nucleo/api.js';
 import { $, cargarImagen, esc, leerComoDataURL, showToast } from '../nucleo/dom.js';
@@ -87,7 +87,8 @@ function pintarBorrador() {
 }
 
 // ── Icono de la app ──
-let dibujoPendiente = 0;
+// Los iconos se redibujan solo si cambio algo que los afecta (no con cada letra del nombre).
+let dibujoPendiente = 0, claveIconoDibujado = null, claveDisenosDibujados = null;
 function pintarIcono(marca) {
   // Si el tipo elegido no se puede usar (p. ej. "Mi logo" sin logo) se muestra el que va a quedar.
   const tipo = marca.icono.tipo;
@@ -97,12 +98,17 @@ function pintarIcono(marca) {
   document.querySelectorAll('[data-icono-panel]').forEach(p => { p.hidden = p.dataset.iconoPanel !== tipo; });
   pintarColor('iconoColor', marca.icono.color || marca.color, !marca.icono.color);
   $('cfg-iconoColor-mismo').classList.toggle('on', !marca.icono.color);
-  const n = ++dibujoPendiente;
-  dibujarIcono(marca, 128).then(png => { if (n === dibujoPendiente) { $('cfg-icono-img').src = png; $('cfg-icono-chico').src = png; } }).catch(() => {});
+  if (claveIcono(marca) !== claveIconoDibujado) {
+    claveIconoDibujado = claveIcono(marca);
+    const n = ++dibujoPendiente;
+    dibujarIcono(marca, 128).then(png => { if (n === dibujoPendiente) { $('cfg-icono-img').src = png; $('cfg-icono-chico').src = png; } }).catch(() => {});
+  }
   // Botones de diseños, dibujados con el color actual.
+  const redibujarDisenos = claveDisenos(marca) !== claveDisenosDibujados;
+  claveDisenosDibujados = claveDisenos(marca);
   for (const b of document.querySelectorAll('.cfg-diseno')) {
     b.classList.toggle('on', b.dataset.diseno === marca.icono.diseno);
-    dibujarIcono({ ...marca, icono: { ...marca.icono, tipo: 'app', diseno: b.dataset.diseno } }, 76)
+    if (redibujarDisenos) dibujarIcono({ ...marca, icono: { ...marca.icono, tipo: 'app', diseno: b.dataset.diseno } }, 76)
       .then(png => { b.querySelector('img').src = png; }).catch(() => {});
   }
 }
@@ -274,6 +280,7 @@ function armarMensajes() {
 
 // ── Abrir ──
 function cargar() {
+  claveIconoDibujado = claveDisenosDibujados = null;   // al abrir se dibuja todo de nuevo
   const actual = leerMarca(estado.appSettings);
   const { icono, ...resto } = actual;
   borrador = { ...resto, nombre: estado.appSettings.marcaNombre || '',

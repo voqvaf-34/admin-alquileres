@@ -62,6 +62,12 @@ async function conImagen(src, lado, fondo, margen) {
   return c.toDataURL('image/png');
 }
 
+// Lo que cambia el dibujo del icono: si la clave es la misma, no hace falta volver a dibujarlo.
+export const claveIcono = marca => JSON.stringify([marca.icono, marca.icono.tipo === 'logo' ? marca.logo : '', marca.color, marca.nombre[0], marca.fuente]);
+
+// Lo que cambia los botones de diseños prediseñados (color, inicial y tipografia).
+export const claveDisenos = marca => JSON.stringify([marca.icono.color || marca.color, marca.nombre[0], marca.fuente]);
+
 // marca: lo que devuelve leerMarca. Devuelve un data URL PNG de lado x lado.
 export async function dibujarIcono(marca, lado = 256) {
   const { icono } = marca;
