@@ -19,12 +19,8 @@ export function monthsAgo(date) {
 
 export function fmtIPC(v) { return v.toFixed(2).replace('.', ',') + '%'; }
 
-export function toWaPhone(digits) {
-  if (digits.length < 7) return null;
-  if (/^(598|54|55|351|34)/.test(digits)) return digits;
-  if (digits.startsWith('0')) return '598' + digits.slice(1);
-  return '598' + digits;
-}
+// Enlace que abre WhatsApp con ese numero; html es lo que se muestra (ya escapado).
+const enlaceWhatsApp = (numero, html) => `<a class="wa" href="https://wa.me/${numero}" target="_blank" rel="noopener">${html}</a>`;
 
 // Varios valores en un mismo dato (co-propietarios, telefonos, mails, edificios) se muestran
 // separados por un punto tenue, igual en todas las pantallas.
@@ -37,9 +33,8 @@ export const isNada = t => !t || /^[-xX\s]*$/.test(t);
 export function telLink(raw) {
   if (isNada(raw)) return NADA;
   const out = Splitters.telefonos(raw).filter(p => !isNada(p)).map(part => {
-    const phone = toWaPhone(part.replace(/\D/g, ''));
-    if (!phone) return `<span class="tel">${esc(part)}</span>`;
-    return `<a class="wa" href="https://wa.me/${phone}" target="_blank" rel="noopener">${esc(part)}</a>`;
+    const numero = D.numeroWhatsApp(part);
+    return numero ? enlaceWhatsApp(numero, esc(part)) : `<span class="tel">${esc(part)}</span>`;
   });
   return out.length ? out.join(SEP) : NADA;
 }
@@ -60,8 +55,8 @@ export function fmtMails(raw) {
 export function linkPhonesInText(raw) {
   if (isNada(raw)) return NADA;
   return Splitters.telefonos(raw).map(p => esc(p).replace(/\d[\d\s]{6,}\d/g, m => {
-    const phone = toWaPhone(m.replace(/\D/g, ''));
-    return phone ? `<a class="wa" href="https://wa.me/${phone}" target="_blank" rel="noopener">${m}</a>` : m;
+    const numero = D.numeroWhatsApp(m);
+    return numero ? enlaceWhatsApp(numero, m) : m;
   })).join(SEP);
 }
 
