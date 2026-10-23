@@ -118,6 +118,16 @@ export function contraste(a, b) {
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }
 
+// Texto sobre un fondo de color: blanco si se lee bien (4.5), si no el que mas contraste tenga.
+export const tintaSobre = c => (contraste(c, '#FFFFFF') >= 4.5 || contraste(c, '#FFFFFF') >= contraste(c, '#1A1A1A') ? '#FFFFFF' : '#1A1A1A');
+
+// Si ni blanco ni oscuro llegan a 4.5 sobre el color, la configuracion lo avisa.
+export const colorConPocoContraste = c => contraste(c, tintaSobre(c)) < 4.5;
+
+// Fondos mas exigentes donde aparece texto de color: la fila desplegada o un fondo teñido en tema
+// claro, y la tarjeta mas clara en tema oscuro. Si se lee ahi, se lee en todos los fondos.
+const CLARO_MAS_OSCURO = '#E6EAF0', OSCURO_MAS_CLARO = '#262626';
+
 // Version del color legible como texto sobre un fondo (contraste 4.5): se oscurece o se aclara.
 function legibleSobre(rgb, fondo, hacia) {
   let c = rgb, t = 0;
@@ -126,8 +136,8 @@ function legibleSobre(rgb, fondo, hacia) {
 }
 
 // Colores que usa la pantalla a partir del color principal (y el secundario, opcional):
-// - header / headerInk: barra superior y su texto: blanco salvo que no llegue a contraste 3
-//   (texto grande/negrita y botones, WCAG); tambien es el texto de los botones con fondo de color
+// - header / headerInk: barra superior y su texto (tambien el de los botones con fondo de color):
+//   blanco si llega a contraste 4.5 (WCAG AA); si no, el que mas contraste tenga (blanco u oscuro)
 // - accent / accentInk: botones y textos destacados en tema claro (accentInk mas oscuro para texto)
 // - accentDark / accentInkDark: lo mismo en tema oscuro (mas claros para que se lean sobre negro)
 // - sec*: lo mismo para el color secundario (pestaña activa, avisos, titulos de seccion)
@@ -136,15 +146,14 @@ export function paleta(color, color2 = '') {
   const base = esColor(color) ? color.toUpperCase() : MARCA_DEFAULT.color;
   const sec  = esColor(color2) ? color2.toUpperCase() : base;
   const rgb = hexToRgb(base), rgb2 = hexToRgb(sec);
-  const headerInk = contraste(base, '#FFFFFF') >= 3 ? '#FFFFFF' : '#1A1A1A';
-  const secOn = contraste(sec, '#FFFFFF') >= 3 ? '#FFFFFF' : '#1A1A1A';
+  const headerInk = tintaSobre(base), secOn = tintaSobre(sec);
   const accentDark = rgbToHex(mezclar(rgb, 0.08)), secDark = rgbToHex(mezclar(rgb2, 0.08));
   return {
     header: base, headerInk, headerFg: headerInk === '#FFFFFF' ? '255,255,255' : '26,26,26',
-    accent: base, accentRgb: rgb.join(','), accentInk: rgbToHex(legibleSobre(rgb, '#FFFFFF', -1)),
-    accentDark, accentDarkRgb: hexToRgb(accentDark).join(','), accentInkDark: rgbToHex(legibleSobre(rgb, '#0D0D0D', 1)),
-    sec, secRgb: rgb2.join(','), secOn, secInk: rgbToHex(legibleSobre(rgb2, '#FFFFFF', -1)),
-    secDark, secDarkRgb: hexToRgb(secDark).join(','), secInkDark: rgbToHex(legibleSobre(rgb2, '#0D0D0D', 1)),
+    accent: base, accentRgb: rgb.join(','), accentInk: rgbToHex(legibleSobre(rgb, CLARO_MAS_OSCURO, -1)),
+    accentDark, accentDarkRgb: hexToRgb(accentDark).join(','), accentInkDark: rgbToHex(legibleSobre(rgb, OSCURO_MAS_CLARO, 1)),
+    sec, secRgb: rgb2.join(','), secOn, secInk: rgbToHex(legibleSobre(rgb2, CLARO_MAS_OSCURO, -1)),
+    secDark, secDarkRgb: hexToRgb(secDark).join(','), secInkDark: rgbToHex(legibleSobre(rgb2, OSCURO_MAS_CLARO, 1)),
     tinteBg: rgbToHex(mezclar(rgb, 0.93)), tinteSurface: rgbToHex(mezclar(rgb, 0.985)),
     tinteBgDark: rgbToHex(mezclar(rgb, -0.9)), tintePanelDark: rgbToHex(mezclar(rgb, -0.84)),
   };

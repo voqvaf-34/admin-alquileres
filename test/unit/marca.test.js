@@ -44,9 +44,16 @@ test('marca: valida lo que se guarda desde Configuracion', () => {
   assert.throws(() => D.marcaASettings({ nombre: 'x', color: '#000000', logo: 'data:image/png;base64,' + 'A'.repeat(D.LOGO_MAX_CHARS) }), /grande/);
 });
 
-test('paleta: texto de la barra blanco u oscuro segun el color', () => {
+test('paleta: texto de la barra blanco u oscuro segun el color (contraste 4.5)', () => {
   assert.equal(D.paleta('#2563EB').headerInk, '#FFFFFF');
-  assert.equal(D.paleta('#FD4108').headerInk, '#FFFFFF');   // naranja: blanco (contraste >= 3)
+  assert.equal(D.paleta('#FD4108').headerInk, '#1A1A1A');   // naranja: el blanco no llega a 4.5
+  for (const c of D.COLORES_SUGERIDOS) {
+    const p = D.paleta(c);
+    assert.ok(D.contraste(c, p.headerInk) >= 4.5, `${c}: barra ${p.headerInk}`);
+    assert.equal(D.colorConPocoContraste(c), false, c);
+  }
+  assert.equal(D.colorConPocoContraste('#2563EB'), false);
+  assert.equal(D.colorConPocoContraste('#808080'), true, 'gris medio: ni blanco ni negro llegan a 4.5');
   assert.equal(D.paleta('#FACC15').headerInk, '#1A1A1A');   // amarillo: oscuro
   assert.equal(D.paleta('#FACC15').headerFg, '26,26,26');
 });

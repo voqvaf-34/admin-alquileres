@@ -1,7 +1,7 @@
 // Ventana de Configuracion, en tres pestañas: Marca (nombre, logo, icono), Apariencia (colores,
 // tema, tipografia) y Mensajes (plantillas). Todo con vista previa y se guarda recien con Guardar.
 // En el primer arranque se abre como asistente: Marca y Apariencia como pasos 1 y 2.
-import { COLORES_SUGERIDOS, FUENTES, ICONOS_APP, PLANTILLAS, TEMAS, esColor, leerMarca, paleta, rellenar, textoPlantilla,
+import { COLORES_SUGERIDOS, FUENTES, ICONOS_APP, colorConPocoContraste, PLANTILLAS, TEMAS, esColor, leerMarca, paleta, rellenar, textoPlantilla,
   variablesDesconocidas } from '../../../dominios/index.js';
 import { dibujarIcono, imagenCuadrada } from '../componentes/iconos.js';
 import { aplicarMarca, pintarApariencia } from '../componentes/marca.js';
@@ -15,11 +15,13 @@ const $ = id => document.getElementById(id);
 // Lo que se esta editando (el icono "aplanado": iconoTipo, iconoDiseno, iconoColor, iconoImagen).
 let borrador = {};
 
-// Modo de color al abrir (el modo se aplica en el momento; Cancelar lo vuelve atras).
-let modoAlAbrir = 'auto';
+// Modo de color y accesibilidad al abrir (se aplican en el momento; Cancelar los vuelve atras).
+let modoAlAbrir = 'auto', a11yAlAbrir = null;
+
+const TAMANOS = [[0.9, 'Chico'], [1, 'Normal'], [1.15, 'Grande'], [1.3, 'Más grande'], [1.5, 'Enorme']];
 
 // Asistente de primer uso: pasos y que hacer al terminar.
-const PASOS = ['marca', 'apariencia'];
+const PASOS = ['marca', 'apariencia', 'accesibilidad'];
 let asistente = null;   // { paso, alTerminar }
 
 // Datos inventados para el ejemplo de cada mensaje.
@@ -38,7 +40,7 @@ const marcaBorrador = () => leerMarca({
 function mostrarPestana(id) {
   document.querySelectorAll('[data-cfg-tab]').forEach(b => b.classList.toggle('on', b.dataset.cfgTab === id));
   document.querySelectorAll('[data-cfg-panel]').forEach(p => { p.hidden = p.dataset.cfgPanel !== id; });
-  $('cfg-preview-wrap').hidden = id === 'mensajes';
+  $('cfg-preview-wrap').hidden = id === 'mensajes' || id === 'accesibilidad';
   if (asistente) {
     asistente.paso = PASOS.indexOf(id);
     document.querySelectorAll('[data-cfg-tab]').forEach(b => b.classList.toggle('hecho', PASOS.indexOf(b.dataset.cfgTab) < asistente.paso));
@@ -76,6 +78,9 @@ function pintarBorrador() {
   $('cfg-logo-quitar').disabled = !marca.logo;
   pintarIcono(marca);
   pintarColor('color', marca.color, false);
+  const flojos = [marca.color, marca.color2].filter(c => c && colorConPocoContraste(c));
+  $('cfg-color-aviso').textContent = flojos.length
+    ? 'Con este color, ni el texto blanco ni el oscuro llegan al contraste recomendado: puede costar leer la barra y los botones. Probá uno un poco más claro o más oscuro.' : '';
   pintarColor('color2', p.sec, !marca.color2);
   $('cfg-color2-mismo').classList.toggle('on', !marca.color2);
   document.querySelectorAll('.cfg-tema').forEach(b => b.classList.toggle('on', b.dataset.tema === marca.tema));
@@ -140,6 +145,36 @@ function pintarModo() {
   $('cfg-prev-modo').textContent = oscuro ? 'Ver en modo claro' : 'Ver en modo oscuro';
 }
 
+// ── Accesibilidad ──
+function pintarA11y() {
+  const p = A11y.get();
+  document.querySelectorAll('.cfg-tamano').forEach(b => {
+    const on = +b.dataset.tamano === +p.tamano;
+    b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
+  });
+  document.querySelectorAll('[data-a11y]').forEach(i => { i.checked = !!p[i.dataset.a11y]; });
+  document.querySelectorAll('[data-anim]').forEach(b => {
+    const on = b.dataset.anim === p.animaciones;
+    b.classList.toggle('active', on); b.setAttribute('aria-checked', on);
+  });
+}
+
+function armarAccesibilidad() {
+  $('cfg-tamanos').innerHTML = TAMANOS.map(([f, nombre]) =>
+    `<button type="button" class="cfg-tamano" role="radio" data-tamano="${f}"><b style="font-size:${Math.round(14 * f)}px">Aa</b><small>${nombre} · ${Math.round(f * 100)}%</small></button>`).join('');
+  document.querySelectorAll('[data-anim]').forEach(b => b.setAttribute('role', 'radio'));
+  $('cfg-tamanos').addEventListener('click', e => {
+    const b = e.target.closest('.cfg-tamano'); if (!b) return;
+    A11y.set({ tamano: +b.dataset.tamano }); pintarA11y();
+  });
+  document.querySelectorAll('[data-a11y]').forEach(i => i.addEventListener('change', () => { A11y.set({ [i.dataset.a11y]: i.checked }); pintarA11y(); }));
+  $('cfg-anim').addEventListener('click', e => {
+    const b = e.target.closest('[data-anim]'); if (!b) return;
+    A11y.set({ animaciones: b.dataset.anim }); pintarA11y();
+  });
+  $('cfg-a11y-normal').addEventListener('click', () => { A11y.set(A11y.DEFAULT); pintarA11y(); });
+}
+
 function armarApariencia() {
   $('cfg-modos').addEventListener('click', e => {
     const b = e.target.closest('[data-modo]'); if (!b) return;
@@ -147,8 +182,9 @@ function armarApariencia() {
   });
   document.addEventListener('modo-color', () => { if ($('modal-config').classList.contains('open')) pintarModo(); });
   // Cancelar (o la X) deja el modo como estaba.
-  $('cfg-cancelar').addEventListener('click', () => Theme.setModo(modoAlAbrir));
-  document.querySelector('#modal-config .modal-x').addEventListener('click', () => Theme.setModo(modoAlAbrir));
+  const deshacerPreferencias = () => { Theme.setModo(modoAlAbrir); if (a11yAlAbrir) A11y.set(a11yAlAbrir); };
+  $('cfg-cancelar').addEventListener('click', deshacerPreferencias);
+  document.querySelector('#modal-config .modal-x').addEventListener('click', deshacerPreferencias);
 
   document.querySelectorAll('[data-color-picker] .cfg-sugeridos').forEach(box => {
     box.innerHTML = COLORES_SUGERIDOS.map(c =>
@@ -215,7 +251,7 @@ function armarMensajes() {
   $('cfg-mensajes').innerHTML = Object.entries(PLANTILLAS).map(([id, p]) => `
     <details class="m-disclosure cfg-msg" data-msg="${id}">
       <summary>${esc(p.titulo)}</summary>
-      <textarea spellcheck="true"></textarea>
+      <textarea spellcheck="true" aria-label="${esc(p.titulo)}"></textarea>
       <div class="cfg-vars">
         ${p.variables.map(v => `<button type="button" class="cfg-var" data-var="${v}" title="Insertar">{${v}}</button>`).join('')}
         <button type="button" class="cfg-restaurar">Restaurar texto original</button>
@@ -251,7 +287,9 @@ function cargar() {
     document.querySelector(`[data-msg="${id}"]`).open = false;
   }
   modoAlAbrir = Theme.getModo();
+  a11yAlAbrir = A11y.get();
   pintarModo();
+  pintarA11y();
   pintarBorrador();
 }
 
@@ -345,6 +383,7 @@ export function iniciar() {
   armarMensajes();
   armarApariencia();
   armarIcono();
+  armarAccesibilidad();
   document.querySelectorAll('[data-cfg-tab]').forEach(b => b.addEventListener('click', () => mostrarPestana(b.dataset.cfgTab)));
   $('cfg-nombre').addEventListener('input', e => { borrador.nombre = e.target.value; pintarBorrador(); });
 

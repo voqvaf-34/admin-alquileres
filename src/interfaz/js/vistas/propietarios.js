@@ -95,7 +95,7 @@ export function renderOwnersPanel() {
         <td><span class="db-dir">${esc(o.nombre)}</span> ${contactBadge(c)}</td>
         <td>${telLink(o.telefono)}</td>
         <td>${fmtMails(o.mail)}</td>
-        <td style="white-space:nowrap">${units.length}${units.length ? ` <span style="opacity:0.5;font-size:11px">(${act} activo${act === 1 ? '' : 's'})</span>` : ''}</td>
+        <td style="white-space:nowrap">${units.length}${units.length ? ` <span style="color:var(--dim);font-size:11px">(${act} activo${act === 1 ? '' : 's'})</span>` : ''}</td>
         <td class="db-chevron">${puntoNuevo('propietarios', o.id)}&#9658;</td>
       </tr>
       <tr class="db-detail-row" style="${exp ? '' : 'display:none'}">
@@ -135,7 +135,7 @@ export function ownerDetail(o, units, c) {
           <span class="owner-apt${u.activo ? '' : ' inactive'} acct-dir" data-goto-contract="${u.ids[u.ids.length - 1]}" style="cursor:pointer" title="Ver en Base de Datos">${esc(u.direccion)}</span>
           <input type="text" data-acct-owner="${o.id}" data-acct-dir="${esc(u.direccion)}" value="${esc(acct(u.direccion))}"
             placeholder="${o.cuentaCobro ? 'Usa la general' : 'Cuenta o metodo de cobro de este apto'}">
-        </div>`).join('') : '<span style="opacity:0.4;font-size:11px">Sin aptos vinculados</span>'}
+        </div>`).join('') : '<span style="color:var(--dim);font-size:11px">Sin aptos vinculados</span>'}
     </div>
 
     ${o.notas ? `<div class="owner-notes">${esc(o.notas)}</div>` : ''}
@@ -238,7 +238,7 @@ export function renderMergeResults() {
   const list = estado.owners.filter(o => o.id !== mergeKeepId && (!q || norm(o.nombre).includes(q))).slice(0, 40);
   document.getElementById('merge-results').innerHTML = list.map(o =>
     `<div class="merge-item${o.id === mergeDropId ? ' selected' : ''}" data-merge-pick="${o.id}">${esc(o.nombre)}<small>${esc(o.telefono || '')} &middot; ${ownerUnits(byOwner.get(o.id) || []).length} aptos</small></div>`
-  ).join('') || '<div class="merge-item" style="opacity:0.5;cursor:default">Sin resultados</div>';
+  ).join('') || '<div class="merge-item" style="color:var(--dim);cursor:default">Sin resultados</div>';
 }
 
 export async function submitMerge() {

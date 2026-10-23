@@ -28,7 +28,7 @@
   <div id="upload-screen">
     <div class="upload-inner">
       <div class="logo-big">Admin Alquileres</div>
-      <div style="font-size:13px;opacity:0.7;margin-bottom:20px;line-height:1.6">
+      <div style="font-size:13px;color:var(--dim);margin-bottom:20px;line-height:1.6">
         ¿Cómo querés empezar?
       </div>
       <div class="start-options">
@@ -52,7 +52,7 @@
   <div id="viewer-setup-screen" hidden>
     <div class="upload-inner">
       <div class="logo-big">Alquileres &middot; Visor</div>
-      <div style="font-size:13px;opacity:0.75;margin-bottom:18px;line-height:1.7">
+      <div style="font-size:13px;color:var(--dim);margin-bottom:18px;line-height:1.7">
         No se encontró la base compartida.<br>
         Elegí la carpeta <strong>Base Admin Alquileres</strong> que publica la app principal.
       </div>
@@ -117,18 +117,18 @@
 
     <div class="controls" id="op-controls">
       <div class="ctrl-group">
-        <label class="ctrl-label">Mes</label>
+        <label for="sel-month" class="ctrl-label">Mes</label>
         <select class="ctrl-select" id="sel-month"></select>
       </div>
       <div class="ctrl-group">
-        <label class="ctrl-label">Año</label>
+        <label for="sel-year" class="ctrl-label">Año</label>
         <select class="ctrl-select" id="sel-year"></select>
       </div>
       <div class="ctrl-group" id="ipc-group">   <!-- solo en Aumentos -->
-        <label class="ctrl-label">IPC %</label>
+        <label for="inp-ipc" class="ctrl-label">IPC %</label>
         <input type="number" step="0.01" class="ctrl-input" id="inp-ipc" value="3.16">
         <button id="btn-ipc-fetch" class="btn-ipc-fetch" title="Obtener IPC del INE">&#8635;</button>
-        <span id="ipc-period" style="font-size:10px;opacity:0.4;"></span>
+        <span id="ipc-period" style="font-size:10px;color:var(--dim);"></span>
       </div>
       <div class="ctrl-group" style="border-left:1px solid rgba(var(--fg),0.08);padding-left:12px;margin-left:4px;">
         <label class="db-chk-label"><input type="checkbox" id="op-show-sinresolver"> Sin resolver</label>
@@ -147,11 +147,11 @@
           <button class="search-clear" id="db-search-clear" title="Limpiar busqueda">&times;</button>
         </div>
         <div class="ctrl-group">
-          <label class="ctrl-label">Año</label>
+          <label for="db-year" class="ctrl-label">Año</label>
           <select id="db-year" class="ctrl-select"><option value="0">Todos</option></select>
         </div>
         <div class="ctrl-group">
-          <label class="ctrl-label">Mes inicio</label>
+          <label for="db-month" class="ctrl-label">Mes inicio</label>
           <select id="db-month" class="ctrl-select">
             <option value="0">Todos</option>
             <option value="1">Enero</option><option value="2">Febrero</option>
@@ -249,19 +249,19 @@
       </div>
       <div class="modal-section">Datos para contratos</div>
       <div class="modal-grid">
-        <div class="mfield mfull"><label>Nombre completo <span class="m-req">*</span></label><input type="text" id="m-own-nombre" autocomplete="off"></div>
-        <div class="mfield"><label>Numero de cedula</label><input type="text" id="m-own-cedula" placeholder="Ej: 1.234.567-8" autocomplete="off"></div>
-        <div class="mfield"><label>Estado civil</label>
+        <div class="mfield mfull"><label for="m-own-nombre">Nombre completo <span class="m-req">*</span></label><input type="text" id="m-own-nombre" autocomplete="off"></div>
+        <div class="mfield"><label for="m-own-cedula">Numero de cedula</label><input type="text" id="m-own-cedula" placeholder="Ej: 1.234.567-8" autocomplete="off"></div>
+        <div class="mfield"><label for="m-own-estado">Estado civil</label>
           <input type="text" id="m-own-estado" list="estado-civil-opts" placeholder="Soltero/a, Casado/a..." autocomplete="off">
           <datalist id="estado-civil-opts">
             <option value="Soltero/a"></option><option value="Casado/a"></option><option value="Divorciado/a"></option>
             <option value="Viudo/a"></option><option value="Union concubinaria"></option>
           </datalist>
         </div>
-        <div class="mfield mfull"><label>Domicilio personal</label><input type="text" id="m-own-domicilio" autocomplete="off"></div>
-        <div class="mfield"><label>Numero de celular</label><input type="text" id="m-own-tel" autocomplete="off"></div>
-        <div class="mfield"><label>Correo electronico</label><input type="text" id="m-own-mail" autocomplete="off"></div>
-        <div class="mfield mfull"><label>Cuenta o metodo de cobro (general)</label>
+        <div class="mfield mfull"><label for="m-own-domicilio">Domicilio personal</label><input type="text" id="m-own-domicilio" autocomplete="off"></div>
+        <div class="mfield"><label for="m-own-tel">Numero de celular</label><input type="text" id="m-own-tel" autocomplete="off"></div>
+        <div class="mfield"><label for="m-own-mail">Correo electronico</label><input type="text" id="m-own-mail" autocomplete="off"></div>
+        <div class="mfield mfull"><label for="m-own-cuenta">Cuenta o metodo de cobro (general)</label>
           <input type="text" id="m-own-cuenta" placeholder="Ej: BROU caja de ahorro 001234567-00001" autocomplete="off">
           <span class="field-hint">Si algun apto cobra en otra cuenta, se carga en la ficha del propietario, por apto.</span>
         </div>
@@ -270,12 +270,12 @@
       <summary>Contacto <span class="m-sum-hint">si se habla con otra persona: administrador, referente, familiar...</span></summary>
       <div class="modal-grid">
         <div class="mfield mfull"><select id="m-own-contact"></select></div>
-        <div class="mfield" data-contact-field><label>Nombre</label><input type="text" id="m-con-nombre" autocomplete="off"></div>
-        <div class="mfield" data-contact-field><label>Rol</label><input type="text" id="m-con-rol" list="rol-opts" placeholder="Administrador, Referente..." autocomplete="off">
+        <div class="mfield" data-contact-field><label for="m-con-nombre">Nombre</label><input type="text" id="m-con-nombre" autocomplete="off"></div>
+        <div class="mfield" data-contact-field><label for="m-con-rol">Rol</label><input type="text" id="m-con-rol" list="rol-opts" placeholder="Administrador, Referente..." autocomplete="off">
           <datalist id="rol-opts"><option value="Administrador"></option><option value="Referente"></option><option value="Familiar"></option><option value="Apoderado"></option></datalist>
         </div>
-        <div class="mfield" data-contact-field><label>Telefono</label><input type="text" id="m-con-tel" autocomplete="off"></div>
-        <div class="mfield" data-contact-field><label>Mail</label><input type="text" id="m-con-mail" autocomplete="off"></div>
+        <div class="mfield" data-contact-field><label for="m-con-tel">Telefono</label><input type="text" id="m-con-tel" autocomplete="off"></div>
+        <div class="mfield" data-contact-field><label for="m-con-mail">Mail</label><input type="text" id="m-con-mail" autocomplete="off"></div>
         <div class="mfield mfull field-hint" id="m-con-shared" data-contact-field></div>
       </div>
       </details>
@@ -320,7 +320,7 @@
         <span class="modal-title">Compartir con el Visor</span>
         <button class="unmark-btn modal-x" data-close-modal="modal-share">&times;</button>
       </div>
-      <div style="font-size:12px;line-height:1.7;opacity:0.85">
+      <div style="font-size:12px;line-height:1.7;color:var(--dim)">
         Tu base principal sigue en esta PC. Después de cada cambio se publica una copia en la carpeta compartida,
         que es la que lee la app <strong>Admin Alquileres Visor</strong> (y sirve de respaldo extra).
       </div>
@@ -344,7 +344,7 @@
         <span class="modal-title">Unificar propietarios</span>
         <button class="unmark-btn modal-x" data-close-modal="modal-merge">&times;</button>
       </div>
-      <div style="font-size:12px;opacity:0.75;line-height:1.6;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:12px">
         Se mantiene <strong id="merge-keep-name"></strong>. Elegí el propietario duplicado: sus aptos pasan a este,
         se completan los datos vacíos y el duplicado se elimina.
       </div>
@@ -370,15 +370,15 @@
       <div class="modal-section">Dirección</div>
       <div class="modal-grid">
         <div class="mfield">
-          <label>Edificio <span class="field-hint">(si tiene)</span></label>
+          <label for="m-edificio">Edificio <span class="field-hint">(si tiene)</span></label>
           <input type="text" id="m-edificio" placeholder="Ej: Torre Ceibo" autocomplete="off">
         </div>
         <div class="mfield">
-          <label>Calle y numero <span class="m-req">*</span></label>
+          <label for="m-calle">Calle y numero <span class="m-req">*</span></label>
           <input type="text" id="m-calle" placeholder="Ej: Av. Italia 1500" autocomplete="off">
         </div>
         <div class="mfield">
-          <label>Unidad</label>
+          <label for="m-unidad">Unidad</label>
           <input type="text" id="m-unidad" placeholder="Ej: 601" autocomplete="off">
         </div>
         <div class="mfield">
@@ -389,30 +389,30 @@
       <div class="modal-section">Propietario</div>
       <div class="modal-grid">
         <div class="mfield mfull">
-          <label>Nombre</label>
+          <label for="m-prop">Nombre</label>
           <input type="text" id="m-prop" placeholder="Nombre completo" autocomplete="off">
         </div>
         <div class="mfield">
-          <label>Teléfono</label>
+          <label for="m-tel-prop">Teléfono</label>
           <input type="text" id="m-tel-prop" placeholder="09X XXX XXX" autocomplete="off">
         </div>
         <div class="mfield">
-          <label>Mail</label>
+          <label for="m-mail-prop">Mail</label>
           <input type="email" id="m-mail-prop" placeholder="prop@ejemplo.com" autocomplete="off">
         </div>
       </div>
       <div class="modal-section">Inquilino</div>
       <div class="modal-grid">
         <div class="mfield mfull">
-          <label>Nombre</label>
+          <label for="m-inq">Nombre</label>
           <input type="text" id="m-inq" placeholder="Nombre completo" autocomplete="off">
         </div>
         <div class="mfield">
-          <label>Teléfono</label>
+          <label for="m-tel-inq">Teléfono</label>
           <input type="text" id="m-tel-inq" placeholder="09X XXX XXX" autocomplete="off">
         </div>
         <div class="mfield">
-          <label>Mail</label>
+          <label for="m-mail-inq">Mail</label>
           <input type="email" id="m-mail-inq" placeholder="inq@ejemplo.com" autocomplete="off">
         </div>
       </div>
@@ -429,7 +429,7 @@
           </div>
         </div>
         <div class="mfield">
-          <label>Duracion contrato</label>
+          <label for="m-duracion">Duracion contrato</label>
           <select id="m-duracion">
             <option value="">Sin especificar</option>
             <option value="1 año">1 año</option>
@@ -438,11 +438,11 @@
           </select>
         </div>
         <div class="mfield">
-          <label>Fecha inicio</label>
+          <label for="m-fecha">Fecha inicio</label>
           <input type="date" id="m-fecha">
         </div>
         <div class="mfield mfull">
-          <label>Garantía</label>
+          <label for="m-garantia">Garantía</label>
           <select id="m-garantia"></select>
         </div>
         <details class="m-disclosure mfull" id="m-opt-rem">
@@ -477,19 +477,19 @@
       <div class="modal-section">Datos de la administración</div>
       <div class="modal-grid">
         <div class="mfield mfull">
-          <label>Administracion <span class="m-req">*</span></label>
+          <label for="m-adm-nombre">Administracion <span class="m-req">*</span></label>
           <input type="text" id="m-adm-nombre" placeholder="Ej: Administración Sur (Laura Gómez)" autocomplete="off">
         </div>
         <div class="mfield mfull">
-          <label>Edificios administrados</label>
+          <label for="m-adm-edificios">Edificios administrados</label>
           <input type="text" id="m-adm-edificios">
         </div>
         <div class="mfield mfull">
-          <label>Telefonos</label>
+          <label for="m-adm-telefono">Telefonos</label>
           <input type="text" id="m-adm-telefono">
         </div>
         <div class="mfield mfull">
-          <label>Mails</label>
+          <label for="m-adm-mail">Mails</label>
           <input type="text" id="m-adm-mail">
         </div>
       </div>
@@ -544,13 +544,14 @@
       <div class="cfg-tabs" role="tablist">
         <button type="button" class="cfg-tab" data-cfg-tab="marca" role="tab">Marca</button>
         <button type="button" class="cfg-tab" data-cfg-tab="apariencia" role="tab">Apariencia</button>
+        <button type="button" class="cfg-tab" data-cfg-tab="accesibilidad" role="tab">Accesibilidad</button>
         <button type="button" class="cfg-tab" data-cfg-tab="mensajes" role="tab">Mensajes</button>
       </div>
 
       <section class="cfg-panel" data-cfg-panel="marca">
         <div class="modal-grid">
           <div class="mfield mfull">
-            <label>Nombre de la inmobiliaria</label>
+            <label for="cfg-nombre">Nombre de la inmobiliaria</label>
             <input type="text" id="cfg-nombre" placeholder="Mi Inmobiliaria" autocomplete="off" maxlength="60">
             <span class="field-hint">Se muestra arriba (si no hay logo) y en los mensajes para inquilinos y propietarios.</span>
           </div>
@@ -582,8 +583,8 @@
                   <div class="cfg-colores" data-color-picker="iconoColor">
                     <button type="button" class="cfg-mismo" id="cfg-iconoColor-mismo">Color principal</button>
                     <div class="cfg-sugeridos"></div>
-                    <input type="color" class="cfg-color" title="Elegir otro color">
-                    <input type="text" class="cfg-color-hex" maxlength="7" spellcheck="false" autocomplete="off">
+                    <input type="color" class="cfg-color" title="Elegir otro color" aria-label="Elegir otro color">
+                    <input type="text" class="cfg-color-hex" aria-label="Color en código (#RRGGBB)" maxlength="7" spellcheck="false" autocomplete="off">
                   </div>
                 </div>
                 <div data-icono-panel="logo">
@@ -616,17 +617,18 @@
             <label>Color principal <span class="m-sum-hint">barra superior y botones</span></label>
             <div class="cfg-colores" data-color-picker="color">
               <div class="cfg-sugeridos"></div>
-              <input type="color" class="cfg-color" title="Elegir otro color">
-              <input type="text" class="cfg-color-hex" maxlength="7" spellcheck="false" autocomplete="off">
+              <input type="color" class="cfg-color" title="Elegir otro color" aria-label="Elegir otro color">
+              <input type="text" class="cfg-color-hex" aria-label="Color en código (#RRGGBB)" maxlength="7" spellcheck="false" autocomplete="off">
             </div>
+            <div class="cfg-aviso" id="cfg-color-aviso" role="status"></div>
           </div>
           <div class="mfield mfull">
             <label>Color secundario <span class="m-sum-hint">pestaña activa, avisos y títulos</span></label>
             <div class="cfg-colores" data-color-picker="color2">
               <button type="button" class="cfg-mismo" id="cfg-color2-mismo">Igual al principal</button>
               <div class="cfg-sugeridos"></div>
-              <input type="color" class="cfg-color" title="Elegir otro color">
-              <input type="text" class="cfg-color-hex" maxlength="7" spellcheck="false" autocomplete="off">
+              <input type="color" class="cfg-color" title="Elegir otro color" aria-label="Elegir otro color">
+              <input type="text" class="cfg-color-hex" aria-label="Color en código (#RRGGBB)" maxlength="7" spellcheck="false" autocomplete="off">
             </div>
           </div>
           <div class="mfield mfull">
@@ -637,6 +639,35 @@
             <label>Tipografía</label>
             <div class="cfg-fuentes" id="cfg-fuentes"></div>
           </div>
+        </div>
+      </section>
+
+      <section class="cfg-panel" data-cfg-panel="accesibilidad">
+        <span class="field-hint">Ajustes de esta PC para leer y usar la app con más comodidad. Se aplican en el momento.</span>
+        <div class="modal-grid">
+          <div class="mfield mfull">
+            <span class="cfg-subtitulo" id="cfg-tamano-titulo">Tamaño del texto y la interfaz</span>
+            <div class="cfg-tamanos" id="cfg-tamanos" role="radiogroup" aria-labelledby="cfg-tamano-titulo"></div>
+          </div>
+          <div class="mfield mfull cfg-switches">
+            <label class="cfg-switch"><input type="checkbox" data-a11y="negrita">
+              <span><strong>Texto en negrita</strong><small>Todas las letras más gruesas.</small></span></label>
+            <label class="cfg-switch"><input type="checkbox" data-a11y="contraste">
+              <span><strong>Más contraste</strong><small>Textos secundarios y bordes más marcados.</small></span></label>
+            <label class="cfg-switch"><input type="checkbox" data-a11y="espaciado">
+              <span><strong>Más espacio entre letras y renglones</strong><small>Ayuda a leer, por ejemplo con dislexia.</small></span></label>
+            <label class="cfg-switch"><input type="checkbox" data-a11y="subrayar">
+              <span><strong>Subrayar enlaces</strong><small>Teléfonos, mails y enlaces se distinguen sin depender del color.</small></span></label>
+          </div>
+          <div class="mfield mfull">
+            <span class="cfg-subtitulo" id="cfg-anim-titulo">Animaciones</span>
+            <div class="seg cfg-anim" id="cfg-anim" role="radiogroup" aria-labelledby="cfg-anim-titulo">
+              <button type="button" class="seg-btn" data-anim="auto">Como Windows</button>
+              <button type="button" class="seg-btn" data-anim="si">Sí</button>
+              <button type="button" class="seg-btn" data-anim="no">No</button>
+            </div>
+          </div>
+          <div class="mfield mfull"><button type="button" class="link-btn" id="cfg-a11y-normal">Volver a los valores normales</button></div>
         </div>
       </section>
 

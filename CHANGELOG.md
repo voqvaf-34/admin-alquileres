@@ -2,6 +2,23 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
+## [0.8.0] - 2026-10-22
+
+### Agregado
+- **Accesibilidad** (Configuración y paso 3 del asistente), por PC: tamaño del texto y la interfaz (90 % a 150 %),
+  texto en negrita, más contraste, más espacio entre letras y renglones, subrayar enlaces y animaciones
+  (como Windows, sí o no).
+- Foco del teclado siempre visible.
+- Aviso en Configuración si el color elegido no permite texto legible encima.
+- Prueba automática de accesibilidad con axe-core (WCAG 2.1 A y AA) en todas las pantallas, temas y modos.
+
+### Cambiado
+- Contraste: los textos secundarios dejan de usar transparencia y cumplen 4,5:1 en todos los temas, en claro y oscuro.
+  Los colores de marca como texto se ajustan para leerse también sobre fondos teñidos y tarjetas oscuras.
+- El texto sobre el color de la marca (barra y botones) es blanco solo si llega a 4,5:1; si no, el que más contraste
+  tenga. Por ejemplo, sobre naranja #FD4108 pasa a ser oscuro.
+- Todos los campos tienen su etiqueta asociada (lectores de pantalla).
+
 ## [0.7.0] - 2026-10-22
 
 ### Agregado

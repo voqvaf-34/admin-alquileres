@@ -30,7 +30,7 @@ export function toWaPhone(digits) {
 // separados por un punto tenue, igual en todas las pantallas.
 export const SEP  = ' <span class="msep">&middot;</span> ';
 
-export const NADA = '<span style="opacity:0.35">-</span>';
+export const NADA = '<span style="color:var(--dim)">-</span>';
 
 export const isNada = t => !t || /^[-xX\s]*$/.test(t);
 

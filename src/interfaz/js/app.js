@@ -133,7 +133,7 @@ export function render() {
 
     let h = '';
     if (showPend && vencAtrasados.length > 0) {
-      h += `<div class="sec-title" style="color:var(--red);opacity:0.8">&#9888; Vencidos sin resolver (${vencAtrasados.length})</div>`;
+      h += `<div class="sec-title" style="color:var(--red)">&#9888; Vencidos sin resolver (${vencAtrasados.length})</div>`;
       h += `<div class="card-list">${vencAtrasados.map(e=>cardVenc(e,"var(--red)",true)).join("")}</div>`;
     }
     h += `<div class="sec-title${(showPend && vencAtrasados.length) ? ' sep' : ''}">${MONTH_NAMES[estado.selMonth]} ${estado.selYear}</div>`;

@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('api', {
   saveConfig:      (c)       => call('config:save', c),
   setTitleBarColor: (c, ink) => call('window:titleBarColor', c, ink),
   setAppIcon:      (png)     => call('window:icon', png),
+  setZoom:         (f)       => call('window:zoom', f),
   fetchIPC:        ()        => call('ipc:fetch'),
   openDataFolder:  ()        => call('data:openFolder'),
   backupNow:       ()        => call('data:backup'),

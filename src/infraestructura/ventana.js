@@ -23,14 +23,30 @@ function leerBarra() {
   return BARRA_DEFAULT;
 }
 
+// Zoom de la ventana (Accesibilidad > Tamaño). La barra de Windows acompaña la altura de la cabecera.
+let zoom = 1;
+const alturaBarra = () => Math.round(TITLEBAR_H * zoom);
+
 function setTitleBarColor(color, ink) {
   if (!esHex(color) || !esHex(ink)) throw new Error('Color no valido.');
   if (ctx.win && !ctx.win.isDestroyed()) {
     ctx.win.setBackgroundColor(color);
-    if (process.platform === 'win32') ctx.win.setTitleBarOverlay({ color, symbolColor: ink, height: TITLEBAR_H });
+    if (process.platform === 'win32') ctx.win.setTitleBarOverlay({ color, symbolColor: ink, height: alturaBarra() });
   }
   const prev = leerBarra();
   if (prev.color !== color || prev.ink !== ink) fs.writeFileSync(barraFile(), JSON.stringify({ color, ink }));
+  return true;
+}
+
+function setZoom(factor) {
+  const f = Number(factor);
+  if (!(f >= 0.8 && f <= 1.6)) throw new Error('Tamaño no valido.');
+  zoom = f;
+  if (ctx.win && !ctx.win.isDestroyed()) {
+    ctx.win.webContents.setZoomFactor(f);
+    const b = leerBarra();
+    if (process.platform === 'win32') ctx.win.setTitleBarOverlay({ color: b.color, symbolColor: b.ink, height: alturaBarra() });
+  }
   return true;
 }
 
@@ -113,7 +129,7 @@ function createWindow({ hidden = false } = {}) {
     // La barra de titulo de Windows se integra a la barra de color de la app: quedan solo los
     // botones minimizar/maximizar/cerrar dibujados sobre el color de la marca.
     titleBarStyle: 'hidden',
-    titleBarOverlay: { color: barra.color, symbolColor: barra.ink, height: TITLEBAR_H },
+    titleBarOverlay: { color: barra.color, symbolColor: barra.ink, height: alturaBarra() },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -154,4 +170,4 @@ function createWindow({ hidden = false } = {}) {
   ctx.win.loadFile(path.join(__dirname, '..', 'interfaz', 'index.html'));
 }
 
-Object.assign(module.exports, { setAppIcon, setTitleBarColor, showWindow, quitApp, loginItemEnabled, buildTrayMenu, createTray, createWindow });
+Object.assign(module.exports, { setZoom, setAppIcon, setTitleBarColor, showWindow, quitApp, loginItemEnabled, buildTrayMenu, createTray, createWindow });

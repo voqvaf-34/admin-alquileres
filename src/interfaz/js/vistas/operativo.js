@@ -98,7 +98,7 @@ export function footerAumento(e, m, y, ipcVal) {
   if (D.gestionadoPor(e)) {
     return `<div class="card-footer">
       <span class="delegado-badge">Delegado &rarr; ${esc(D.gestionadoPor(e))}</span>
-      <span style="font-size:11px;opacity:0.35">Excluido de cola personal</span>
+      <span style="font-size:11px;color:var(--dim)">Excluido de cola personal</span>
     </div>`;
   }
 
@@ -123,7 +123,7 @@ export function footerAumento(e, m, y, ipcVal) {
   // Marcado como "no aumenta"
   if (naMk) {
     return `<div class="card-footer">
-      <span style="font-size:12px;opacity:0.55">&#10005; No aumenta${naMk.desc ? ' &mdash; ' + esc(naMk.desc) : ''} <span style="font-size:10px;opacity:0.45">${naMk.date}</span></span>
+      <span style="font-size:12px;color:var(--dim)">&#10005; No aumenta${naMk.desc ? ' &mdash; ' + esc(naMk.desc) : ''} <span style="font-size:10px;color:var(--dim)">${naMk.date}</span></span>
       <button class="unmark-btn" data-un-na="${esc(naKy)}" title="Deshacer" style="font-size:14px">&#8617;</button>
     </div>`;
   }
@@ -133,7 +133,7 @@ export function footerAumento(e, m, y, ipcVal) {
     return `<div class="card-footer" style="flex-wrap:wrap;gap:8px">
       <input type="text" id="inp-na-desc" placeholder="Descripcion (opcional, se guarda en comentarios)" class="date-inp" style="flex:1;min-width:160px">
       <button class="mark-btn" data-na-conf="${esc(naKy)}">&#10003; Confirmar</button>
-      <button class="mark-btn" data-na-cancel style="opacity:0.5">&#10005;</button>
+      <button class="mark-btn" data-na-cancel style="color:var(--dim)">&#10005;</button>
     </div>`;
   }
 
@@ -143,7 +143,7 @@ export function footerAumento(e, m, y, ipcVal) {
       <input type="checkbox" class="chk" data-aum="${esc(key)}">
       Marcar enviado
     </label>
-    <button class="mark-btn" data-na-start="${esc(naKy)}" style="opacity:0.55;font-size:11px;border-color:rgba(var(--red-rgb),0.2);color:rgba(var(--red-rgb),0.6)">&#10005; No aumenta</button>
+    <button class="mark-btn" data-na-start="${esc(naKy)}" style="font-size:11px;border-color:rgba(var(--red-rgb),0.35);color:var(--red)">&#10005; No aumenta</button>
     ${copyBtns}
   </div>`;
 }
@@ -151,9 +151,9 @@ export function footerAumento(e, m, y, ipcVal) {
 // Genera el bloque de inputs de fecha + plazo para una renovacion pendiente
 export function _vencInputs(defaultYears, confirmAttr, dirEsc) {
   return `<div class="card-footer" style="flex-wrap:wrap;gap:8px">
-    <span style="font-size:11px;opacity:0.5">Inicio:</span>
+    <span style="font-size:11px;color:var(--dim)">Inicio:</span>
     <input type="date" id="inp-venc-date" class="date-inp">
-    <span style="font-size:11px;opacity:0.5">Plazo:</span>
+    <span style="font-size:11px;color:var(--dim)">Plazo:</span>
     <select id="inp-venc-years" class="date-inp" style="width:auto">
       <option value="1"${defaultYears===1?' selected':''}>1 año</option>
       <option value="2"${defaultYears===2?' selected':''}>2 años</option>
@@ -187,7 +187,7 @@ export function footerVenc(e) {
       return `<div class="card-footer">
         <span class="venc-done-label">&#10003; Renovado ${mkR.date}</span>
         ${nuevaInfoR}
-        <span style="font-size:10px;opacity:0.3">1er ciclo: ${mk.date}</span>
+        <span style="font-size:10px;color:var(--dim)">1er ciclo: ${mk.date}</span>
         <button class="unmark-btn" data-vunc-r="${esc(e.direccion)}" title="Desmarcar renovacion">&times;</button>
       </div>`;
     }
@@ -199,12 +199,12 @@ export function footerVenc(e) {
     const ni = parseDMY(mk.nuevaInicio);
     const nvDate = ni ? fmtDate(new Date(ni.getFullYear()+mk.renewYears, ni.getMonth(), Math.min(ni.getDate(),28))) : '-';
     return `<div class="card-footer" style="flex-direction:column;align-items:flex-start;gap:6px">
-      <div style="font-size:11px;color:var(--amber);opacity:0.75">
+      <div style="font-size:11px;color:var(--amber)">
         Renovado el ${mk.date} &middot; Inicio: ${mk.nuevaInicio} &middot; ${mk.renewYears}a &middot; Vence: ${nvDate}
       </div>
       <div style="display:flex;gap:8px">
         <button class="mark-btn" data-vstart-r="${esc(e.direccion)}">Marcar renovado</button>
-        <button class="unmark-btn" style="font-size:11px;opacity:0.4;border:1px solid rgba(var(--fg),0.1);padding:2px 8px;border-radius:4px" data-vunc="${esc(e.direccion)}" title="Deshacer 1er renovacion">&#8617; Deshacer</button>
+        <button class="unmark-btn" style="font-size:11px;color:var(--dim);border:1px solid rgba(var(--fg),0.1);padding:2px 8px;border-radius:4px" data-vunc="${esc(e.direccion)}" title="Deshacer 1er renovacion">&#8617; Deshacer</button>
       </div>
     </div>`;
   }
@@ -231,7 +231,7 @@ export function footerVenc(e) {
   const nrMk = estado.marks[nrKey(e)];
   if (nrMk && D.noRenuevaVigente(e, estado.marks)) {
     return `<div class="card-footer">
-      <span style="font-size:12px;opacity:0.55">&#10005; No renueva${nrMk.sigueActivo ? ' (sigue activo)' : ''}${nrMk.desc ? ' &mdash; ' + esc(nrMk.desc) : ''} <span style="font-size:10px;opacity:0.45">${nrMk.date}</span></span>
+      <span style="font-size:12px;color:var(--dim)">&#10005; No renueva${nrMk.sigueActivo ? ' (sigue activo)' : ''}${nrMk.desc ? ' &mdash; ' + esc(nrMk.desc) : ''} <span style="font-size:10px;color:var(--dim)">${nrMk.date}</span></span>
       <button class="unmark-btn" data-un-nr="${esc(e.direccion)}" title="Deshacer" style="font-size:14px">&#8617;</button>
     </div>`;
   }
@@ -241,11 +241,11 @@ export function footerVenc(e) {
   if (pendingNoRen === e.direccion) {
     return `<div class="card-footer" style="flex-wrap:wrap;gap:8px">
       <input type="text" id="inp-nr-desc" placeholder="Descripcion (opcional, se guarda en comentarios)" class="date-inp" style="flex:1;min-width:160px">
-      <label class="db-chk-label" style="opacity:0.85" title="Si sigue, se le sigue avisando el IPC y la renovacion cada año. Si no, el alquiler pasa a inactivo.">
+      <label class="db-chk-label" style="color:var(--dim)" title="Si sigue, se le sigue avisando el IPC y la renovacion cada año. Si no, el alquiler pasa a inactivo.">
         <input type="checkbox" id="inp-nr-sigue"> Sigue en el apto (seguir avisando IPC y renovación)
       </label>
       <button class="mark-btn" data-nr-conf="${esc(e.direccion)}">&#10003; Confirmar</button>
-      <button class="mark-btn" data-nr-cancel style="opacity:0.5">&#10005;</button>
+      <button class="mark-btn" data-nr-cancel style="color:var(--dim)">&#10005;</button>
       <div class="field-hint" style="width:100%">Si no sigue en el apto, el alquiler se marca como inactivo (se puede deshacer).</div>
     </div>`;
   }
@@ -258,7 +258,7 @@ export function footerVenc(e) {
   return `<div class="card-footer" style="flex-wrap:wrap">
     ${sigueInfo}
     <button class="mark-btn" data-vstart="${esc(e.direccion)}">Marcar renovado</button>
-    <button class="mark-btn" data-nr-start="${esc(e.direccion)}" style="opacity:0.55;font-size:11px;border-color:rgba(var(--red-rgb),0.2);color:rgba(var(--red-rgb),0.6)">&#10005; No renueva</button>
+    <button class="mark-btn" data-nr-start="${esc(e.direccion)}" style="font-size:11px;border-color:rgba(var(--red-rgb),0.35);color:var(--red)">&#10005; No renueva</button>
   </div>`;
 }
 
@@ -273,18 +273,18 @@ export function cardAumento(e, m, y, ipcVal) {
   const isDel  = Boolean(D.gestionadoPor(e));
   const borderColor = mk ? "var(--green)" : naMk ? "rgba(150,150,150,0.3)" : isDel ? "var(--amber)" : D.comentarios(e).length ? "var(--orange)" : "rgba(var(--accent-rgb),0.3)";
   return `
-    <div class="card" data-card-key="${esc(cardKey)}" style="border-left:3px solid ${borderColor}${naMk ? ';filter:grayscale(1) opacity(0.5)' : ''}">
+    <div class="card" data-card-key="${esc(cardKey)}" style="border-left:3px solid ${borderColor}${naMk ? ';filter:grayscale(1)' : ''}">
       <div class="card-top">
         <div>
-          <span style="color:${isDel ? 'var(--amber)' : 'var(--accent)'};font-weight:600">${esc(e.direccion)}</span>
-          <span style="opacity:0.3;margin-left:10px;font-size:11px">${years}a</span>
+          <span style="color:${isDel ? 'var(--amber)' : 'var(--accent-ink)'};font-weight:600">${esc(e.direccion)}</span>
+          <span style="color:var(--dim);margin-left:10px;font-size:11px">${years}a</span>
           ${isDel ? `<span class="delegado-badge" style="margin-left:8px">&#8618; ${esc(D.gestionadoPor(e))}</span>` : ''}
         </div>
         <div style="text-align:right;white-space:nowrap">
-          <span style="opacity:0.5">${fmtMoney(e.importe, e.moneda)}</span>
-          <span style="margin:0 6px;opacity:0.2">&rarr;</span>
+          <span style="color:var(--dim)">${fmtMoney(e.importe, e.moneda)}</span>
+          <span style="margin:0 6px;color:var(--dim)">&rarr;</span>
           <span style="color:var(--green);font-weight:600">${fmtMoney(nuevo, e.moneda)}</span>
-          <span style="font-size:11px;opacity:0.5;margin-left:6px">(+${fmtMoney(diff, e.moneda)})</span>
+          <span style="font-size:11px;color:var(--dim);margin-left:6px">(+${fmtMoney(diff, e.moneda)})</span>
         </div>
       </div>
       <div class="card-grid">
@@ -312,13 +312,13 @@ export function cardVenc(e, color, overdue) {
   const bcolor      = activeMk ? "var(--green)" : nrMkC ? "rgba(150,150,150,0.3)" : color;
   const inicioLabel = `Inicio original: ${fmtDate(e.fechaInicio)}`;
   const overdueTag  = overdue
-    ? `<span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--red);background:rgba(var(--red-rgb),0.12);border:1px solid rgba(var(--red-rgb),0.3);border-radius:3px;padding:1px 6px;margin-left:6px;vertical-align:middle">VENCIDO ${monthsAgo(vd)}</span>`
+    ? `<span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:color-mix(in srgb, var(--red) 75%, var(--text));background:rgba(var(--red-rgb),0.12);border:1px solid rgba(var(--red-rgb),0.3);border-radius:3px;padding:1px 6px;margin-left:6px;vertical-align:middle">VENCIDO ${monthsAgo(vd)}</span>`
     : '';
   return `
-    <div class="card" style="border-left:3px solid ${bcolor}${nrMkC ? ';filter:grayscale(1) opacity(0.5)' : ''}">
+    <div class="card" style="border-left:3px solid ${bcolor}${nrMkC ? ';filter:grayscale(1)' : ''}">
       <div class="card-top">
         <span style="color:${bcolor};font-weight:600">${esc(e.direccion)}${overdueTag}</span>
-        <span class="badge" style="background:color-mix(in srgb, ${color} 13%, transparent);color:${color}">Vence ${fmtDate(vd)}${diasFaltan(vd)}</span>
+        <span class="badge" style="background:color-mix(in srgb, ${color} 13%, transparent);color:color-mix(in srgb, ${color} 75%, var(--text))">Vence ${fmtDate(vd)}${diasFaltan(vd)}</span>
       </div>
       <div class="card-grid">
         <div><span class="lbl">Inq: </span>${fmtNames(e.inquilino)}</div>

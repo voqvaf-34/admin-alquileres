@@ -22,6 +22,32 @@
     toggle() { this.setModo(get() === 'dark' ? 'light' : 'dark'); return get(); },
   };
 
+  // Accesibilidad (de cada PC): tamaño (zoom de toda la ventana) y opciones que son clases en <html>.
+  const A11Y_KEY = 'alq-accesibilidad';
+  const A11Y_DEFAULT = { tamano: 1, negrita: false, contraste: false, espaciado: false, subrayar: false, animaciones: 'auto' };
+  const leerA11y = () => { try { return { ...A11Y_DEFAULT, ...JSON.parse(localStorage.getItem(A11Y_KEY) || '{}') }; } catch (_) { return { ...A11Y_DEFAULT }; } };
+  const aplicarA11y = p => {
+    const cl = document.documentElement.classList;
+    cl.toggle('a11y-negrita', !!p.negrita);
+    cl.toggle('a11y-contraste', !!p.contraste);
+    cl.toggle('a11y-espaciado', !!p.espaciado);
+    cl.toggle('a11y-subrayar', !!p.subrayar);
+    cl.toggle('a11y-sin-animaciones', p.animaciones === 'no');
+    cl.toggle('a11y-con-animaciones', p.animaciones === 'si');
+    if (window.api && window.api.setZoom) window.api.setZoom(+p.tamano || 1).catch(() => {});
+  };
+  aplicarA11y(leerA11y());
+  window.A11y = {
+    DEFAULT: A11Y_DEFAULT,
+    get: leerA11y,
+    set(p) {
+      const v = { ...leerA11y(), ...p };
+      try { localStorage.setItem(A11Y_KEY, JSON.stringify(v)); } catch (_) {}
+      aplicarA11y(v);
+      return v;
+    },
+  };
+
   // Ultima marca usada (la guarda componentes/marca.js); los datos reales llegan despues con la base.
   let marca = null;
   try { marca = JSON.parse(localStorage.getItem('alq-marca') || 'null'); } catch (_) {}

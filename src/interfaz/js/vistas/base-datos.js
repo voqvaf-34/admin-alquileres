@@ -116,7 +116,7 @@ export function renderDBTable() {
       <td class="db-dir">${esc(e.direccion)}${e.inactive ? `<span class="inactive-badge">INACTIVO</span>` : ''}${garantiaBadge(e)}${e.remitente ? `<span class="delegado-badge" style="margin-left:8px;font-size:10px" title="Aumentos los hace ${esc(e.remitente)}">&#8618; ${esc(e.remitente)}</span>` : ''}</td>
       <td>${fmtNames(e.propietario)}</td>
       <td>${fmtNames(e.inquilino)}</td>
-      <td style="white-space:nowrap;opacity:0.7">${fmtDate(e.fechaInicio)}</td>
+      <td style="white-space:nowrap;color:var(--dim)">${fmtDate(e.fechaInicio)}</td>
       <td class="db-chevron">${puntoNuevo('basedatos', e.id)}&#9658;</td>
     </tr>` + (isExp ? filaDetalle(e, porDireccion) : '');
   };
@@ -158,7 +158,7 @@ function insigniaRenovacion(e, dir) {
   const ni = mkV.nuevaInicio && mkV.renewYears && parseDMY(mkV.nuevaInicio);
   if (ni) {
     const nvDate = new Date(ni.getFullYear() + mkV.renewYears, ni.getMonth(), Math.min(ni.getDate(), 28));
-    if (nvDate <= new Date()) vencNote = `<span style="color:var(--amber);opacity:0.8"> &middot; &#9888; Venc. renovacion: ${fmtDate(nvDate)}</span>`;
+    if (nvDate <= new Date()) vencNote = `<span style="color:var(--amber)"> &middot; &#9888; Venc. renovacion: ${fmtDate(nvDate)}</span>`;
   }
   return `<div class="renov-badge">
     <span>&#10003; Renovado el ${mkV.date}${mkV.nuevaInicio ? ` &middot; Inicio: ${mkV.nuevaInicio} &middot; ${mkV.renewYears}a` : ''}${vencNote}</span>
@@ -174,7 +174,7 @@ export function filaDetalle(e, porDireccion) {
         <div class="db-detail-inner">
           <div class="db-detail-grid">
             <div><span class="lbl">Alquiler: </span><strong>${fmtMoney(e.importe, e.moneda)}</strong></div>
-            <div><span class="lbl">Ult. aumento: </span>${e.ultimoAumento ? fmtDate(e.ultimoAumento) : '<span style="opacity:0.35">-</span>'}</div>
+            <div><span class="lbl">Ult. aumento: </span>${e.ultimoAumento ? fmtDate(e.ultimoAumento) : '<span style="color:var(--dim)">-</span>'}</div>
             <div><span class="lbl">Contrato: </span>${esc(e.contratoStr||'-')}</div>
             <div><span class="lbl">Garantía: </span>${e.garantia ? esc(e.garantia) : '<span class="missing">sin cargar</span>'}</div>
             <div><span class="lbl">Aumentos: </span>${D.gestionadoPor(e) ? esc(D.gestionadoPor(e)) : 'La inmobiliaria'}</div>
@@ -187,7 +187,7 @@ export function filaDetalle(e, porDireccion) {
             ${e.mailInq ? `<div><span class="lbl">Mail Inq: </span>${fmtMails(e.mailInq)}</div>` : ''}
           </div>
           ${insigniaRenovacion(e, dir)}
-          ${e.direccionOriginal && e.direccionOriginal !== e.direccion ? `<div style="margin-top:8px;font-size:11px;opacity:0.5">Registrado originalmente como: ${esc(e.direccionOriginal)}</div>` : ''}
+          ${e.direccionOriginal && e.direccionOriginal !== e.direccion ? `<div style="margin-top:8px;font-size:11px;color:var(--dim)">Registrado originalmente como: ${esc(e.direccionOriginal)}</div>` : ''}
           <div class="nota-edit-section">
             <span class="nota-label">Comentarios</span>
             <div class="notas-list">${D.splitNotas(e.notas).map((n, i) => D.parseRenewalNote(n) ? '' : `

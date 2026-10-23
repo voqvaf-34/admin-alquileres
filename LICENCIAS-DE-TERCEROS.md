@@ -12,4 +12,5 @@ que se mantiene:
 | Tipografías [Rubik](https://fonts.google.com/specimen/Rubik), [Inter](https://rsms.me/inter/), [Montserrat](https://fonts.google.com/specimen/Montserrat), [Nunito](https://fonts.google.com/specimen/Nunito) y [Lora](https://fonts.google.com/specimen/Lora) (vía [Fontsource](https://fontsource.org/)) | Tipografías elegibles en Configuración | SIL Open Font License 1.1 (textos en `src/interfaz/recursos/fonts/LICENSE-*.txt`) |
 
 Herramientas usadas solo para desarrollar y probar (no se incluyen en la app instalada):
-[electron-builder](https://www.electron.build/) (MIT) y [Playwright](https://playwright.dev/) (Apache 2.0).
+[electron-builder](https://www.electron.build/) (MIT), [Playwright](https://playwright.dev/) (Apache 2.0) y
+[axe-core](https://github.com/dequelabs/axe-core) (MPL 2.0).

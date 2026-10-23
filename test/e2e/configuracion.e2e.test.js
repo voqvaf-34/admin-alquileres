@@ -121,6 +121,7 @@ test('asistente de primer uso: marca y apariencia paso a paso', { timeout: 90000
     assert.equal(await page.getAttribute('#cfg-preview', 'data-tema'), 'calido');
     assert.notEqual(await page.getAttribute('html', 'data-tema'), 'calido');
     await shot(page, '14-asistente-paso2');
+    await page.click('#cfg-siguiente');   // paso 3: accesibilidad
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });
     await page.waitForSelector('#upload-screen', { state: 'visible' });
@@ -246,6 +247,7 @@ test('modo de color: sigue a Windows por defecto y se elige en el asistente', { 
     assert.equal(await modo(), 'dark');
     assert.equal(await page.evaluate(() => document.getElementById('cfg-preview').classList.contains('oscuro')), true);
     await shot(page, '17-asistente-modo-oscuro');
+    await page.click('#cfg-siguiente');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#upload-screen', { state: 'visible' });
     // Fijado en oscuro: ya no sigue al sistema.
@@ -261,6 +263,58 @@ test('modo de color: sigue a Windows por defecto y se elige en el asistente', { 
     assert.equal(await modo(), 'light');
     await page.click('#cfg-cancelar');
     assert.equal(await modo(), 'dark');
+    assert.deepEqual(errors, []);
+  } finally { await app.close(); }
+});
+
+test('accesibilidad: tamaño, negrita y contraste se aplican, se cancelan y se recuerdan', { timeout: 90000 }, async () => {
+  const dataDir = tmpDir();
+  let { app, page, errors } = await launch(dataDir);
+  const zoom = a => a.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getZoomFactor());
+  const pesoBody = () => page.evaluate(() => getComputedStyle(document.querySelector('#file-info')).fontWeight);
+  try {
+    await empezarVacia(page);
+    assert.equal(await zoom(app), 1);
+    await abrirConfiguracion(page);
+    await page.click('[data-cfg-tab="accesibilidad"]');
+    assert.equal(await page.isVisible('#cfg-preview-wrap'), false);
+    // Cancelar deshace lo que se probo.
+    await page.click('.cfg-tamano[data-tamano="1.5"]');
+    await page.waitForFunction(() => document.querySelector('.cfg-tamano.on').dataset.tamano === '1.5');
+    assert.equal(await zoom(app), 1.5);
+    await page.click('#cfg-cancelar');
+    assert.equal(await zoom(app), 1);
+
+    await abrirConfiguracion(page);
+    await page.click('[data-cfg-tab="accesibilidad"]');
+    await page.click('.cfg-tamano[data-tamano="1.3"]');
+    await page.check('[data-a11y="negrita"]');
+    await page.check('[data-a11y="contraste"]');
+    await page.check('[data-a11y="subrayar"]');
+    await page.click('[data-anim="no"]');
+    await shot(page, '18-accesibilidad');
+    await page.click('#cfg-guardar');
+    await page.waitForSelector('#modal-config', { state: 'hidden' });
+    assert.equal(await zoom(app), 1.3);
+    assert.equal(await pesoBody(), '600');
+    assert.equal(await cssVar(page, '--dim').then(v => v.replace(/\s/g, '')), 'rgba(26,26,26,0.86)');
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains('a11y-sin-animaciones')), true);
+    assert.deepEqual(errors, []);
+  } finally { await app.close(); }
+
+  ({ app, page, errors } = await launch(dataDir));
+  try {
+    await page.waitForSelector('#app-screen', { state: 'visible' });
+    await page.waitForFunction(() => document.documentElement.classList.contains('a11y-negrita'));
+    for (let i = 0; i < 20 && (await zoom(app)) !== 1.3; i++) await page.waitForTimeout(100);
+    assert.equal(await zoom(app), 1.3);
+    // Volver a lo normal.
+    await abrirConfiguracion(page);
+    await page.click('[data-cfg-tab="accesibilidad"]');
+    await page.click('#cfg-a11y-normal');
+    await page.click('#cfg-guardar');
+    assert.equal(await zoom(app), 1);
+    assert.notEqual(await pesoBody(), '600');
     assert.deepEqual(errors, []);
   } finally { await app.close(); }
 });

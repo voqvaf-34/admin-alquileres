@@ -139,6 +139,7 @@ function registerHandlers() {
   });
   handle('window:titleBarColor', (c, ink) => ventana.setTitleBarColor(c, ink));
   handle('window:icon', (png) => ventana.setAppIcon(png));
+  handle('window:zoom', (f) => ventana.setZoom(f));
   handle('ipc:fetch',    ()       => fetchLatestIPC());
 
   const ownersState = () => ({
@@ -197,6 +198,7 @@ function registerViewerHandlers() {
   handle('setting:set',      () => true);
   handle('window:titleBarColor', (c, ink) => ventana.setTitleBarColor(c, ink));
   handle('window:icon', (png) => ventana.setAppIcon(png));
+  handle('window:zoom', (f) => ventana.setZoom(f));
   handle('undo:status',      () => ctx.store ? ctx.store.undoStatus() : {});
 }
 
