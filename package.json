@@ -12,7 +12,7 @@
     "test": "node --test \"test/unit/*.test.js\"",
     "test:e2e": "node --test --test-concurrency=1 \"test/e2e/*.test.js\"",
     "lint": "eslint .",
-    "test:all": "npm test && npm run test:e2e",
+    "test:all": "npm run lint && npm test && npm run test:e2e",
     "capturas": "node scripts/capturas.js",
     "dist": "electron-builder --win nsis",
     "dist:visor": "electron-builder --win nsis -c.productName=\"Admin Alquileres Visor\" -c.appId=com.adminalquileres.visor -c.win.icon=build/icon-visor.ico -c.nsis.shortcutName=\"Admin Alquileres Visor\" -c.directories.output=dist-visor -c.extraMetadata.adminMode=viewer -c.extraMetadata.name=admin-alquileres-visor -c.extraMetadata.productName=\"Admin Alquileres Visor\"",

@@ -16,6 +16,8 @@ jobs:
       - run: npm ci
       # npm puede no correr el script de instalacion de Electron: se descarga el binario explicitamente.
       - run: node node_modules/electron/install.js
+      - name: Lint
+        run: npm run lint
       - name: Pruebas unitarias
         run: npm test
       - name: Pruebas de punta a punta
