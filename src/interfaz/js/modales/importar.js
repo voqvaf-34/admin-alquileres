@@ -1,4 +1,5 @@
-// Importar una planilla con la app en uso: sumarla a lo que ya hay o reemplazar todo.
+// Importar una planilla con la app en uso (sumarla a lo que ya hay o reemplazar todo) y
+// descargar la planilla modelo.
 import { applyState, render } from '../app.js';
 import { call } from '../nucleo/api.js';
 import { esc, showToast } from '../nucleo/dom.js';
@@ -9,6 +10,12 @@ import { populateDBYears } from '../vistas/base-datos.js';
 const $ = id => document.getElementById(id);
 
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+
+// Guarda la planilla modelo donde elija el usuario.
+async function descargarPlanilla() {
+  try { if (await call('downloadTemplate')) showToast('&#10003; Planilla modelo guardada', 'ok'); }
+  catch (err) { showToast('Error al guardar la planilla: ' + esc(err.message), 'err'); }
+}
 
 async function importar() {
   const modo = document.querySelector('input[name="imp-modo"]:checked').value;
@@ -39,8 +46,6 @@ export function iniciar() {
     openModal('modal-importar');
   });
   $('imp-elegir').addEventListener('click', importar);
-  $('imp-modelo').addEventListener('click', async () => {
-    try { if (await call('downloadTemplate')) showToast('&#10003; Planilla modelo guardada', 'ok'); }
-    catch (err) { showToast('Error al guardar la planilla: ' + esc(err.message), 'err'); }
-  });
+  // Planilla modelo: desde la pantalla de inicio, el menu ☰ y esta ventana.
+  for (const id of ['btn-template', 'btn-menu-template', 'imp-modelo']) $(id).addEventListener('click', descargarPlanilla);
 }
