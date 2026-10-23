@@ -8,7 +8,8 @@ const SALIDA = path.join(ROOT, 'docs', 'capturas');
 
 async function main() {
   fs.mkdirSync(SALIDA, { recursive: true });
-  const { app, page } = await lanzar(carpetaTemporal('alq-capturas-'), {}, { tamano: { width: 1280, height: 800 } });
+  // El IPC se consulta al INE como en la app real (las pruebas lo desactivan).
+  const { app, page } = await lanzar(carpetaTemporal('alq-capturas-'), { ADMIN_ALQ_NO_EXTERNAL: undefined }, { tamano: { width: 1280, height: 800 } });
   const captura = async nombre => { await page.waitForTimeout(250); await page.screenshot({ path: path.join(SALIDA, nombre + '.png') }); console.log('  ' + nombre); };
   const sinToast = () => page.evaluate(() => { document.getElementById('toast').className = ''; });
 

@@ -2,6 +2,28 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
+## [Sin publicar]
+
+### Corregido
+- Deshacer: un cambio hecho enseguida de importar una planilla ya no se deshace junto con la importación.
+- Datos de ejemplo: el delegado se llama "Gestora Norte" (sin el prefijo de la planilla original).
+
+### Cambiado (código, sin cambios visibles)
+- Reglas de negocio que estaban en la interfaz pasan a `dominios/` (importe nuevo, número de WhatsApp, urgencia
+  de los vencimientos, normalización de contratos). Aumentos y Renovaciones tienen vistas propias. La base de
+  datos pasa de un archivo de 729 líneas a una carpeta con un archivo por tema.
+- Sin código repetido: un solo diálogo de planillas, canales comunes del editor y el Visor, ayudantes de archivos
+  e imágenes, una sola forma de abrir la app en las pruebas.
+- Se dejaron de exportar 108 funciones que solo se usan en su archivo; el CSS no tiene reglas duplicadas.
+- Nombres del código unificados en español (funciones, métodos, constantes y variables). Las claves guardadas
+  en la base y en los archivos de configuración no cambian: las bases de la 0.8.0 se abren igual.
+- Configuración: al escribir el nombre de la marca se redibujan solo los íconos que cambian (de 140 a 7).
+
+### Agregado (desarrollo)
+- ESLint y .editorconfig (`npm run lint`), también en GitHub Actions.
+- Prueba de recorrido completo de la app con los datos de ejemplo (22 flujos).
+- Las pruebas abren la app fuera de la pantalla y no consultan al INE por internet.
+
 ## [0.8.0] - 2026-10-22
 
 ### Agregado
