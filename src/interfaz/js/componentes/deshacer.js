@@ -5,7 +5,7 @@ import { _marksSaving } from '../nucleo/datos.js';
 import { esc, showToast } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
 import { populateDBYears } from '../vistas/base-datos.js';
-import { limpiarPendientes } from '../vistas/operativo.js';
+import { limpiarPendientes } from '../vistas/tarjetas.js';
 
 export function paintUndo(st) {
   if (!st) return;

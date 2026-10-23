@@ -1,63 +1,13 @@
-// Pestañas Aumentos y Renovaciones: tarjetas y acciones (enviado, renovado, no renueva...).
+// Pestaña Renovaciones: contratos que vencen, tarjetas y acciones (renovado, no renueva).
 import * as D from '../../../dominios/index.js';
-import { aumKey, fmtDate, naKey, nrKey, parseDMY, parseISO, realDuration, vncKey, vncKeyR } from '../../../dominios/index.js';
+import { fmtDate, nrKey, parseDMY, parseISO, realDuration, vncKey, vncKeyR } from '../../../dominios/index.js';
 import { render } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { appendNote, entryByDir, getVencDate, saveIncrease, saveMarks, saveNotes, saveRenewal, vencColor, vencRenewalMsg } from '../nucleo/datos.js';
+import { appendNote, entryByDir, getVencDate, getVencidosAtrasados, getVencimientos, isVencResuelto, saveMarks, saveNotes, saveRenewal, vencColor, vencRenewalMsg } from '../nucleo/datos.js';
 import { copyToClipboard, esc, showToast } from '../nucleo/dom.js';
 import { estado, replaceEntry } from '../nucleo/estado.js';
-import { diasFaltan, fmtIPC, fmtMails, fmtMoney, fmtNames, fmtNotas, monthsAgo, telLink } from '../nucleo/formato.js';
-import { contactRow } from './propietarios.js';
-
-export let pendingVenc   = null;
-
-export let pendingNoAum  = null;   // naKey activo mientras se espera descripcion de "no aumenta"
-
-export let pendingNoRen  = null;   // dir activo mientras se espera descripcion de "no renueva"
-
-// Al deshacer/rehacer se descartan las acciones a medio cargar (descripcion de "no aumenta", etc.).
-export function limpiarPendientes() { pendingVenc = pendingNoAum = pendingNoRen = null; }
-
-// Aumentos resueltos (enviado / no aumenta): una linea con el resumen; al tocarla se despliega
-// el detalle con la opcion de deshacer (asi un clic de mas no deshace nada).
-const aumAbiertos = new Set();   // claves de marca de las tarjetas resueltas desplegadas
-
-export function cardAumentoCompact(e, m, y) {
-  const key  = aumKey(e, m, y);
-  const mk   = estado.marks[key];
-  const naKy = naKey(e, m, y);
-  const naMk = estado.marks[naKy];
-  if (!mk && !naMk) return '';
-  const k = mk ? key : naKy;
-  const abierto = aumAbiertos.has(k);
-  const resumen = mk
-    ? `&#10003; Enviado ${mk.date}${mk.importeAnterior ? ` &middot; ${fmtMoney(mk.importeAnterior, e.moneda)} &rarr; ${fmtMoney(mk.importeNuevo, e.moneda)}` : ''}`
-    : `&#10005; No aumenta${naMk.desc ? ' &mdash; ' + esc(naMk.desc) : ''} &middot; ${naMk.date}`;
-  const datos = mk
-    ? `<div><span class="lbl">Alquiler: </span>${mk.importeAnterior
-          ? `${fmtMoney(mk.importeAnterior, e.moneda)} &rarr; <strong>${fmtMoney(mk.importeNuevo, e.moneda)}</strong>`
-          : fmtMoney(e.importe, e.moneda)}</div>
-       <div><span class="lbl">IPC aplicado: </span>${mk.ipc != null && mk.ipc !== '' ? fmtIPC(+mk.ipc) : '-'}</div>
-       <div><span class="lbl">Enviado: </span>${mk.date}</div>`
-    : `<div class="full"><span class="lbl">Motivo: </span>${naMk.desc ? esc(naMk.desc) : '-'}</div>
-       <div><span class="lbl">Marcado: </span>${naMk.date}</div>`;
-  const detalle = !abierto ? '' : `
-      <div class="card-grid">
-        <div><span class="lbl">Inq: </span>${fmtNames(e.inquilino)}</div>
-        <div><span class="lbl">Prop: </span>${fmtNames(e.propietario)}</div>
-        ${datos}
-      </div>
-      <div class="card-footer">
-        <button class="mark-btn" ${mk ? `data-aum-undo="${esc(key)}"` : `data-un-na="${esc(naKy)}"`}>&#8617; Deshacer${mk ? ' enviado' : ''}</button>
-      </div>`;
-  return `<div class="card card-compact${abierto ? ' abierta' : ''}" style="border-left:3px solid ${mk ? 'var(--green)' : 'rgba(150,150,150,0.3)'}">
-      <div class="card-compact-row aum-toggle" data-aum-toggle="${esc(k)}" title="${abierto ? 'Cerrar' : 'Ver el detalle'}">
-        <span class="titulo-compacto">${esc(e.direccion)}</span>
-        <span class="meta-chica">${resumen}</span>
-        <span class="aum-chevron">${abierto ? '&#9660;' : '&#9658;'}</span>
-      </div>${detalle}
-    </div>`;
-}
+import { MONTH_NAMES, diasFaltan, fmtMoney, fmtNotas, monthsAgo } from '../nucleo/formato.js';
+import { datosPersonas, filtroResueltos, mesSiguiente, pendientes } from './tarjetas.js';
 
 export function cardVencCompact(e) {
   const mk = estado.marks[vncKey(e)];
@@ -84,68 +34,6 @@ export function cardVencCompact(e) {
     </div>`;
   }
   return '';
-}
-
-export function footerAumento(e, m, y, ipcVal) {
-  const nuevo    = D.nuevoImporte(e.importe, ipcVal);
-  const key      = aumKey(e, m, y);
-  const naKy     = naKey(e, m, y);
-  const mk       = estado.marks[key];
-  const naMk     = estado.marks[naKy];
-  const ipcStr   = fmtIPC(ipcVal);
-  const nuevoStr = fmtMoney(nuevo, e.moneda);
-
-  if (D.gestionadoPor(e)) {
-    return `<div class="card-footer">
-      <span class="delegado-badge">Delegado &rarr; ${esc(D.gestionadoPor(e))}</span>
-      <span style="font-size:11px;color:var(--dim)">Excluido de cola personal</span>
-    </div>`;
-  }
-
-  const { inquilino: msgInq, propietario: msgProp } = D.increaseMessages({ settings: estado.appSettings, contrato: e, porcentaje: ipcStr, nuevoImporte: nuevoStr });
-
-  const copyBtns = `
-    <button class="copy-btn" data-copy="${esc(msgInq)}"  title="Copiar mensaje inquilino">&#8663; Inq</button>
-    <button class="copy-btn" data-copy="${esc(msgProp)}" title="Copiar mensaje propietario">&#8663; Prop</button>`;
-
-  // Ya enviado
-  if (mk) {
-    return `<div class="card-footer">
-      <label class="chk-wrap done">
-        <input type="checkbox" class="chk" data-aum="${esc(key)}" checked>
-        Enviado ${mk.date}
-      </label>
-      ${mk.importeAnterior ? `<span class="change-tag">${fmtMoney(mk.importeAnterior, e.moneda)} &rarr; ${fmtMoney(mk.importeNuevo, e.moneda)}</span>` : ''}
-      ${copyBtns}
-    </div>`;
-  }
-
-  // Marcado como "no aumenta"
-  if (naMk) {
-    return `<div class="card-footer">
-      <span style="font-size:12px;color:var(--dim)">&#10005; No aumenta${naMk.desc ? ' &mdash; ' + esc(naMk.desc) : ''} <span style="font-size:10px;color:var(--dim)">${naMk.date}</span></span>
-      <button class="unmark-btn" data-un-na="${esc(naKy)}" title="Deshacer" style="font-size:14px">&#8617;</button>
-    </div>`;
-  }
-
-  // Esperando descripcion de "no aumenta"
-  if (pendingNoAum === naKy) {
-    return `<div class="card-footer" style="flex-wrap:wrap;gap:8px">
-      <input type="text" id="inp-na-desc" placeholder="Descripcion (opcional, se guarda en comentarios)" class="date-inp" style="flex:1;min-width:160px">
-      <button class="mark-btn" data-na-conf="${esc(naKy)}">&#10003; Confirmar</button>
-      <button class="mark-btn" data-na-cancel style="color:var(--dim)">&#10005;</button>
-    </div>`;
-  }
-
-  // Estado normal
-  return `<div class="card-footer">
-    <label class="chk-wrap">
-      <input type="checkbox" class="chk" data-aum="${esc(key)}">
-      Marcar enviado
-    </label>
-    <button class="mark-btn" data-na-start="${esc(naKy)}" style="font-size:11px;border-color:rgba(var(--red-rgb),0.35);color:var(--red)">&#10005; No aumenta</button>
-    ${copyBtns}
-  </div>`;
 }
 
 // Genera el bloque de inputs de fecha + plazo para una renovacion pendiente
@@ -192,7 +80,7 @@ export function footerVenc(e) {
       </div>`;
     }
     // Pendiente de confirmar ciclo post-renovacion
-    if (pendingVenc === 'R:' + e.direccion) {
+    if (pendientes.venc === 'R:' + e.direccion) {
       return _vencInputs(mk.renewYears || 2, 'data-vconf-r', esc(e.direccion));
     }
     // Mostrar historial de 1er renovacion + boton para marcar 2da
@@ -238,7 +126,7 @@ export function footerVenc(e) {
   // Ciclo nuevo de un contrato que no renovo pero sigue: se vuelve a avisar.
   const sigueInfo = nrMk ? `<div style="font-size:11px;color:var(--amber);width:100%">No renovó el ${nrMk.date} y sigue en el apto: corresponde volver a ofrecer la renovación.</div>` : '';
 
-  if (pendingNoRen === e.direccion) {
+  if (pendientes.noRenueva === e.direccion) {
     return `<div class="card-footer" style="flex-wrap:wrap;gap:8px">
       <input type="text" id="inp-nr-desc" placeholder="Descripcion (opcional, se guarda en comentarios)" class="date-inp" style="flex:1;min-width:160px">
       <label class="db-chk-label" style="color:var(--dim)" title="Si sigue, se le sigue avisando el IPC y la renovacion cada año. Si no, el alquiler pasa a inactivo.">
@@ -251,7 +139,7 @@ export function footerVenc(e) {
   }
 
   const defaultYears = realDuration(e.contratoDuracion) || 2;
-  if (pendingVenc === e.direccion) {
+  if (pendientes.venc === e.direccion) {
     return _vencInputs(defaultYears, 'data-vconf', esc(e.direccion));
   }
 
@@ -260,44 +148,6 @@ export function footerVenc(e) {
     <button class="mark-btn" data-vstart="${esc(e.direccion)}">Marcar renovado</button>
     <button class="mark-btn" data-nr-start="${esc(e.direccion)}" style="font-size:11px;border-color:rgba(var(--red-rgb),0.35);color:var(--red)">&#10005; No renueva</button>
   </div>`;
-}
-
-export function cardAumento(e, m, y, ipcVal) {
-  const nuevo  = D.nuevoImporte(e.importe, ipcVal);
-  const diff   = nuevo - e.importe;
-  const years  = y - e.fechaInicio.getFullYear();
-  const cardKey = aumKey(e, m, y);
-  const mk     = estado.marks[cardKey];
-  const naMk   = estado.marks[naKey(e, m, y)];
-  const isDel  = Boolean(D.gestionadoPor(e));
-  const borderColor = mk ? 'var(--green)' : naMk ? 'rgba(150,150,150,0.3)' : isDel ? 'var(--amber)' : D.comentarios(e).length ? 'var(--orange)' : 'rgba(var(--accent-rgb),0.3)';
-  return `
-    <div class="card" data-card-key="${esc(cardKey)}" style="border-left:3px solid ${borderColor}${naMk ? ';filter:grayscale(1)' : ''}">
-      <div class="card-top">
-        <div>
-          <span style="color:${isDel ? 'var(--amber)' : 'var(--accent-ink)'};font-weight:600">${esc(e.direccion)}</span>
-          <span style="color:var(--dim);margin-left:10px;font-size:11px">${years}a</span>
-          ${isDel ? `<span class="delegado-badge" style="margin-left:8px">&#8618; ${esc(D.gestionadoPor(e))}</span>` : ''}
-        </div>
-        <div style="text-align:right;white-space:nowrap">
-          <span style="color:var(--dim)">${fmtMoney(e.importe, e.moneda)}</span>
-          <span style="margin:0 6px;color:var(--dim)">&rarr;</span>
-          <span style="color:var(--green);font-weight:600">${fmtMoney(nuevo, e.moneda)}</span>
-          <span style="font-size:11px;color:var(--dim);margin-left:6px">(+${fmtMoney(diff, e.moneda)})</span>
-        </div>
-      </div>
-      <div class="card-grid">
-        <div><span class="lbl">Inq: </span>${fmtNames(e.inquilino)}</div>
-        <div><span class="lbl">Prop: </span>${fmtNames(e.propietario)}</div>
-        <div><span class="lbl">Tel: </span>${telLink(e.telInq)}</div>
-        <div><span class="lbl">Tel: </span>${telLink(e.telProp)}</div>
-        ${contactRow(e, 'full')}
-        ${e.mailInq?`<div class="full"><span class="lbl">Mail: </span>${fmtMails(e.mailInq)}</div>`:''}
-      </div>
-      <div class="card-meta">Inicio: ${fmtDate(e.fechaInicio)}${e.ultimoAumento ? ` &middot; Ultimo aumento: ${fmtDate(e.ultimoAumento)}` : ''} &middot; Contrato: ${esc(e.contratoStr||'-')}</div>
-      ${fmtNotas(e)}
-      ${footerAumento(e, m, y, ipcVal)}
-    </div>`;
 }
 
 export function cardVenc(e, color, overdue) {
@@ -319,13 +169,7 @@ export function cardVenc(e, color, overdue) {
         <span style="color:${bcolor};font-weight:600">${esc(e.direccion)}${overdueTag}</span>
         <span class="badge" style="background:color-mix(in srgb, ${color} 13%, transparent);color:color-mix(in srgb, ${color} 75%, var(--text))">Vence ${fmtDate(vd)}${diasFaltan(vd)}</span>
       </div>
-      <div class="card-grid">
-        <div><span class="lbl">Inq: </span>${fmtNames(e.inquilino)}</div>
-        <div><span class="lbl">Prop: </span>${fmtNames(e.propietario)}</div>
-        <div><span class="lbl">Tel: </span>${telLink(e.telInq)}</div>
-        <div><span class="lbl">Tel: </span>${telLink(e.telProp)}</div>
-        ${contactRow(e, 'full')}
-      </div>
+      ${datosPersonas(e)}
       <div class="card-meta">${inicioLabel} &middot; Contrato: ${esc(e.contratoStr||'-')} &middot; Alquiler: ${fmtMoney(e.importe, e.moneda)}</div>
       ${fmtNotas(e)}
       <div style="padding:4px 0 2px">
@@ -347,121 +191,64 @@ export function _readVencInputs(defaultYears) {
   return { d, years, desc };
 }
 
-// "Marcar enviado": aplica el aumento al alquiler y guarda la marca (con el importe anterior,
-// para poder deshacer).
-async function marcarAumentoEnviado(key) {
-  const entry = entryByDir(key.split('|')[1]);
-  if (!entry) return;
-  const today     = new Date();
-  const newAmount = D.nuevoImporte(entry.importe, estado.ipc);
-  const prev = { importeAnterior: entry.importe, ultimoAumentoAnterior: D.toISODate(entry.ultimoAumento) };
-  if (await saveIncrease(entry, newAmount, today)) {
-    estado.marks[key] = { date: fmtDate(today), importeNuevo: newAmount, ipc: estado.ipc, ...prev };
-    await saveMarks();
-  }
+// Renovaciones del mes elegido (ventana de 45 dias) que faltan resolver (el circulito de la pestaña).
+export function contarPendientesRenovaciones() {
+  return getVencimientos(estado.entries, estado.selMonth, estado.selYear).filter(e => !isVencResuelto(e)).length;
 }
 
-// Deshacer "enviado": vuelve el alquiler al importe anterior y saca la marca.
-async function deshacerAumentoEnviado(key) {
-  const entry = entryByDir(key.split('|')[1]);
-  const mk = estado.marks[key];
-  // Revierte el importe solo si la marca guardo el estado previo (las importadas no lo tienen).
-  if (entry && mk && mk.importeAnterior) {
-    try {
-      replaceEntry(await call('patchContract', entry.id,
-        { importe: mk.importeAnterior, ultimoAumento: mk.ultimoAumentoAnterior || null }));
-    } catch (err) {
-      showToast('Error al revertir el aumento: ' + esc(err.message), 'err');
-      return false;
-    }
+// Vencidos sin resolver, el mes elegido y el siguiente, con el filtro de resueltos.
+export function renderRenovaciones(content) {
+  const { m: nxM, y: nxY } = mesSiguiente(estado.selMonth, estado.selYear);
+  const vencimientos  = getVencimientos(estado.entries, estado.selMonth, estado.selYear);
+  // "Proximo" solo con los que no aparecen ya en el mes elegido (la ventana de 45 dias se superpone).
+  const vencIds       = new Set(vencimientos.map(e => e.id));
+  const vencProx      = getVencimientos(estado.entries, nxM, nxY).filter(e => !vencIds.has(e.id));
+  const vencAtrasados = getVencidosAtrasados(estado.entries, estado.selMonth, estado.selYear);
+  const filtro = filtroResueltos();
+  const showPend = filtro.pendientes, showResv = filtro.resueltos;
+  const vencPend = vencimientos.filter(e => !isVencResuelto(e));
+  const vencResv = vencimientos.filter(e =>  isVencResuelto(e));
+  const proxPend = vencProx.filter(e => !isVencResuelto(e));
+  const proxResv = vencProx.filter(e =>  isVencResuelto(e));
+
+  let h = '';
+  if (showPend && vencAtrasados.length > 0) {
+    h += `<div class="sec-title" style="color:var(--red)">&#9888; Vencidos sin resolver (${vencAtrasados.length})</div>`;
+    h += `<div class="card-list">${vencAtrasados.map(e=>cardVenc(e,'var(--red)',true)).join('')}</div>`;
   }
-  delete estado.marks[key];
-  await saveMarks();
-  return true;
+  h += `<div class="sec-title${(showPend && vencAtrasados.length) ? ' sep' : ''}">${MONTH_NAMES[estado.selMonth]} ${estado.selYear}</div>`;
+  const visibleVenc = (showPend ? vencPend : []).concat(showResv ? vencResv : []);
+  if (visibleVenc.length === 0) {
+    h += `<div class="empty">Sin renovaciones ${filtro.palabra} este mes</div>`;
+  } else {
+    if (showPend && vencPend.length) h += `<div class="card-list">${vencPend.map(e=>cardVenc(e)).join('')}</div>`;
+    if (showResv && vencResv.length) h += `<div class="card-list">${vencResv.map(e=>cardVencCompact(e)).join('')}</div>`;
+  }
+  const visibleProx = (showPend ? proxPend : []).concat(showResv ? proxResv : []);
+  h += `<div class="sec-title sep">Proximo: ${MONTH_NAMES[nxM]} ${nxY} (${visibleProx.length})</div>`;
+  if (visibleProx.length === 0) {
+    h += `<div class="empty">Sin renovaciones ${filtro.palabra} el mes que viene</div>`;
+  } else {
+    if (showPend && proxPend.length) h += `<div class="card-list">${proxPend.map(e=>cardVenc(e)).join('')}</div>`;
+    if (showResv && proxResv.length) h += `<div class="card-list">${proxResv.map(e=>cardVencCompact(e)).join('')}</div>`;
+  }
+  content.innerHTML = h;
 }
 
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
-  document.getElementById('content').addEventListener('change', async e => {
-    const chk = e.target.closest('[data-aum]');
-    if (!chk) return;
-    chk.disabled = true;
-    if (chk.checked) await marcarAumentoEnviado(chk.dataset.aum);
-    else await deshacerAumentoEnviado(chk.dataset.aum);
-    render();
-  });
-
   document.getElementById('content').addEventListener('click', async e => {
-    // ── aumentos resueltos: desplegar el detalle / deshacer ─────────────────────
-    const aumUndo = e.target.closest('[data-aum-undo]');
-    if (aumUndo) {
-      aumUndo.disabled = true;
-      if (await deshacerAumentoEnviado(aumUndo.dataset.aumUndo)) {
-        aumAbiertos.delete(aumUndo.dataset.aumUndo);
-        showToast('&#8617; Aumento deshecho: el alquiler volvió al importe anterior', 'info');
-      }
-      render();
-      return;
-    }
-    const aumToggle = e.target.closest('[data-aum-toggle]');
-    if (aumToggle) {
-      const k = aumToggle.dataset.aumToggle;
-      if (aumAbiertos.has(k)) aumAbiertos.delete(k); else aumAbiertos.add(k);
-      render();
-      return;
-    }
-
-    const copyBtn = e.target.closest('[data-copy]');
-    if (copyBtn) {
-      copyToClipboard(copyBtn.dataset.copy);
-      copyBtn.classList.add('copied');
-      const orig = copyBtn.textContent;
-      copyBtn.textContent = '✓';
-      setTimeout(() => { copyBtn.textContent = orig; copyBtn.classList.remove('copied'); }, 1800);
-      return;
-    }
-
-    // ── na-start (iniciar "no aumenta") ──────────────────────────────────────
-    const naStart = e.target.closest('[data-na-start]');
-    if (naStart) {
-      pendingNoAum = naStart.dataset.naStart;
-      pendingNoRen = null;
-      render();
-      setTimeout(() => { const el = document.getElementById('inp-na-desc'); if (el) el.focus(); }, 50);
-      return;
-    }
-    if (e.target.closest('[data-na-cancel]')) { pendingNoAum = null; render(); return; }
-
-    // ── na-conf (confirmar no aumenta) ────────────────────────────────────────
-    const naConf = e.target.closest('[data-na-conf]');
-    if (naConf) {
-      const naKy   = naConf.dataset.naConf;
-      const descEl = document.getElementById('inp-na-desc');
-      const desc   = descEl ? descEl.value.trim() : '';
-      const entry  = entryByDir(naKy.split('|')[1]);   // na|dir|m|y
-      estado.marks[naKy]  = { date: fmtDate(new Date()), desc };
-      saveMarks();
-      pendingNoAum = null;
-      if (entry && desc) await saveNotes(entry, appendNote(entry, `NO AUMENTA: ${desc}`));
-      render();
-      return;
-    }
-
-    // ── un-na (deshacer no aumenta) ───────────────────────────────────────────
-    const unNa = e.target.closest('[data-un-na]');
-    if (unNa) { delete estado.marks[unNa.dataset.unNa]; saveMarks(); render(); return; }
-
     // ── nr-start (iniciar "no renueva") ──────────────────────────────────────
     const nrStart = e.target.closest('[data-nr-start]');
     if (nrStart) {
-      pendingNoRen = nrStart.dataset.nrStart;
-      pendingVenc  = null;
-      pendingNoAum = null;
+      pendientes.noRenueva = nrStart.dataset.nrStart;
+      pendientes.venc  = null;
+      pendientes.noAumenta = null;
       render();
       setTimeout(() => { const el = document.getElementById('inp-nr-desc'); if (el) el.focus(); }, 50);
       return;
     }
-    if (e.target.closest('[data-nr-cancel]')) { pendingNoRen = null; render(); return; }
+    if (e.target.closest('[data-nr-cancel]')) { pendientes.noRenueva = null; render(); return; }
 
     // ── nr-conf (confirmar no renueva) ────────────────────────────────────────
     const nrConf = e.target.closest('[data-nr-conf]');
@@ -474,7 +261,7 @@ export function iniciar() {
       const vd     = entry ? getVencDate(entry) : null;
       estado.marks[`nr|${dir}`] = { date: fmtDate(new Date()), desc, sigueActivo: sigue, hasta: vd ? D.toISODate(vd) : '' };
       await saveMarks();
-      pendingNoRen = null;
+      pendientes.noRenueva = null;
       if (entry && desc) await saveNotes(entry, appendNote(entry, `NO RENUEVA${sigue ? ' (sigue en el apto)' : ''}: ${desc}`));
       if (entry && !sigue) {
         try { replaceEntry(await call('inactivate', entry.id)); showToast('No renueva: el alquiler pasó a inactivo (Ctrl+Z para deshacer)', 'info'); }
@@ -507,12 +294,12 @@ export function iniciar() {
 
     // ── vstart / vstart-r ───────────────────────────────────────────────────────
     const vstart = e.target.closest('[data-vstart]');
-    if (vstart) { pendingNoRen = null; pendingNoAum = null; pendingVenc = vstart.dataset.vstart; render(); return; }
+    if (vstart) { pendientes.noRenueva = null; pendientes.noAumenta = null; pendientes.venc = vstart.dataset.vstart; render(); return; }
 
     const vstartR = e.target.closest('[data-vstart-r]');
-    if (vstartR) { pendingNoRen = null; pendingNoAum = null; pendingVenc = 'R:' + vstartR.dataset.vstartR; render(); return; }
+    if (vstartR) { pendientes.noRenueva = null; pendientes.noAumenta = null; pendientes.venc = 'R:' + vstartR.dataset.vstartR; render(); return; }
 
-    if (e.target.closest('[data-vcancel]')) { pendingVenc = null; render(); return; }
+    if (e.target.closest('[data-vcancel]')) { pendientes.venc = null; render(); return; }
 
     // ── vconf (ciclo original) ─────────────────────────────────────────────────
     const vconf = e.target.closest('[data-vconf]');
@@ -524,7 +311,7 @@ export function iniciar() {
       delete estado.marks[`nr|${dir}`];   // si no habia renovado pero seguia, ahora renovo
       estado.marks[`v|${dir}`] = { date: fmtDate(new Date()), nuevaInicio: d ? fmtDate(d) : '', renewYears: years };
       saveMarks();
-      pendingVenc  = null;
+      pendientes.venc  = null;
       if (entry) await saveRenewal(entry, years, desc);
       render();
       return;
@@ -541,7 +328,7 @@ export function iniciar() {
       delete estado.marks[`nr|${dir}`];
       estado.marks[`vr|${dir}`] = { date: fmtDate(new Date()), nuevaInicio: d ? fmtDate(d) : '', renewYears: years };
       saveMarks();
-      pendingVenc  = null;
+      pendientes.venc  = null;
       if (entry) await saveRenewal(entry, years, desc);
       render();
       return;

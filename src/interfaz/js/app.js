@@ -10,7 +10,8 @@ import * as importar from './modales/importar.js';
 import * as D from '../../dominios/index.js';
 import * as deshacer from './componentes/deshacer.js';
 import * as modales from './nucleo/modales.js';
-import * as operativo from './vistas/operativo.js';
+import * as aumentos from './vistas/aumentos.js';
+import * as renovaciones from './vistas/renovaciones.js';
 import * as propietarios from './vistas/propietarios.js';
 import { Splitters } from '../../dominios/index.js';
 import { bindAutocomplete } from './componentes/autocompletado.js';
@@ -21,13 +22,14 @@ import { paintSave, paintShare, paintViewer, viewerUseState } from './componente
 import { paintUndo } from './componentes/deshacer.js';
 import { fetchIPC } from './componentes/ipc.js';
 import { call } from './nucleo/api.js';
-import { entryByDir, getAumentos, getVencidosAtrasados, getVencimientos, isAumentoResuelto, isVencResuelto, saveNotes, vencColor } from './nucleo/datos.js';
+import { entryByDir, saveNotes, vencColor } from './nucleo/datos.js';
 import { esc, showToast } from './nucleo/dom.js';
 import { applyOwners, estado } from './nucleo/estado.js';
 import { MONTH_NAMES, colorPorDias } from './nucleo/formato.js';
 import { renderAdminTable } from './vistas/administraciones.js';
 import { populateDBYears, renderDBTable } from './vistas/base-datos.js';
-import { cardAumento, cardAumentoCompact, cardVenc, cardVencCompact } from './vistas/operativo.js';
+import { contarPendientesAumentos, renderAumentos } from './vistas/aumentos.js';
+import { contarPendientesRenovaciones, renderRenovaciones } from './vistas/renovaciones.js';
 import { renderOwnersPanel } from './vistas/propietarios.js';
 
 export function applyState(st) {
@@ -65,24 +67,10 @@ export function render() {
   document.getElementById('op-controls').style.display  = isPanel  ? 'none'  : 'flex';
   document.getElementById('ipc-group').hidden = estado.activeTab !== 'aumentos';   // el IPC solo aplica a aumentos
 
-  // Contadores de tabs
-  const nxM = estado.selMonth===12 ? 1 : estado.selMonth+1;
-  const nxY = estado.selMonth===12 ? estado.selYear+1 : estado.selYear;
-  const aumentos        = getAumentos(estado.entries, estado.selMonth, estado.selYear);
-  const vencimientos    = getVencimientos(estado.entries, estado.selMonth, estado.selYear);
-  const aumentosProx    = getAumentos(estado.entries, nxM, nxY);
-  // "Proximo" solo con los que no aparecen ya en el mes elegido (la ventana de 45 dias se superpone).
-  const vencIds         = new Set(vencimientos.map(e => e.id));
-  const vencProx        = getVencimientos(estado.entries, nxM, nxY).filter(e => !vencIds.has(e.id));
-  const vencAtrasados   = getVencidosAtrasados(estado.entries, estado.selMonth, estado.selYear);
-
   // Aumentos y Renovaciones muestran un circulito (como una notificacion) con lo que falta hacer;
   // los resueltos se ven igual en la lista pero no cuentan.
-  const pendAum  = aumentos.filter(e => !isAumentoResuelto(e, estado.selMonth, estado.selYear)).length;
-  // Renovaciones: solo las que vencen dentro de la ventana de 45 dias y no estan resueltas (sin "proximo").
-  const pendVenc = vencimientos.filter(e => !isVencResuelto(e)).length;
-  pintarAviso('tab-aumentos', pendAum);
-  pintarAviso('tab-vencimientos', pendVenc);
+  pintarAviso('tab-aumentos', contarPendientesAumentos());
+  pintarAviso('tab-vencimientos', contarPendientesRenovaciones());
   pintarNovedades();   // Visor: lo nuevo desde la ultima vez que se entro a cada pestaña
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===estado.activeTab));
 
@@ -99,61 +87,9 @@ export function render() {
     return;
   }
 
-  const content  = document.getElementById('content');
-  const showAll  = !estado.opShowSinResolver && !estado.opShowResuelto;
-  const showPend = estado.opShowSinResolver || showAll;
-  const showResv = estado.opShowResuelto    || showAll;
-
-  if (estado.activeTab === 'aumentos') {
-    const aumPend  = aumentos.filter(e => !isAumentoResuelto(e, estado.selMonth, estado.selYear));
-    const aumResv  = aumentos.filter(e =>  isAumentoResuelto(e, estado.selMonth, estado.selYear));
-    const proxPend = aumentosProx.filter(e => !isAumentoResuelto(e, nxM, nxY));
-    const proxResv = aumentosProx.filter(e =>  isAumentoResuelto(e, nxM, nxY));
-
-    let h = `<div class="sec-title">${MONTH_NAMES[estado.selMonth]} ${estado.selYear}</div>`;
-    const visibleAum  = (showPend ? aumPend  : []).concat(showResv ? aumResv  : []);
-    const visibleProx = (showPend ? proxPend : []).concat(showResv ? proxResv : []);
-    if (visibleAum.length === 0) {
-      h += `<div class="empty">Sin aumentos ${estado.opShowSinResolver ? 'pendientes' : estado.opShowResuelto ? 'resueltos' : ''} este mes</div>`;
-    } else {
-      if (showPend && aumPend.length)  h += `<div class="card-list">${aumPend.map(e=>cardAumento(e,estado.selMonth,estado.selYear,estado.ipc)).join('')}</div>`;
-      if (showResv && aumResv.length)  h += `<div class="card-list">${aumResv.map(e=>cardAumentoCompact(e,estado.selMonth,estado.selYear)).join('')}</div>`;
-    }
-    if (visibleProx.length > 0) {
-      h += `<div class="sec-title sep">Proximo: ${MONTH_NAMES[nxM]} ${nxY} (${visibleProx.length})</div>`;
-      if (showPend && proxPend.length) h += `<div class="card-list dim">${proxPend.map(e=>cardAumento(e,nxM,nxY,estado.ipc)).join('')}</div>`;
-      if (showResv && proxResv.length) h += `<div class="card-list dim">${proxResv.map(e=>cardAumentoCompact(e,nxM,nxY)).join('')}</div>`;
-    }
-    content.innerHTML = h;
-  } else {
-    const vencPend = vencimientos.filter(e => !isVencResuelto(e));
-    const vencResv = vencimientos.filter(e =>  isVencResuelto(e));
-    const proxPend = vencProx.filter(e => !isVencResuelto(e));
-    const proxResv = vencProx.filter(e =>  isVencResuelto(e));
-
-    let h = '';
-    if (showPend && vencAtrasados.length > 0) {
-      h += `<div class="sec-title" style="color:var(--red)">&#9888; Vencidos sin resolver (${vencAtrasados.length})</div>`;
-      h += `<div class="card-list">${vencAtrasados.map(e=>cardVenc(e,'var(--red)',true)).join('')}</div>`;
-    }
-    h += `<div class="sec-title${(showPend && vencAtrasados.length) ? ' sep' : ''}">${MONTH_NAMES[estado.selMonth]} ${estado.selYear}</div>`;
-    const visibleVenc = (showPend ? vencPend : []).concat(showResv ? vencResv : []);
-    if (visibleVenc.length === 0) {
-      h += `<div class="empty">Sin renovaciones ${estado.opShowSinResolver ? 'pendientes' : estado.opShowResuelto ? 'resueltos' : ''} este mes</div>`;
-    } else {
-      if (showPend && vencPend.length) h += `<div class="card-list">${vencPend.map(e=>cardVenc(e)).join('')}</div>`;
-      if (showResv && vencResv.length) h += `<div class="card-list">${vencResv.map(e=>cardVencCompact(e)).join('')}</div>`;
-    }
-    const visibleProx = (showPend ? proxPend : []).concat(showResv ? proxResv : []);
-    h += `<div class="sec-title sep">Proximo: ${MONTH_NAMES[nxM]} ${nxY} (${visibleProx.length})</div>`;
-    if (visibleProx.length === 0) {
-      h += `<div class="empty">Sin renovaciones ${estado.opShowSinResolver ? 'pendientes' : estado.opShowResuelto ? 'resueltos' : ''} el mes que viene</div>`;
-    } else {
-      if (showPend && proxPend.length) h += `<div class="card-list">${proxPend.map(e=>cardVenc(e)).join('')}</div>`;
-      if (showResv && proxResv.length) h += `<div class="card-list">${proxResv.map(e=>cardVencCompact(e)).join('')}</div>`;
-    }
-    content.innerHTML = h;
-  }
+  const content = document.getElementById('content');
+  if (estado.activeTab === 'aumentos') renderAumentos(content);
+  else renderRenovaciones(content);
 }
 
 export function showApp() {
@@ -305,7 +241,7 @@ export function iniciar() {
 // parte de la pantalla (las viñetas del formulario antes que el autocompletado) y se cargan
 // los datos.
 
-for (const parte of [modales, compartir, operativo, propietarios, { iniciar }, deshacer, cabecera,
+for (const parte of [modales, compartir, aumentos, renovaciones, propietarios, { iniciar }, deshacer, cabecera,
                      baseDatos, administraciones, alquiler, configuracion, importar]) parte.iniciar();
 bindAutocomplete();
 loadState();
