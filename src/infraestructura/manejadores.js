@@ -56,8 +56,21 @@ function handle(channel, fn) {
   });
 }
 
+// Canales que no modifican datos: los usan el editor y el Visor.
+function registerCommonHandlers() {
+  handle('state:get',            () => estadoApp.state());
+  handle('undo:status',          () => (ctx.store ? ctx.store.undoStatus() : {}));
+  handle('ipc:fetch',            () => fetchLatestIPC());
+  handle('owner:docPreview',     (id) => docPreview(id));
+  handle('owner:openDoc',        (id) => shell.openPath(docFile(id).p));
+  handle('data:exportCsv',       () => exportCsv());
+  handle('window:titleBarColor', (c, ink) => ventana.setTitleBarColor(c, ink));
+  handle('window:icon',          (png) => ventana.setAppIcon(png));
+  handle('window:zoom',          (f) => ventana.setZoom(f));
+}
+
 function registerHandlers() {
-  handle('state:get', () => estadoApp.state());
+  registerCommonHandlers();
 
   // Planillas: elegir el archivo y reemplazar todo (al empezar o con la app en uso), o sumarla a
   // lo que ya hay. null = se cancelo el dialogo.
@@ -105,7 +118,6 @@ function registerHandlers() {
 
   handle('undo:undo',   () => { const label = ctx.store.undo(); notifyUndo(); return { label, state: estadoApp.state() }; });
   handle('undo:redo',   () => { const label = ctx.store.redo(); notifyUndo(); return { label, state: estadoApp.state() }; });
-  handle('undo:status', () => ctx.store.undoStatus());
 
   // Alta/edicion: ademas del contrato se vinculan los propietarios escritos en el modal.
   const saveWithOwners = (saved, c) => {
@@ -128,10 +140,6 @@ function registerHandlers() {
       ...(asistente ? { asistenteVisto: '1' } : {}) });
     return { settings: ctx.store.getSettings() };
   });
-  handle('window:titleBarColor', (c, ink) => ventana.setTitleBarColor(c, ink));
-  handle('window:icon', (png) => ventana.setAppIcon(png));
-  handle('window:zoom', (f) => ventana.setZoom(f));
-  handle('ipc:fetch',    ()       => fetchLatestIPC());
 
   const ownersState = () => ({
     owners: ctx.store.listOwners(), contacts: ctx.store.listContacts(), contractOwners: ctx.store.listContractOwners(),
@@ -153,13 +161,10 @@ function registerHandlers() {
   handle('owner:account',  (ownerId, dir, cuenta) => { ctx.store.setOwnerAccount(ownerId, dir, cuenta); return ownersState(); });
   handle('owner:addDocs',  async (ownerId)       => { await pickOwnerDocs(ownerId); return ownersState(); });
   handle('owner:deleteDoc', (id)                 => { ctx.store.deleteOwnerDoc(id); return ownersState(); });
-  handle('owner:docPreview', (id)                => docPreview(id));
-  handle('owner:openDoc',  (id)                  => shell.openPath(docFile(id).p));
   handle('contract:setOwners', (id, ids)         => { ctx.store.setContractOwners(id, ids); return ownersState(); });
 
   handle('data:openFolder', () => shell.openPath(app.getPath('userData')));
   handle('data:backup',     () => ctx.store.backup('manual'));
-  handle('data:exportCsv',  () => exportCsv());
 
   // Carpeta compartida para el Visor.
   handle('share:status',  () => publicacion.shareStatus());
@@ -179,18 +184,10 @@ function registerHandlers() {
 
 // El Visor solo lee: no se registra ningun canal que modifique datos.
 function registerViewerHandlers() {
-  handle('state:get',        () => estadoApp.state());
-  handle('viewer:pickDir',   () => visor.pickViewerDir());
-  handle('viewer:reload',    async () => { await visor.loadViewer(); return estadoApp.state(); });
-  handle('ipc:fetch',        () => fetchLatestIPC());
-  handle('owner:docPreview', (id) => docPreview(id));
-  handle('owner:openDoc',    (id) => shell.openPath(docFile(id).p));
-  handle('data:exportCsv',   () => exportCsv());
-  handle('setting:set',      () => true);
-  handle('window:titleBarColor', (c, ink) => ventana.setTitleBarColor(c, ink));
-  handle('window:icon', (png) => ventana.setAppIcon(png));
-  handle('window:zoom', (f) => ventana.setZoom(f));
-  handle('undo:status',      () => ctx.store ? ctx.store.undoStatus() : {});
+  registerCommonHandlers();
+  handle('viewer:pickDir', () => visor.pickViewerDir());
+  handle('viewer:reload',  async () => { await visor.loadViewer(); return estadoApp.state(); });
+  handle('setting:set',    () => true);
 }
 
 Object.assign(module.exports, { UNDO_LABELS, notifyUndo, handle, registerHandlers, registerViewerHandlers });
