@@ -2,7 +2,7 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
-## [Sin publicar]
+## [0.8.1] - 2026-10-23
 
 ### Corregido
 - Deshacer: un cambio hecho enseguida de importar una planilla ya no se deshace junto con la importación.
