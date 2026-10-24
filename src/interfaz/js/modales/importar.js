@@ -22,17 +22,17 @@ async function importar() {
     const res = await call(modo === 'agregar' ? 'importarSumar' : 'importarReemplazar');
     if (!res) return;                                   // dialogo cancelado
     cerrarModal('modal-importar');
-    aplicarEstado(res.state);
-    estado.expandedRows.clear();
+    aplicarEstado(res.estado);
+    estado.filasAbiertas.clear();
     llenarAniosBase();
     dibujar();
     if (modo === 'agregar') {
-      const r = res.result;
+      const r = res.resultado;
       mostrarAviso(`&#10003; Agregados ${plural(r.agregados, 'alquiler', 'alquileres')}` +
-        (r.admins ? ` y ${plural(r.admins, 'administración', 'administraciones')}` : '') +
+        (r.administraciones ? ` y ${plural(r.administraciones, 'administración', 'administraciones')}` : '') +
         (r.repetidos ? ` (${plural(r.repetidos, 'repetido salteado', 'repetidos salteados')})` : ''), 'ok');
     } else {
-      mostrarAviso(`&#10003; Importados ${plural(res.counts.contracts, 'alquiler', 'alquileres')} y ${plural(res.counts.admins, 'administración', 'administraciones')}`, 'ok');
+      mostrarAviso(`&#10003; Importados ${plural(res.cantidades.contratos, 'alquiler', 'alquileres')} y ${plural(res.cantidades.administraciones, 'administración', 'administraciones')}`, 'ok');
     }
   } catch (err) { mostrarAviso('Error al importar: ' + esc(err.message), 'err'); }
 }

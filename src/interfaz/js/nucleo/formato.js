@@ -30,37 +30,37 @@ const NADA = '<span style="color:var(--dim)">-</span>';
 
 const esNada = t => !t || /^[-xX\s]*$/.test(t);
 
-export function enlaceTelefono(raw) {
-  if (esNada(raw)) return NADA;
-  const salida = Separadores.telefonos(raw).filter(p => !esNada(p)).map(parte => {
+export function enlaceTelefono(textoOriginal) {
+  if (esNada(textoOriginal)) return NADA;
+  const salida = Separadores.telefonos(textoOriginal).filter(p => !esNada(p)).map(parte => {
     const numero = D.numeroWhatsApp(parte);
     return numero ? enlaceWhatsApp(numero, esc(parte)) : `<span class="tel">${esc(parte)}</span>`;
   });
   return salida.length ? salida.join(SEP) : NADA;
 }
 
-export function formatearNombres(raw) {
-  const salida = Separadores.personas(raw || '').map(esc);
+export function formatearNombres(textoOriginal) {
+  const salida = Separadores.personas(textoOriginal || '').map(esc);
   return salida.length ? salida.join(SEP) : NADA;
 }
 
-export function formatearMails(raw) {
-  const salida = Separadores.mails(raw || '').map(m => m.includes('@')
+export function formatearMails(textoOriginal) {
+  const salida = Separadores.mails(textoOriginal || '').map(m => m.includes('@')
     ? `<a class="mail-val" href="mailto:${esc(m)}">${esc(m)}</a>` : `<span class="mail-val">${esc(m)}</span>`);
   return salida.length ? salida.join(SEP) : NADA;
 }
 
 // Texto libre de telefonos (admin.) -- cada telefono separado; los numeros pasan a WhatsApp
 // preservando las etiquetas ("Emergencias: ...").
-export function enlazarTelefonosEnTexto(raw) {
-  if (esNada(raw)) return NADA;
-  return Separadores.telefonos(raw).map(p => esc(p).replace(/\d[\d\s]{6,}\d/g, m => {
+export function enlazarTelefonosEnTexto(textoOriginal) {
+  if (esNada(textoOriginal)) return NADA;
+  return Separadores.telefonos(textoOriginal).map(p => esc(p).replace(/\d[\d\s]{6,}\d/g, m => {
     const numero = D.numeroWhatsApp(m);
     return numero ? enlaceWhatsApp(numero, m) : m;
   })).join(SEP);
 }
 
-export function enlazarMailsEnTexto(raw) { return formatearMails(raw); }
+export function enlazarMailsEnTexto(textoOriginal) { return formatearMails(textoOriginal); }
 
 // Comentarios en las tarjetas: uno por renglon (sin las notas de renovacion).
 export function formatearNotas(e) {
@@ -68,8 +68,8 @@ export function formatearNotas(e) {
   return lista.length ? `<div class="card-nota">${lista.map(n => `<div class="nota-item">${esc(n)}</div>`).join('')}</div>` : '';
 }
 
-export function formatearEdificios(raw) {
-  const salida = Separadores.edificios(raw || '').map(esc);
+export function formatearEdificios(textoOriginal) {
+  const salida = Separadores.edificios(textoOriginal || '').map(esc);
   return salida.length ? salida.join(SEP) : NADA;
 }
 

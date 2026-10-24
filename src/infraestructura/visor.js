@@ -11,50 +11,50 @@ const estadoApp = require('./estado-app');
 
 function archivoConfigVisor() { return path.join(app.getPath('userData'), 'visor.json'); }
 
-function estadoVisor() { return { dir: ctx.viewer.dir, lastLoad: ctx.viewer.lastLoad, publicado: ctx.viewer.dir ? (share.leerInfo(ctx.viewer.dir) || {}).publicado : null, error: ctx.viewer.error }; }
+function estadoVisor() { return { carpeta: ctx.visor.carpeta, ultimaCarga: ctx.visor.ultimaCarga, publicado: ctx.visor.carpeta ? (share.leerInfo(ctx.visor.carpeta) || {}).publicado : null, error: ctx.visor.error }; }
 
 async function cargarVisor() {
-  if (!ctx.viewer.dir) {
+  if (!ctx.visor.carpeta) {
     let cfg = {};
     try { cfg = JSON.parse(fs.readFileSync(archivoConfigVisor(), 'utf8')); } catch (_) {}
     // cfg.sharedDir: archivo de configuracion del Visor de hasta la 0.8.1.
-    ctx.viewer.dir = process.env.ADMIN_ALQ_SHARED_DIR || cfg.carpetaCompartida || cfg.sharedDir || CARPETA_COMPARTIDA_PREDETERMINADA;
+    ctx.visor.carpeta = process.env.ADMIN_ALQ_SHARED_DIR || cfg.carpetaCompartida || cfg.sharedDir || CARPETA_COMPARTIDA_PREDETERMINADA;
   }
-  if (!ctx.viewer.dir) { ctx.viewer.error = 'Todavía no se eligió la carpeta compartida.'; return; }
+  if (!ctx.visor.carpeta) { ctx.visor.error = 'Todavía no se eligió la carpeta compartida.'; return; }
   try {
-    const siguiente = await BaseDatos.open(share.rutaBaseCompartida(ctx.viewer.dir), { readOnly: true });
-    if (ctx.store) ctx.store.close();
-    ctx.store = siguiente;
-    ctx.viewer.mtime = share.fechaModBase(ctx.viewer.dir);
-    ctx.viewer.lastLoad = new Date().toISOString();
-    ctx.viewer.error = null;
+    const siguiente = await BaseDatos.open(share.rutaBaseCompartida(ctx.visor.carpeta), { soloLectura: true });
+    if (ctx.base) ctx.base.close();
+    ctx.base = siguiente;
+    ctx.visor.mtime = share.fechaModBase(ctx.visor.carpeta);
+    ctx.visor.ultimaCarga = new Date().toISOString();
+    ctx.visor.error = null;
   } catch (e) {
-    ctx.viewer.error = e.message;
+    ctx.visor.error = e.message;
   }
 }
 
 function iniciarSondeoVisor() {
   setInterval(async () => {
-    const m = ctx.viewer.dir && share.fechaModBase(ctx.viewer.dir);
-    if (!m || m === ctx.viewer.mtime) return;
+    const m = ctx.visor.carpeta && share.fechaModBase(ctx.visor.carpeta);
+    if (!m || m === ctx.visor.mtime) return;
     await new Promise(r => setTimeout(r, 400));            // que termine de escribirse
     await cargarVisor();
-    if (ctx.win && !ctx.win.isDestroyed()) ctx.win.webContents.send('data:changed', estadoVisor());
+    if (ctx.ventana && !ctx.ventana.isDestroyed()) ctx.ventana.webContents.send('data:changed', estadoVisor());
   }, INTERVALO_SONDEO_MS);
 }
 
 async function elegirCarpetaVisor() {
-  const res = await dialog.showOpenDialog(ctx.win, {
+  const res = await dialog.showOpenDialog(ctx.ventana, {
     title: 'Elegir la carpeta compartida de Admin Alquileres', properties: ['openDirectory'],
     defaultPath: CARPETA_COMPARTIDA_PREDETERMINADA && fs.existsSync(CARPETA_COMPARTIDA_PREDETERMINADA) ? CARPETA_COMPARTIDA_PREDETERMINADA : undefined,
   });
   if (res.canceled || !res.filePaths[0]) return null;
   const dir = res.filePaths[0];
   if (!fs.existsSync(share.rutaBaseCompartida(dir))) throw new Error('En esa carpeta no está la base compartida (alquileres.sqlite).');
-  ctx.viewer.dir = dir;
+  ctx.visor.carpeta = dir;
   fs.writeFileSync(archivoConfigVisor(), JSON.stringify({ carpetaCompartida: dir }));
   await cargarVisor();
-  return estadoApp.state();
+  return estadoApp.estado();
 }
 
 Object.assign(module.exports, { estadoVisor, cargarVisor, iniciarSondeoVisor, elegirCarpetaVisor });

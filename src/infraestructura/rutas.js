@@ -8,7 +8,7 @@ const { ctx } = require('./contexto');
 function rutaBase() { return path.join(app.getPath('userData'), 'alquileres.sqlite'); }
 
 function carpetaDocs() {
-  return ES_VISOR ? share.rutaDocsCompartidos(ctx.viewer.dir || '') : path.join(app.getPath('userData'), 'documentos');
+  return ES_VISOR ? share.rutaDocsCompartidos(ctx.visor.carpeta || '') : path.join(app.getPath('userData'), 'documentos');
 }
 
 

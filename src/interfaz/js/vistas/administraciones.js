@@ -12,10 +12,10 @@ let textoBusquedaAdmins  = '';
 let filaAdminEditando     = null;  // id de la administracion en edicion (null = alta nueva)
 
 function adminsFiltradas() {
-  if (!estado.admins) return [];
-  if (!textoBusquedaAdmins.trim()) return estado.admins;
+  if (!estado.administraciones) return [];
+  if (!textoBusquedaAdmins.trim()) return estado.administraciones;
   const q = normalizar(textoBusquedaAdmins);
-  return estado.admins.filter(a =>
+  return estado.administraciones.filter(a =>
     normalizar(a.nombre).includes(q) ||
     normalizar(a.edificios).includes(q) ||
     normalizar(a.telefono).includes(q) ||
@@ -24,10 +24,10 @@ function adminsFiltradas() {
 }
 
 export function dibujarTablaAdmins() {
-  if (!estado.admins) return;
+  if (!estado.administraciones) return;
   const filtrados = adminsFiltradas();
   const elCantidad = document.getElementById('admin-count');
-  if (elCantidad) elCantidad.textContent = `${filtrados.length} / ${estado.admins.length} administraciones`;
+  if (elCantidad) elCantidad.textContent = `${filtrados.length} / ${estado.administraciones.length} administraciones`;
 
   const tbody = document.getElementById('admin-tbody');
   if (!tbody) return;
@@ -84,7 +84,7 @@ async function enviarAdmin() {
   btn.disabled    = true;
   btn.textContent = 'Guardando...';
   try {
-    estado.admins = await call('guardarAdmin', carga);
+    estado.administraciones = await call('guardarAdmin', carga);
     mostrarAviso('&#10003; Administracion guardada', 'ok');
     ocultarModalAdmin();
     dibujar();
@@ -98,7 +98,7 @@ async function enviarAdmin() {
 async function borrarEntradaAdmin(id, nombre) {
   if (!confirm(`Eliminar "${nombre}"?`)) return;
   try {
-    estado.admins = await call('borrarAdmin', id);
+    estado.administraciones = await call('borrarAdmin', id);
     mostrarAviso('&#10003; Administracion eliminada', 'ok');
     dibujar();
   } catch (err) {
@@ -134,14 +134,14 @@ export function iniciar() {
   document.getElementById('admin-tbody').addEventListener('click', e => {
     const btnEditar = e.target.closest('[data-admin-edit]');
     if (btnEditar) {
-      const entrada = estado.admins && estado.admins.find(a => a.id === +btnEditar.dataset.adminEdit);
+      const entrada = estado.administraciones && estado.administraciones.find(a => a.id === +btnEditar.dataset.adminEdit);
       if (entrada) mostrarModalAdmin(entrada);
       return;
     }
     const btnBorrar = e.target.closest('[data-admin-del]');
     if (btnBorrar) {
       const id    = +btnBorrar.dataset.adminDel;
-      const entrada = estado.admins && estado.admins.find(a => a.id === id);
+      const entrada = estado.administraciones && estado.administraciones.find(a => a.id === id);
       borrarEntradaAdmin(id, entrada ? entrada.nombre : '');
       return;
     }

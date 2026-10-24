@@ -17,9 +17,9 @@ export function gestionadoPor(e) {
   return GARANTIAS_GESTIONAN.includes(g) ? g : '';
 }
 
-export function interpretarDuracion(raw) {
-  if (!raw) return null;
-  const s = String(raw).toLowerCase().trim();
+export function interpretarDuracion(textoOriginal) {
+  if (!textoOriginal) return null;
+  const s = String(textoOriginal).toLowerCase().trim();
   const m = s.match(/\b([123])\b/);
   if (m) return parseInt(m[1],10);
   const m2 = s.match(/([123])/);
@@ -42,16 +42,16 @@ export function hidratarContrato(r) {
     remitente: r.remitente || '',
     garantia: r.garantia || '',
     moneda: r.moneda === 'USD' ? 'USD' : 'UYU',
-    contratoStr: r.contratoStr || '',
+    contratoTexto: r.contratoTexto || '',
     edificio: r.edificio || '', calle: r.calle || '', unidad: r.unidad || '',
     direccionOriginal: r.direccionOriginal || '',
-    contratoDuracion: interpretarDuracion(r.contratoStr),
+    contratoDuracion: interpretarDuracion(r.contratoTexto),
     fechaInicio: interpretarISO(r.fechaInicio),
     inquilino: r.inquilino || '',
     telInq: r.telInq || '',
     mailInq: r.mailInq || '',
     notas: r.notas || '',
-    inactive: !!r.inactive,
+    inactivo: !!r.inactivo,
   };
 }
 
@@ -62,25 +62,25 @@ export function adjuntarPropietarios(entradas, propietarios, contactos, enlaces)
   const cById = new Map((contactos || []).map(c => [c.id, c]));
   const porContrato = new Map();
   for (const l of enlaces || []) {
-    if (!porContrato.has(l.contractId)) porContrato.set(l.contractId, []);
-    porContrato.get(l.contractId).push(l);
+    if (!porContrato.has(l.idContrato)) porContrato.set(l.idContrato, []);
+    porContrato.get(l.idContrato).push(l);
   }
   for (const e of entradas) {
-    if (e.propietarioRaw === undefined) {
-      e.propietarioRaw = e.propietario; e.telPropRaw = e.telProp; e.mailPropRaw = e.mailProp;
+    if (e.propietarioOriginal === undefined) {
+      e.propietarioOriginal = e.propietario; e.telPropOriginal = e.telProp; e.mailPropOriginal = e.mailProp;
     }
     const ls = (porContrato.get(e.id) || []).slice().sort((a, b) => a.orden - b.orden);
-    e.owners = ls.map(l => oById.get(l.ownerId)).filter(Boolean);
-    if (e.owners.length) {
-      e.propietario = e.owners.map(o => o.nombre).join(' / ');
-      e.telProp     = e.owners.map(o => o.telefono).filter(Boolean).join(' / ');
-      e.mailProp    = e.owners.map(o => o.mail).filter(Boolean).join(' / ');
+    e.propietarios = ls.map(l => oById.get(l.idPropietario)).filter(Boolean);
+    if (e.propietarios.length) {
+      e.propietario = e.propietarios.map(o => o.nombre).join(' / ');
+      e.telProp     = e.propietarios.map(o => o.telefono).filter(Boolean).join(' / ');
+      e.mailProp    = e.propietarios.map(o => o.mail).filter(Boolean).join(' / ');
     } else {
-      e.propietario = e.propietarioRaw; e.telProp = e.telPropRaw; e.mailProp = e.mailPropRaw;
+      e.propietario = e.propietarioOriginal; e.telProp = e.telPropOriginal; e.mailProp = e.mailPropOriginal;
     }
     const cs = new Map();
-    for (const o of e.owners) if (o.contactId && cById.has(o.contactId)) cs.set(o.contactId, cById.get(o.contactId));
-    e.contacts = [...cs.values()];
+    for (const o of e.propietarios) if (o.idContacto && cById.has(o.idContacto)) cs.set(o.idContacto, cById.get(o.idContacto));
+    e.contactos = [...cs.values()];
   }
   return entradas;
 }

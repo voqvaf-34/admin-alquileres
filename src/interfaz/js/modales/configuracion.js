@@ -281,13 +281,13 @@ function armarMensajes() {
 // ── Abrir ──
 function cargar() {
   claveIconoDibujado = claveDisenosDibujados = null;   // al abrir se dibuja todo de nuevo
-  const actual = leerMarca(estado.appSettings);
+  const actual = leerMarca(estado.ajustesApp);
   const { icono, ...resto } = actual;
-  borrador = { ...resto, nombre: estado.appSettings.marcaNombre || '',
+  borrador = { ...resto, nombre: estado.ajustesApp.marcaNombre || '',
     iconoTipo: icono.tipo, iconoDiseno: icono.diseno, iconoColor: icono.color, iconoImagen: icono.imagen };
   $('cfg-nombre').value = borrador.nombre;
   for (const id of Object.keys(PLANTILLAS)) {
-    areaMensaje(id).value = textoPlantilla(estado.appSettings, id);
+    areaMensaje(id).value = textoPlantilla(estado.ajustesApp, id);
     document.querySelector(`[data-msg="${id}"]`).open = false;
   }
   modoAlAbrir = Theme.getModo();
@@ -363,8 +363,8 @@ async function guardar() {
     const marca = { nombre: $('cfg-nombre').value.trim(), color: m.color, color2: m.color2, logo: m.logo, tema: m.tema,
       fuente: m.fuente, icono: { ...m.icono, imagen: borrador.iconoImagen } };
     const st = await call('guardarConfig', { marca, mensajes, asistente: !!asistente });
-    estado.appSettings = st.settings;
-    aplicarMarca(estado.appSettings);
+    estado.ajustesApp = st.ajustes;
+    aplicarMarca(estado.ajustesApp);
     if (asistente) return terminarAsistente();
     cerrarModal('modal-config');
     mostrarAviso('&#10003; Configuración guardada', 'ok');
@@ -392,7 +392,7 @@ export function iniciar() {
   $('cfg-siguiente').addEventListener('click', () => mostrarPestana(PASOS[asistente.paso + 1]));
   $('cfg-atras').addEventListener('click', () => mostrarPestana(PASOS[asistente.paso - 1]));
   $('cfg-saltar').addEventListener('click', async () => {
-    try { await call('guardarAjuste', 'asistenteVisto', '1'); estado.appSettings.asistenteVisto = '1'; } catch (_) {}
+    try { await call('guardarAjuste', 'asistenteVisto', '1'); estado.ajustesApp.asistenteVisto = '1'; } catch (_) {}
     terminarAsistente();
   });
   $('cfg-guardar').addEventListener('click', guardar);

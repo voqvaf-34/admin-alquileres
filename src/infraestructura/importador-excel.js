@@ -64,7 +64,7 @@ function interpretarHojaContratos(ws) {
     else if (typeof fechaRaw === 'number') fecha = D.fechaExcel(fechaRaw);
 
     salida.push({
-      sourceRow:     r,
+      filaOrigen:     r,
       direccion:     b.trim(),
       propietario:   textoLimpio(g(2)),
       telProp:       textoLimpio(g(3)),
@@ -73,13 +73,13 @@ function interpretarHojaContratos(ws) {
       importe:       D.interpretarImporteUY(g(7)) || importeBase,
       ultimoAumento: D.aFechaISO(ultimoAumento),
       remitente,
-      contratoStr:   textoLimpio(g(8)),
+      contratoTexto:   textoLimpio(g(8)),
       fechaInicio:   D.aFechaISO(fecha),
       inquilino:     textoLimpio(g(10)),
       telInq:        textoLimpio(g(11)),
       mailInq:       textoLimpio(g(12)),
       notas:         textoLimpio(g(13)),
-      inactive,
+      inactivo: inactive,
     });
   }
   return salida;
@@ -95,7 +95,7 @@ function interpretarHojaAdmins(ws) {
     if (!nombreRaw || typeof nombreRaw !== 'string') continue;
     const nombre = nombreRaw.trim();
     if (!nombre || nombre.toUpperCase() === 'ADMINISTRACIONES') continue;
-    salida.push({ sourceRow: r, nombre, edificios: textoLimpio(g(1)), telefono: textoLimpio(g(2)), mail: textoLimpio(g(3)) });
+    salida.push({ filaOrigen: r, nombre, edificios: textoLimpio(g(1)), telefono: textoLimpio(g(2)), mail: textoLimpio(g(3)) });
   }
   return salida;
 }
@@ -110,9 +110,9 @@ function leerLibro(wb) {
   const wsA = hoja(wb, 'administraciones');
   const contratos = interpretarHojaModelo(wsC, D.COLUMNAS_ALQUILERES, D.filaAContrato);
   if (contratos) {
-    return { formato: 'plantilla', contracts: contratos, admins: interpretarHojaModelo(wsA, D.COLUMNAS_ADMINISTRACIONES, D.filaAAdministracion) || [] };
+    return { formato: 'plantilla', contratos, administraciones: interpretarHojaModelo(wsA, D.COLUMNAS_ADMINISTRACIONES, D.filaAAdministracion) || [] };
   }
-  return { formato: 'clasico', contracts: interpretarHojaContratos(wsC), admins: interpretarHojaAdmins(wsA) };
+  return { formato: 'clasico', contratos: interpretarHojaContratos(wsC), administraciones: interpretarHojaAdmins(wsA) };
 }
 
 // Los CSV pueden venir en UTF-8 o en ANSI (Excel en Windows): se detecta para leer bien las tildes.

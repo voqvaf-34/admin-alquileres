@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const { lanzar, carpetaTemporal, captura } = require('./helpers');
 
 test('primer arranque: empezar con una base vacia', { timeout: 60000 }, async () => {
-  const { app, page, errors: errores } = await lanzar(carpetaTemporal());
+  const { app, page, errores } = await lanzar(carpetaTemporal());
   try {
     await page.waitForSelector('#upload-screen', { state: 'visible' });
     assert.match(await page.textContent('#upload-screen'), /Cómo querés empezar/);

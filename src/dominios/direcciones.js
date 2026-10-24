@@ -5,7 +5,7 @@ import { claveNombre } from './texto.js';
 
 function armarIndice(reglas) {
   const idx = new Map();
-  for (const b of reglas.buildings || []) {
+  for (const b of reglas.edificios || []) {
     for (const a of [b.nombre, ...(b.alias || [])]) idx.set(claveNombre(a), b);
   }
   return idx;
@@ -21,24 +21,24 @@ function separarPrefijoConocido(texto, idx) {
   if (!mejor) return null;
   const palabras = mejor.alias.split(' ').length;
   const resto = String(texto).trim().split(/\s+/).slice(palabras).join(' ');
-  return { building: mejor.b, rest: resto };
+  return { edificioConocido: mejor.b, rest: resto };
 }
 
-export function normalizarDireccion(raw, reglas = {}) {
+export function normalizarDireccion(textoOriginal, reglas = {}) {
   const idx = armarIndice(reglas);
-  const ovKey = claveNombre(raw);
-  const ov = Object.entries(reglas.overrides || {}).find(([k]) => claveNombre(k) === ovKey);
-  let p = N.interpretarDireccion(raw);
+  const ovKey = claveNombre(textoOriginal);
+  const ov = Object.entries(reglas.correccionesManuales || {}).find(([k]) => claveNombre(k) === ovKey);
+  let p = N.interpretarDireccion(textoOriginal);
   if (ov) p = { ...p, ...ov[1] };
 
   // Edificio por alias del diccionario.
   if (p.edificio) {
-    const coincidencia = idx.get(claveNombre(p.edificio)) || (separarPrefijoConocido(p.edificio, idx) || {}).building;
+    const coincidencia = idx.get(claveNombre(p.edificio)) || (separarPrefijoConocido(p.edificio, idx) || {}).edificioConocido;
     if (coincidencia) p.edificio = coincidencia.nombre;
   } else if (p.calle) {
     const s = separarPrefijoConocido(p.calle, idx);
     if (s) {
-      p.edificio = s.building.nombre;
+      p.edificio = s.edificioConocido.nombre;
       const resto = s.rest.trim();
       if (/^\d{1,4}$/.test(resto) && !p.unidad) { p.unidad = resto; p.calle = ''; }
       else p.calle = resto;
@@ -55,7 +55,7 @@ export function normalizarDireccion(raw, reglas = {}) {
     unidad: /^\d/.test(String(p.unidad || '')) ? String(p.unidad).toUpperCase().replace(/\s+/g, ' ') : N.mayusculasIniciales(p.unidad),
     nota: p.nota || '',
   };
-  salida.direccion = N.formatearDireccion(salida) || N.mayusculasIniciales(raw);
+  salida.direccion = N.formatearDireccion(salida) || N.mayusculasIniciales(textoOriginal);
   return salida;
 }
 

@@ -19,7 +19,7 @@ const VERSION_MONEDA = '1';
 // "editor" (la app de siempre) o "viewer" (Visor de solo lectura, otro instalador).
 const PAQUETE = require('../../package.json');
 
-const MODO = process.env.ADMIN_ALQ_MODE || PAQUETE.adminMode || 'editor';
+const MODO = process.env.ADMIN_ALQ_MODE || PAQUETE.modoAdmin || 'editor';
 
 const ES_VISOR = MODO === 'viewer';
 

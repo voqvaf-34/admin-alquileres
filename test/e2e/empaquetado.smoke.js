@@ -21,7 +21,7 @@ const exe = visor
     } else {
       await page.click('#btn-start-demo');
       await page.waitForSelector('#app-screen', { state: 'visible' });
-      assert.equal(await page.evaluate(() => app.estado.entries.length), 21);
+      assert.equal(await page.evaluate(() => app.estado.entradas.length), 21);
     }
     console.log(`OK: ${path.basename(exe)}`);
   } finally { await app.close(); }

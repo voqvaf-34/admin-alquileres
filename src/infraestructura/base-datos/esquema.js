@@ -115,4 +115,7 @@ const CLAVES_VIEJAS = [
   ['msgRenovacion', 'mensajeRenovacionTexto'], ['msgAumentoInq', 'mensajeAumentoInq'], ['msgAumentoProp', 'mensajeAumentoProp'],
 ];
 
-module.exports = { ESQUEMA, COLUMNAS_AGREGADAS, TABLAS_VIEJAS, COLUMNAS_VIEJAS, CLAVES_VIEJAS };
+// Campos del JSON de cada marca (aumento enviado, renovado, no renueva...).
+const CAMPOS_MARCA_VIEJOS = { date: 'fecha', desc: 'descripcion', renewYears: 'aniosRenovacion', xlSaved: 'guardadoEnExcel' };
+
+module.exports = { ESQUEMA, COLUMNAS_AGREGADAS, TABLAS_VIEJAS, COLUMNAS_VIEJAS, CLAVES_VIEJAS, CAMPOS_MARCA_VIEJOS };

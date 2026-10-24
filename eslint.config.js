@@ -7,6 +7,7 @@ const reglas = {
   'no-unused-vars': ['error', { args: 'after-used', argsIgnorePattern: '^_', caughtErrors: 'none' }],
   'no-var': 'error',
   'prefer-const': ['error', { destructuring: 'all' }],
+  'object-shorthand': ['error', 'properties'],
   eqeqeq: ['error', 'always', { null: 'ignore' }],
   'no-empty': ['error', { allowEmptyCatch: true }],
   // Formato basico (el resto lo indica .editorconfig)

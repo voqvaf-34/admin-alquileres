@@ -11,20 +11,20 @@ export function pintarCompartir(st) {
   if (!st) return;
   infoCompartir = st;
   const punto = document.getElementById('share-dot');
-  punto.className = 'share-dot ' + (!st.dir ? 'off' : st.error ? 'err' : st.pending ? 'pending' : 'ok');
-  document.getElementById('btn-share').title = !st.dir ? 'No se comparte con el Visor'
-    : st.error ? st.error : st.lastPublished ? `Compartido ${formatearHora(st.lastPublished)} en ${st.dir}` : 'Publicando...';
-  document.getElementById('share-dir').textContent = st.dir || 'No se comparte (desactivado).';
-  document.getElementById('share-state').innerHTML = !st.dir ? ''
+  punto.className = 'share-dot ' + (!st.carpeta ? 'off' : st.error ? 'err' : st.pendiente ? 'pending' : 'ok');
+  document.getElementById('btn-share').title = !st.carpeta ? 'No se comparte con el Visor'
+    : st.error ? st.error : st.ultimaPublicacion ? `Compartido ${formatearHora(st.ultimaPublicacion)} en ${st.carpeta}` : 'Publicando...';
+  document.getElementById('share-dir').textContent = st.carpeta || 'No se comparte (desactivado).';
+  document.getElementById('share-state').innerHTML = !st.carpeta ? ''
     : st.error ? `<span style="color:var(--amber)">${esc(st.error)}</span>`
-    : st.lastPublished ? `<span style="color:var(--green)">&#10003; Última copia publicada: ${formatearHora(st.lastPublished)}</span>` : 'Publicando...';
+    : st.ultimaPublicacion ? `<span style="color:var(--green)">&#10003; Última copia publicada: ${formatearHora(st.ultimaPublicacion)}</span>` : 'Publicando...';
 }
 
 export function pintarVisor(v) {
   if (!v) return;
   const el = document.getElementById('viewer-updated');
   el.textContent = v.publicado ? `Datos al ${formatearHora(v.publicado)}` : '';
-  el.title = v.dir ? `Carpeta: ${v.dir}` : '';
+  el.title = v.carpeta ? `Carpeta: ${v.carpeta}` : '';
 }
 
 function mostrarConfigVisor(v) {
@@ -33,11 +33,11 @@ function mostrarConfigVisor(v) {
   document.getElementById('app-screen').style.display = 'none';
   document.getElementById('viewer-setup-screen').hidden = false;
   document.body.classList.remove('in-app');
-  document.getElementById('viewer-setup-error').textContent = v && v.error ? `${v.dir ? v.dir + ': ' : ''}${v.error}` : '';
+  document.getElementById('viewer-setup-error').textContent = v && v.error ? `${v.carpeta ? v.carpeta + ': ' : ''}${v.error}` : '';
 }
 
 export async function visorUsarEstado(st) {
-  if (st.needsShared) { mostrarConfigVisor(st.viewer); return; }
+  if (st.necesitaCompartida) { mostrarConfigVisor(st.visor); return; }
   document.getElementById('viewer-setup-screen').hidden = true;
   aplicarEstado(st);
   mostrarApp();
@@ -89,7 +89,7 @@ export function iniciar() {
   window.api.alCambiarDatos(async () => {
     try {
       const st = await call('obtenerEstado');
-      if (st.needsShared) return;
+      if (st.necesitaCompartida) return;
       aplicarEstado(st);
       llenarAniosBase();
       dibujar();

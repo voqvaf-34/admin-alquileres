@@ -10,9 +10,9 @@ import { limpiarPendientes } from '../vistas/tarjetas.js';
 export function pintarDeshacer(st) {
   if (!st) return;
   const u = document.getElementById('btn-undo'), r = document.getElementById('btn-redo');
-  u.disabled = !st.canUndo; r.disabled = !st.canRedo;
-  u.title = st.canUndo ? `Deshacer: ${st.undoLabel} (Ctrl+Z)` : 'Nada para deshacer';
-  r.title = st.canRedo ? `Rehacer: ${st.redoLabel} (Ctrl+Y)` : 'Nada para rehacer';
+  u.disabled = !st.puedeDeshacer; r.disabled = !st.puedeRehacer;
+  u.title = st.puedeDeshacer ? `Deshacer: ${st.etiquetaDeshacer} (Ctrl+Z)` : 'Nada para deshacer';
+  r.title = st.puedeRehacer ? `Rehacer: ${st.etiquetaRehacer} (Ctrl+Y)` : 'Nada para rehacer';
 }
 
 async function ejecutarDeshacer(rehacer) {
@@ -20,10 +20,10 @@ async function ejecutarDeshacer(rehacer) {
     await _guardandoMarcas;
     const r = await call(rehacer ? 'rehacerCambio' : 'deshacerCambio');
     limpiarPendientes();
-    aplicarEstado(r.state);
+    aplicarEstado(r.estado);
     llenarAniosBase();
     dibujar();
-    mostrarAviso(`${rehacer ? '&#8631; Rehecho' : '&#8630; Deshecho'}: ${esc(r.label)}`, 'info');
+    mostrarAviso(`${rehacer ? '&#8631; Rehecho' : '&#8630; Deshecho'}: ${esc(r.etiqueta)}`, 'info');
   } catch (err) {
     mostrarAviso(esc(err.message), 'info');
   }
@@ -36,7 +36,7 @@ export function iniciar() {
   document.getElementById('btn-undo').addEventListener('click', () => ejecutarDeshacer(false));
   document.getElementById('btn-redo').addEventListener('click', () => ejecutarDeshacer(true));
   document.addEventListener('keydown', e => {
-    if (!e.ctrlKey || e.altKey || !estado.entries || document.body.classList.contains('viewer')) return;
+    if (!e.ctrlKey || e.altKey || !estado.entradas || document.body.classList.contains('viewer')) return;
     if (e.target.matches('input, textarea, select, [contenteditable="true"]')) return;   // deshacer de texto nativo
     const k = e.key.toLowerCase();
     if (k === 'z' && !e.shiftKey) { e.preventDefault(); ejecutarDeshacer(false); }

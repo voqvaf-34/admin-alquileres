@@ -31,13 +31,13 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     await editor.page.waitForSelector('#modal-config', { state: 'hidden' });
     await editor.page.waitForFunction(() => document.getElementById('share-dot').classList.contains('ok'));
     assert.ok(fs.existsSync(path.join(compartida, 'alquileres.sqlite')), 'la base se publico');
-    const total = await editor.page.evaluate(() => app.estado.entries.length);
+    const total = await editor.page.evaluate(() => app.estado.entradas.length);
 
     visor = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
       ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: compartida, ADMIN_ALQ_POLL_MS: '500' });
     const vp = visor.page;
     await vp.waitForSelector('#app-screen', { state: 'visible' });
-    assert.equal(await vp.evaluate(() => app.estado.entries.length), total, 'el visor ve los mismos datos');
+    assert.equal(await vp.evaluate(() => app.estado.entradas.length), total, 'el visor ve los mismos datos');
     assert.ok(await vp.isVisible('.viewer-badge'));
     // Misma marca que el editor (viaja dentro de la base publicada).
     assert.equal(await vp.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--m-header').trim()), '#7C3AED');
@@ -60,7 +60,7 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
       await ep.fill('#m-importe', '15000');
       await ep.click('#modal-submit');
       await ep.waitForSelector('#modal-add', { state: 'hidden' });
-      await vp.waitForFunction(c => app.estado.entries.some(e => e.direccion === c), calle, { timeout: 15000 });
+      await vp.waitForFunction(c => app.estado.entradas.some(e => e.direccion === c), calle, { timeout: 15000 });
     };
     await agregar('Visor Prueba 123');
     assert.match(await vp.textContent('#viewer-updated'), /Datos al \d{2}\/\d{2} \d{2}:\d{2}/);
@@ -92,8 +92,8 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     // El visor no puede escribir: no hay canales de modificacion.
     const r = await vp.evaluate(() => window.api.agregarContrato({ direccion: 'X', importeBase: 1 }).catch(() => 'rechazado'));
     assert.ok(r === 'rechazado' || (r && r.ok === false), 'escritura rechazada');
-    assert.deepEqual(visor.errors, []);
-    assert.deepEqual(editor.errors, []);
+    assert.deepEqual(visor.errores, []);
+    assert.deepEqual(editor.errores, []);
   } finally {
     if (visor) await visor.app.close();
     await editor.app.close();
@@ -106,7 +106,7 @@ test('visor sin carpeta compartida pide elegirla', { timeout: 60000 }, async () 
   try {
     await v.page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
     assert.match(await v.page.textContent('#viewer-setup-error'), /No se encontro la base compartida/);
-    assert.deepEqual(v.errors, []);
+    assert.deepEqual(v.errores, []);
   } finally { await v.app.close(); }
 });
 

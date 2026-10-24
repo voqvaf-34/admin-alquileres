@@ -3,9 +3,9 @@ const { s, n } = require('./util');
 const COLUMNAS_CONTRATO = {
   direccion: 'direccion', propietario: 'propietario', telProp: 'tel_prop', mailProp: 'mail_prop',
   importeBase: 'importe_base', importe: 'importe', ultimoAumento: 'ultimo_aumento',
-  remitente: 'remitente', garantia: 'garantia', moneda: 'moneda', contratoStr: 'contrato_texto', fechaInicio: 'fecha_inicio',
+  remitente: 'remitente', garantia: 'garantia', moneda: 'moneda', contratoTexto: 'contrato_texto', fechaInicio: 'fecha_inicio',
   inquilino: 'inquilino', telInq: 'tel_inq', mailInq: 'mail_inq', notas: 'notas',
-  inactive: 'inactivo', sourceRow: 'fila_origen',
+  inactivo: 'inactivo', filaOrigen: 'fila_origen',
 };
 // Campos que la UI puede modificar sueltos (aumento enviado, comentario).
 const CAMPOS_MODIFICABLES = new Set(['importe', 'ultimoAumento', 'notas']);
@@ -14,9 +14,9 @@ function registroAContrato(r) {
   return {
     id: r.id, direccion: r.direccion, propietario: r.propietario, telProp: r.tel_prop,
     mailProp: r.mail_prop, importeBase: r.importe_base, importe: r.importe,
-    ultimoAumento: r.ultimo_aumento, remitente: r.remitente, contratoStr: r.contrato_texto,
+    ultimoAumento: r.ultimo_aumento, remitente: r.remitente, contratoTexto: r.contrato_texto,
     fechaInicio: r.fecha_inicio, inquilino: r.inquilino, telInq: r.tel_inq,
-    mailInq: r.mail_inq, notas: r.notas, inactive: !!r.inactivo,
+    mailInq: r.mail_inq, notas: r.notas, inactivo: !!r.inactivo,
     edificio: r.edificio || '', calle: r.calle || '', unidad: r.unidad || '',
     direccionOriginal: r.direccion_original || '', garantia: r.garantia || '',
     moneda: r.moneda === 'USD' ? 'USD' : 'UYU',
@@ -46,9 +46,9 @@ class MetodosContratos {
         inactivo, fila_origen, edificio, calle, unidad, direccion_original, garantia, moneda)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [s(c.direccion), s(c.propietario), s(c.telProp), s(c.mailProp), imp, n(c.importe) || imp,
-       c.ultimoAumento || null, s(c.remitente), s(c.contratoStr), c.fechaInicio || null,
-       s(c.inquilino), s(c.telInq), s(c.mailInq), s(c.notas), c.inactive ? 1 : 0,
-       c.sourceRow == null ? null : c.sourceRow, s(c.edificio), s(c.calle), s(c.unidad), s(c.direccionOriginal), s(c.garantia), c.moneda === 'USD' ? 'USD' : 'UYU']);
+       c.ultimoAumento || null, s(c.remitente), s(c.contratoTexto), c.fechaInicio || null,
+       s(c.inquilino), s(c.telInq), s(c.mailInq), s(c.notas), c.inactivo ? 1 : 0,
+       c.filaOrigen == null ? null : c.filaOrigen, s(c.edificio), s(c.calle), s(c.unidad), s(c.direccionOriginal), s(c.garantia), c.moneda === 'USD' ? 'USD' : 'UYU']);
     return this.ultimoId();
   }
 
@@ -72,7 +72,7 @@ class MetodosContratos {
       if (mapa.has(partes[1])) partes[1] = mapa.get(partes[1]);
       const k = partes.join('|');
       const datos = JSON.parse(r.datos);
-      if (!salida[k] || aFecha(datos.date) > aFecha(salida[k].date)) salida[k] = datos;
+      if (!salida[k] || aFecha(datos.fecha) > aFecha(salida[k].fecha)) salida[k] = datos;
     }
     this.db.run('DELETE FROM marcas');
     for (const [k, v] of Object.entries(salida)) this.db.run('INSERT INTO marcas (clave, datos) VALUES (?, ?)', [k, JSON.stringify(v)]);
@@ -84,9 +84,9 @@ class MetodosContratos {
     const propietarios = new Map(this.listarPropietarios().map(o => [o.id, o]));
     const enlaces = this.listarPropietariosDeContratos();
     const porContrato = new Map();
-    for (const l of enlaces) { if (!porContrato.has(l.contractId)) porContrato.set(l.contractId, []); porContrato.get(l.contractId).push(propietarios.get(l.ownerId)); }
-    const aBorrar = this.listarContratos().filter(c => c.inactive &&
-      !(porContrato.get(c.id) || []).some(o => o && (o.telefono || o.mail || o.contactId)));
+    for (const l of enlaces) { if (!porContrato.has(l.idContrato)) porContrato.set(l.idContrato, []); porContrato.get(l.idContrato).push(propietarios.get(l.idPropietario)); }
+    const aBorrar = this.listarContratos().filter(c => c.inactivo &&
+      !(porContrato.get(c.id) || []).some(o => o && (o.telefono || o.mail || o.idContacto)));
     if (!aBorrar.length) return [];
     const afectados = new Set(aBorrar.flatMap(c => (porContrato.get(c.id) || []).map(o => o && o.id)).filter(Boolean));
     this.transaccion(() => {
@@ -124,7 +124,7 @@ class MetodosContratos {
   }
 
   agregarContrato(c) {
-    const id = this.transaccion(() => this._insertarContrato({ ...c, importe: c.importeBase, inactive: false }));
+    const id = this.transaccion(() => this._insertarContrato({ ...c, importe: c.importeBase, inactivo: false }));
     return this.obtenerContrato(id);
   }
 
@@ -141,7 +141,7 @@ class MetodosContratos {
         `UPDATE contratos SET direccion=?, propietario=?, tel_prop=?, mail_prop=?, importe_base=?,
           importe=?, contrato_texto=?, fecha_inicio=?, inquilino=?, tel_inq=?, mail_inq=?, notas=?,
           edificio=?, calle=?, unidad=?, garantia=?, remitente=?, moneda=?, actualizado=datetime('now','localtime') WHERE id=?`,
-        [s(c.direccion), s(c.propietario), s(c.telProp), s(c.mailProp), imp, imp, s(c.contratoStr),
+        [s(c.direccion), s(c.propietario), s(c.telProp), s(c.mailProp), imp, imp, s(c.contratoTexto),
          c.fechaInicio || null, s(c.inquilino), s(c.telInq), s(c.mailInq), s(c.notas),
          s(c.edificio), s(c.calle), s(c.unidad),
          c.garantia === undefined ? anterior.garantia : s(c.garantia),

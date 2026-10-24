@@ -6,9 +6,9 @@ import { pintarAviso } from './avisos.js';
 
 const CLAVE = 'alq-visor-visto';
 const PESTANAS = {
-  basedatos:        () => estado.entries,
-  propietarios:     () => estado.owners,
-  administraciones: () => estado.admins,
+  basedatos:        () => estado.entradas,
+  propietarios:     () => estado.propietarios,
+  administraciones: () => estado.administraciones,
 };
 
 const esVisor = () => document.body.classList.contains('viewer');
@@ -63,7 +63,7 @@ export const puntoNuevo = (pestana, id) => esNuevo(pestana, id) ? '<span class="
 export function pintarNovedades() {
   if (!esVisor()) return;
   // La pestaña en pantalla ya se esta viendo: al abrir el Visor o al llegar datos nuevos estando en ella.
-  marcarVisto(estado.activeTab);
+  marcarVisto(estado.pestanaActiva);
   const v = leerVistos();
   let primeraVez = false;
   for (const pestana of Object.keys(PESTANAS)) {

@@ -7,12 +7,12 @@ const { lanzar, carpetaTemporal, captura } = require('./helpers');
 
 test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
   const destino = path.join(carpetaTemporal('alq-planilla-'), 'planilla-alquileres.xlsx');
-  let { app, page, errors: errores } = await lanzar(carpetaTemporal());
+  let { app, page, errores } = await lanzar(carpetaTemporal());
   try {
     await page.waitForSelector('#upload-screen', { state: 'visible' });
     // El dialogo "Guardar como" se responde desde el proceso principal (no se abre la carpeta).
     await app.evaluate(({ dialog, shell }, archivo) => {
-      dialog.showSaveDialog = async () => ({ canceled: false, filePath: archivo });
+      dialog.showSaveDialog = async () => ({ canceled: false, rutaArchivo: archivo });
       shell.showItemInFolder = () => {};
     }, destino);
     await captura(page, '30-inicio-planilla');
@@ -23,20 +23,20 @@ test('planilla modelo: descargar e importar', { timeout: 90000 }, async () => {
     assert.deepEqual(errores, []);
   } finally { await app.close(); }
 
-  ({ app, page, errors: errores } = await lanzar(carpetaTemporal(), { ADMIN_ALQ_IMPORT_FILE: destino }));
+  ({ app, page, errores } = await lanzar(carpetaTemporal(), { ADMIN_ALQ_IMPORT_FILE: destino }));
   try {
     await page.waitForSelector('#app-screen', { state: 'visible' });
     const datos = await page.evaluate(() => ({
-      alquileres: app.estado.entries.map(e => [e.direccion, e.importe, e.moneda, e.garantia]),
-      propietarios: app.estado.owners.map(o => o.nombre).sort(),
-      admins: app.estado.admins.map(a => a.nombre),
+      alquileres: app.estado.entradas.map(e => [e.direccion, e.importe, e.moneda, e.garantia]),
+      propietarios: app.estado.propietarios.map(o => o.nombre).sort(),
+      administraciones: app.estado.administraciones.map(a => a.nombre),
     }));
     assert.deepEqual(datos.alquileres, [
       ['Torre Ceibo - Av. Italia 2875 U403', 29400, 'UYU', 'Porto'],
       ['Canelones 1234 U502', 850, 'USD', 'ANDA'],
     ]);
     assert.deepEqual(datos.propietarios, ['Ana Perez', 'Carla Mendez', 'Diego Mendez']);
-    assert.deepEqual(datos.admins, ['Administración Sur (Laura Gómez)']);
+    assert.deepEqual(datos.administraciones, ['Administración Sur (Laura Gómez)']);
     assert.deepEqual(errores, []);
   } finally { await app.close(); }
 });
@@ -47,12 +47,12 @@ test('importar planilla con la app en uso: agregar (sin repetir), reemplazar y d
   const archivo = path.join(carpetaTemporal('alq-planilla-'), 'mis-alquileres.xlsx');
   XLSX.writeFile(libroModelo(), archivo);
 
-  const { app, page, errors: errores } = await lanzar(carpetaTemporal());
+  const { app, page, errores } = await lanzar(carpetaTemporal());
   try {
     await page.click('#btn-start-demo');
     await page.waitForSelector('#app-screen', { state: 'visible' });
     await app.evaluate(({ dialog }, file) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] }); }, archivo);
-    const total = () => page.evaluate(() => app.estado.entries.length);
+    const total = () => page.evaluate(() => app.estado.entradas.length);
     const toast = async () => { await page.waitForSelector('#toast.show'); const t = await page.textContent('#toast'); await page.evaluate(() => { document.getElementById('toast').className = ''; }); return t; };
     assert.equal(await total(), 21);
 
@@ -65,10 +65,10 @@ test('importar planilla con la app en uso: agregar (sin repetir), reemplazar y d
     await page.waitForSelector('#modal-importar', { state: 'hidden' });
     assert.match(await toast(), /Agregados 2 alquileres$/);
     assert.equal(await total(), 23);
-    const nueva = await page.evaluate(() => app.estado.entries.find(e => e.direccion === 'Canelones 1234 U502' && e.inquilino === 'Camila Ruiz'));
+    const nueva = await page.evaluate(() => app.estado.entradas.find(e => e.direccion === 'Canelones 1234 U502' && e.inquilino === 'Camila Ruiz'));
     assert.deepEqual([nueva.moneda, nueva.garantia, nueva.propietario], ['USD', 'ANDA', 'Carla Mendez / Diego Mendez']);
     // Los propietarios que ya existian (de los datos de ejemplo) se reutilizan.
-    assert.equal(await page.evaluate(() => app.estado.owners.filter(o => o.nombre === 'Ana Perez').length), 1);
+    assert.equal(await page.evaluate(() => app.estado.propietarios.filter(o => o.nombre === 'Ana Perez').length), 1);
 
     // Agregar de nuevo la misma planilla: todo repetido.
     await page.click('#btn-menu');
@@ -86,7 +86,7 @@ test('importar planilla con la app en uso: agregar (sin repetir), reemplazar y d
     assert.match(await toast(), /Importados 2 alquileres y 1 administración$/);
     assert.equal(await total(), 2);
     await page.click('#btn-undo');
-    await page.waitForFunction(() => app.estado.entries.length === 23);
+    await page.waitForFunction(() => app.estado.entradas.length === 23);
     assert.deepEqual(errores, []);
   } finally { await app.close(); }
 });

@@ -57,14 +57,14 @@ const datosContrato = (ajustes, e = {}) => ({
   direccion: e.direccion || '', inquilino: e.inquilino || '', propietario: e.propietario || '',
 });
 
-export function mensajeRenovacion(vencDate, { settings: ajustes = {}, contrato } = {}) {
+export function mensajeRenovacion(vencDate, { ajustes = {}, contrato } = {}) {
   return rellenar(textoPlantilla(ajustes, 'renovacion'), {
     ...datosContrato(ajustes, contrato), vencimiento: vencDate ? formatearFecha(vencDate) : '?',
   });
 }
 
 // porcentaje y nuevoImporte llegan ya formateados para mostrar ("3,16%", "$ 25.790").
-export function mensajesAumento({ settings: ajustes = {}, contrato, porcentaje, nuevoImporte }) {
+export function mensajesAumento({ ajustes = {}, contrato, porcentaje, nuevoImporte }) {
   const datos = { ...datosContrato(ajustes, contrato), porcentaje, nuevo_importe: nuevoImporte };
   return {
     inquilino:   rellenar(textoPlantilla(ajustes, 'aumentoInquilino'), datos),

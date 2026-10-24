@@ -62,7 +62,7 @@ export function mostrarModalEdicion(entrada) {
   set('m-mail-inq', entrada.mailInq);
   set('m-importe',  entrada.importe || '');
   set('m-notas',    entrada.notas);
-  ponerOpcionDuracion(entrada.contratoStr || '');
+  ponerOpcionDuracion(entrada.contratoTexto || '');
   set('m-remitente', entrada.remitente);
   ponerOpcionesGarantia(entrada.garantia);
   ponerMoneda(entrada.moneda);
@@ -98,8 +98,8 @@ function ponerOpcionDuracion(valor) {
 // Opciones = las de fabrica + las que se agregaron desde la app + las que ya usa algun contrato.
 function opcionesGarantia() {
   let extra = [];
-  try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
-  const todas = [...D.GARANTIAS_PREDETERMINADAS, ...extra, ...estado.entries.map(e => e.garantia)].filter(Boolean);
+  try { extra = JSON.parse((estado.ajustesApp && estado.ajustesApp.garantias) || '[]'); } catch (_) {}
+  const todas = [...D.GARANTIAS_PREDETERMINADAS, ...extra, ...estado.entradas.map(e => e.garantia)].filter(Boolean);
   const vistos = new Set();
   return todas.filter(g => { const k = g.toUpperCase(); if (vistos.has(k)) return false; vistos.add(k); return true; });
 }
@@ -112,7 +112,7 @@ function ponerOpcionesGarantia(valor) {
     + opciones.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
   sel.value = coincide || '';
   const dl = document.getElementById('dl-remitentes');
-  const rems = [...new Set(estado.entries.map(e => e.remitente).filter(Boolean))].sort();
+  const rems = [...new Set(estado.entradas.map(e => e.remitente).filter(Boolean))].sort();
   dl.innerHTML = rems.map(r => `<option value="${esc(r)}">`).join('');
   actualizarAyudaGestion();
 }
@@ -130,10 +130,10 @@ function agregarOpcionGarantia(nombre) {
   const existe = opcionesGarantia().find(g => g.toUpperCase() === nombre.toUpperCase());
   if (!existe) {
     let extra = [];
-    try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
+    try { extra = JSON.parse((estado.ajustesApp && estado.ajustesApp.garantias) || '[]'); } catch (_) {}
     extra.push(nombre);
-    estado.appSettings.garantias = JSON.stringify(extra);
-    call('guardarAjuste', 'garantias', estado.appSettings.garantias).catch(() => {});
+    estado.ajustesApp.garantias = JSON.stringify(extra);
+    call('guardarAjuste', 'garantias', estado.ajustesApp.garantias).catch(() => {});
   }
   ponerOpcionesGarantia(existe || nombre);
 }
@@ -148,7 +148,7 @@ export async function borrarEntrada(id, dir) {
   try {
     reemplazarEntrada(await call('inactivar', id));
     mostrarAviso('&#10003; Alquiler marcado como inactivo', 'ok');
-    estado.expandedRows.delete(id);
+    estado.filasAbiertas.delete(id);
     dibujar();
   } catch (err) {
     mostrarAviso('Error: ' + esc(err.message), 'err');
@@ -172,7 +172,7 @@ async function enviarAlta() {
     telInq:      (document.getElementById('m-tel-inq').value  || '').trim(),
     mailInq:     (document.getElementById('m-mail-inq').value || '').trim(),
     importeBase: importe,
-    contratoStr: document.getElementById('m-duracion').value  || '',
+    contratoTexto: document.getElementById('m-duracion').value  || '',
     fechaInicio: document.getElementById('m-fecha').value     || null,  // "YYYY-MM-DD"
     notas:       [...(entradaEditando ? D.separarNotas(entradaEditando.notas).filter(D.interpretarNotaRenovacion) : []),
                   ...D.separarNotas(document.getElementById('m-notas').value)].join(' | '),
@@ -190,7 +190,7 @@ async function enviarAlta() {
       ? await call('editarContrato', entradaEditando.id, carga)
       : await call('agregarContrato', carga);
     aplicarPropietarios(res);
-    reemplazarEntrada(res.contract);
+    reemplazarEntrada(res.contrato);
     mostrarAviso(esEditar ? '&#10003; Alquiler actualizado' : '&#10003; Alquiler agregado correctamente', 'ok');
     ocultarModalAlta();
     llenarAniosBase();
@@ -226,18 +226,18 @@ export function iniciar() {
 
   // Campos con viñetas (deben existir antes del autocompletado)
   const S = Separadores, ocupado = () => _acIndice >= 0 && _acOpciones.length > 0;
-  camposConChips['m-adm-edificios'] = armarChips('m-adm-edificios', { split: S.edificios, join: a => a.join('; '), placeholder: 'Nombre del edificio + Enter', addLabel: 'Edificio' });
-  camposConChips['m-adm-telefono']  = armarChips('m-adm-telefono',  { split: S.telefonos, join: a => a.join('; '), placeholder: 'Teléfono + Enter', addLabel: 'Teléfono' });
-  camposConChips['m-adm-mail']      = armarChips('m-adm-mail',      { split: S.mails,     join: a => a.join('; '), placeholder: 'Mail + Enter', addLabel: 'Mail' });
-  camposConChips['m-prop'] = armarChips('m-prop', { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', addLabel: 'Propietario', isBusy: ocupado });
-  camposConChips['m-inq']  = armarChips('m-inq',  { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', addLabel: 'Inquilino', isBusy: ocupado });
+  camposConChips['m-adm-edificios'] = armarChips('m-adm-edificios', { split: S.edificios, join: a => a.join('; '), placeholder: 'Nombre del edificio + Enter', etiquetaAgregar: 'Edificio' });
+  camposConChips['m-adm-telefono']  = armarChips('m-adm-telefono',  { split: S.telefonos, join: a => a.join('; '), placeholder: 'Teléfono + Enter', etiquetaAgregar: 'Teléfono' });
+  camposConChips['m-adm-mail']      = armarChips('m-adm-mail',      { split: S.mails,     join: a => a.join('; '), placeholder: 'Mail + Enter', etiquetaAgregar: 'Mail' });
+  camposConChips['m-prop'] = armarChips('m-prop', { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', etiquetaAgregar: 'Propietario', estaOcupado: ocupado });
+  camposConChips['m-inq']  = armarChips('m-inq',  { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', etiquetaAgregar: 'Inquilino', estaOcupado: ocupado });
   // Comentarios: las notas de renovacion no se muestran (se conservan al guardar, ver enviarAlta).
   camposConChips['m-notas'] = armarChips('m-notas', { split: s => D.comentarios({ notas: s }), join: a => a.join(' | '),
-    placeholder: 'Observaciones, condiciones especiales... + Enter', addLabel: 'Comentario' });
+    placeholder: 'Observaciones, condiciones especiales... + Enter', etiquetaAgregar: 'Comentario' });
   for (const [id, sp, lbl, ph] of [['m-tel-prop', S.telefonos, 'Teléfono', '09X XXX XXX'], ['m-tel-inq', S.telefonos, 'Teléfono', '09X XXX XXX'],
                                    ['m-mail-prop', S.mails, 'Mail', 'mail@ejemplo.com'], ['m-mail-inq', S.mails, 'Mail', 'mail@ejemplo.com']]) {
-    camposConChips[id] = armarChips(id, { split: sp, join: a => a.join(' / '), placeholder: ph, addLabel: lbl, isBusy: ocupado });
+    camposConChips[id] = armarChips(id, { split: sp, join: a => a.join(' / '), placeholder: ph, etiquetaAgregar: lbl, estaOcupado: ocupado });
   }
-  armarSelector('m-garantia', { onAdd: agregarOpcionGarantia, addLabel: 'Otra garantía', placeholder: 'Nombre de la garantía' });
-  armarSelector('m-duracion', { onAdd: t => ponerOpcionDuracion(t), addLabel: 'Otra', placeholder: 'Ej: 18 meses' });
+  armarSelector('m-garantia', { onAdd: agregarOpcionGarantia, etiquetaAgregar: 'Otra garantía', placeholder: 'Nombre de la garantía' });
+  armarSelector('m-duracion', { onAdd: t => ponerOpcionDuracion(t), etiquetaAgregar: 'Otra', placeholder: 'Ej: 18 meses' });
 }

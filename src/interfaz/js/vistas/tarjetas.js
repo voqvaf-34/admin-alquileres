@@ -20,11 +20,11 @@ export function mesSiguiente(m, y) { return m === 12 ? { m: 1, y: y + 1 } : { m:
 
 // Filtros "Sin resolver" / "Resueltos": ninguno tildado = se ven los dos.
 export function filtroResueltos() {
-  const todos = !estado.opShowSinResolver && !estado.opShowResuelto;
+  const todos = !estado.opMostrarSinResolver && !estado.opMostrarResuelto;
   return {
-    pendientes: estado.opShowSinResolver || todos,
-    resueltos: estado.opShowResuelto || todos,
-    palabra: estado.opShowSinResolver ? 'pendientes' : estado.opShowResuelto ? 'resueltos' : '',
+    pendientes: estado.opMostrarSinResolver || todos,
+    resueltos: estado.opMostrarResuelto || todos,
+    palabra: estado.opMostrarSinResolver ? 'pendientes' : estado.opMostrarResuelto ? 'resueltos' : '',
   };
 }
 

@@ -2,11 +2,11 @@ const D = require('../dominios/index.js');
 
 // Busca el IPC interanual publicado por el INE. Si la pagina del mes esperado
 // todavia no existe, prueba con el mes anterior.
-async function consultarUltimoIPC({ now: ahora = new Date(), fetchImpl = fetch, timeoutMs: esperaMs = 15000 } = {}) {
+async function consultarUltimoIPC({ now: ahora = new Date(), funcionConsulta: fetchImpl = fetch, timeoutMs: esperaMs = 15000 } = {}) {
   let periodo = D.ultimoIPCPublicado(ahora);
   const errores = [];
   for (let intento = 0; intento < 2; intento++) {
-    const url = D.urlPaginaIPC(periodo.month, periodo.year);
+    const url = D.urlPaginaIPC(periodo.mes, periodo.anio);
     try {
       const res = await fetchImpl(url, {
         signal: AbortSignal.timeout(esperaMs),
@@ -14,7 +14,7 @@ async function consultarUltimoIPC({ now: ahora = new Date(), fetchImpl = fetch, 
       });
       if (res.ok) {
         const valor = D.interpretarIPCDesdeHtml(await res.text());
-        if (valor != null) return { ok: true, ipc: valor, month: periodo.month, year: periodo.year, url };
+        if (valor != null) return { ok: true, ipc: valor, mes: periodo.mes, anio: periodo.anio, url };
         errores.push(`${url}: valor no encontrado en la pagina`);
       } else {
         errores.push(`${url}: HTTP ${res.status}`);

@@ -17,8 +17,8 @@ export async function consultarIPC() {
     const r = await call('consultarIPC');
     if (r.ok) {
       ponerIPC(r.ipc);
-      const mes = D.MES_ES[r.month];
-      periodo.textContent = `${mes.charAt(0).toUpperCase() + mes.slice(1)} ${r.year}`;
+      const mes = D.MES_ES[r.mes];
+      periodo.textContent = `${mes.charAt(0).toUpperCase() + mes.slice(1)} ${r.anio}`;
       periodo.title = '';
       dibujar();
     } else {

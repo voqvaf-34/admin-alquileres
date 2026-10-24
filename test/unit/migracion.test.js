@@ -40,12 +40,12 @@ test('una base de la 0.8.1 (en ingles) se migra al abrirla y no pierde nada', as
   const [c1, c2] = s.listarContratos();
   assert.equal(c1.direccion, 'Calle 1');
   assert.equal(c1.importe, 21000);
-  assert.equal(c1.contratoStr, '2 AÑOS');
-  assert.equal(c2.inactive, true);
+  assert.equal(c1.contratoTexto, '2 AÑOS');
+  assert.equal(c2.inactivo, true);
   assert.equal(s.listarAdmins()[0].nombre, 'Adm');
-  assert.deepEqual(s.obtenerMarcas(), { 'v|Calle 1': { date: '01/10/2026' } });
+  assert.deepEqual(s.obtenerMarcas(), { 'v|Calle 1': { fecha: '01/10/2026' } });
   assert.deepEqual(s.obtenerAjustes(), { marcaNombre: 'Sur', carpetaCompartida: 'C:/compartida', inicializada: '1', mensajeRenovacionTexto: 'Hola' });
-  assert.equal(s.listarPropietarios().find(o => o.nombre === 'Ana').contactId, 1);
+  assert.equal(s.listarPropietarios().find(o => o.nombre === 'Ana').idContacto, 1);
   assert.equal(s.listarPropietariosDeContratos().length, 2);
   assert.equal(s.listarDocsPropietarios()[0].nombreOriginal, 'foto.jpg');
   assert.equal(s.listarCuentasPropietarios()[0].cuenta, 'BROU 1');
@@ -54,7 +54,7 @@ test('una base de la 0.8.1 (en ingles) se migra al abrirla y no pierde nada', as
   // La numeracion sigue y el borrado en cascada funciona con las tablas renombradas.
   assert.equal(s.agregarContrato({ direccion: 'Calle 3', importeBase: 1000 }).id, 3);
   s.borrarPropietario(1);
-  assert.equal(s.listarPropietariosDeContratos().some(l => l.ownerId === 1), false);
+  assert.equal(s.listarPropietariosDeContratos().some(l => l.idPropietario === 1), false);
   assert.equal(s.listarDocsPropietarios().length, 0);
   assert.equal(s.listarCuentasPropietarios().length, 0);
   s.close();
@@ -70,7 +70,7 @@ test('el Visor (solo lectura) lee una base vieja sin escribirla', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'alq-migra-ro-')), archivo = path.join(dir, 'a.sqlite');
   await baseVieja(archivo);
   const antes = fs.readFileSync(archivo);
-  const s = await BaseDatos.open(archivo, { readOnly: true });
+  const s = await BaseDatos.open(archivo, { soloLectura: true });
   assert.equal(s.listarContratos().length, 2);
   s.close();
   assert.ok(fs.readFileSync(archivo).equals(antes), 'la base compartida no se toca');

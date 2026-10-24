@@ -26,12 +26,12 @@ const INQ = ['Beto Gomez', 'Camila Ruiz', 'Daniel Sosa', 'Emilia Vidal', 'Facund
 export function datosDemo(hoy = new Date()) {
   hoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
   let n = 0;
-  const C = (direccion, prop, importe, fechaInicio, contratoStr, extra = {}) => {
+  const C = (direccion, prop, importe, fechaInicio, contratoTexto, extra = {}) => {
     const inquilino = INQ[n % INQ.length]; n++;
     return {
-      sourceRow: n, direccion, propietario: P[prop], telProp: telDe[prop], mailProp: mail(P[prop].split(' / ')[0]),
-      importeBase: importe, importe, moneda: importe < 10000 ? 'USD' : 'UYU', ultimoAumento: null, remitente: '', contratoStr,
-      fechaInicio: aFechaISO(fechaInicio), inquilino, telInq: tel(200 + n), mailInq: mail(inquilino), notas: '', inactive: false,
+      filaOrigen: n, direccion, propietario: P[prop], telProp: telDe[prop], mailProp: mail(P[prop].split(' / ')[0]),
+      importeBase: importe, importe, moneda: importe < 10000 ? 'USD' : 'UYU', ultimoAumento: null, remitente: '', contratoTexto,
+      fechaInicio: aFechaISO(fechaInicio), inquilino, telInq: tel(200 + n), mailInq: mail(inquilino), notas: '', inactivo: false,
       ...extra,
     };
   };
@@ -66,22 +66,22 @@ export function datosDemo(hoy = new Date()) {
     C('Mirador del Parque - Av. Rivera 3300 U1503', 'hugo', 47500, enMes(hoy, 1, 20, 6), '3 AÑOS'),
     C('Canelones 1234 U304',                       'ines',  20500, enMes(hoy, 0, 11, -5), '2 AÑOS'),
     // Inactivos (inquilinos que ya se fueron).
-    C('Maldonado 1580 U5',                         'jorge', 18200, desde(hoy, 4, 40), '1 AÑO', { inactive: true }),
-    C('Torre Ceibo - Av. Italia 2875 U403',        'ana',   21500, desde(hoy, 4, 5),  '2 AÑOS', { inactive: true }),
+    C('Maldonado 1580 U5',                         'jorge', 18200, desde(hoy, 4, 40), '1 AÑO', { inactivo: true }),
+    C('Torre Ceibo - Av. Italia 2875 U403',        'ana',   21500, desde(hoy, 4, 5),  '2 AÑOS', { inactivo: true }),
   ];
 
-  const admins = [
-    { sourceRow: 1, nombre: 'Administración Sur (Laura Gómez)', edificios: 'Torre Ceibo; Edificio Araza', telefono: '2900 0001', mail: 'administracion.sur@example.com' },
-    { sourceRow: 2, nombre: 'Gestión Edificios Norte', edificios: 'Mirador del Parque', telefono: '2900 0002 / 091 000 900', mail: 'norte@example.com' },
-    { sourceRow: 3, nombre: 'Consorcio Guayabo', edificios: 'Residencial Guayabo', telefono: '2900 0003', mail: 'guayabo@example.com' },
+  const administraciones = [
+    { filaOrigen: 1, nombre: 'Administración Sur (Laura Gómez)', edificios: 'Torre Ceibo; Edificio Araza', telefono: '2900 0001', mail: 'administracion.sur@example.com' },
+    { filaOrigen: 2, nombre: 'Gestión Edificios Norte', edificios: 'Mirador del Parque', telefono: '2900 0002 / 091 000 900', mail: 'norte@example.com' },
+    { filaOrigen: 3, nombre: 'Consorcio Guayabo', edificios: 'Residencial Guayabo', telefono: '2900 0003', mail: 'guayabo@example.com' },
   ];
 
   // Marca de renovacion del apto ya renovado: nuevo contrato desde el vencimiento, por 2 anios.
   const renovado = contratos.find(c => c.direccion === 'Edificio Araza - Bv. Artigas 1610 U1002');
   const vencio = desde(hoy, 0, -120);
-  const marks = {
-    [`v|${renovado.direccion}`]: { date: formatearFecha(desde(hoy, 0, -125)), nuevaInicio: formatearFecha(vencio), renewYears: 2 },
+  const marcas = {
+    [`v|${renovado.direccion}`]: { fecha: formatearFecha(desde(hoy, 0, -125)), nuevaInicio: formatearFecha(vencio), aniosRenovacion: 2 },
   };
 
-  return { contracts: contratos, admins, marks };
+  return { contratos, administraciones, marcas };
 }

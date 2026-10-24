@@ -4,20 +4,20 @@ const { s } = require('./util');
 class MetodosPropietarios {
   // ── propietarios y contactos ─────────────────────────────────────────────
   listarPropietarios() {
-    return this.consultar(`SELECT id, nombre, telefono, mail, notas, contacto_id AS contactId, cedula, domicilio,
+    return this.consultar(`SELECT id, nombre, telefono, mail, notas, contacto_id AS idContacto, cedula, domicilio,
       estado_civil AS estadoCivil, cuenta_cobro AS cuentaCobro FROM propietarios ORDER BY nombre COLLATE NOCASE`);
   }
   listarDocsPropietarios() {
-    return this.consultar('SELECT id, propietario_id AS ownerId, tipo, archivo, nombre_original AS nombreOriginal, creado AS creado FROM documentos_propietarios ORDER BY id');
+    return this.consultar('SELECT id, propietario_id AS idPropietario, tipo, archivo, nombre_original AS nombreOriginal, creado AS creado FROM documentos_propietarios ORDER BY id');
   }
-  listarCuentasPropietarios() { return this.consultar('SELECT propietario_id AS ownerId, direccion, cuenta FROM cuentas_propietarios'); }
+  listarCuentasPropietarios() { return this.consultar('SELECT propietario_id AS idPropietario, direccion, cuenta FROM cuentas_propietarios'); }
 
   agregarDocPropietario(idPropietario, tipo, archivo, nombreOriginal) {
     this.transaccion(() => this.db.run('INSERT INTO documentos_propietarios (propietario_id, tipo, archivo, nombre_original) VALUES (?,?,?,?)',
       [idPropietario, s(tipo) || 'cedula', archivo, s(nombreOriginal)]));
   }
   obtenerDocPropietario(id) {
-    const [d] = this.consultar('SELECT id, propietario_id AS ownerId, archivo, nombre_original AS nombreOriginal FROM documentos_propietarios WHERE id=?', [id]);
+    const [d] = this.consultar('SELECT id, propietario_id AS idPropietario, archivo, nombre_original AS nombreOriginal FROM documentos_propietarios WHERE id=?', [id]);
     return d || null;
   }
   borrarDocPropietario(id) { this.transaccion(() => this.db.run('DELETE FROM documentos_propietarios WHERE id=?', [id])); }
@@ -32,14 +32,14 @@ class MetodosPropietarios {
   }
   listarContactos() { return this.consultar('SELECT id, nombre, rol, telefono, mail, notas FROM contactos ORDER BY nombre COLLATE NOCASE'); }
   listarPropietariosDeContratos() {
-    return this.consultar('SELECT contrato_id AS contractId, propietario_id AS ownerId, orden FROM contratos_propietarios ORDER BY contrato_id, orden');
+    return this.consultar('SELECT contrato_id AS idContrato, propietario_id AS idPropietario, orden FROM contratos_propietarios ORDER BY contrato_id, orden');
   }
 
   _existeContacto(id) { return id == null || this.consultar('SELECT 1 FROM contactos WHERE id=?', [id]).length > 0; }
 
   guardarPropietario(o) {
     if (!s(o.nombre)) throw new Error('El nombre del propietario es obligatorio.');
-    const idContacto = o.contactId ? Number(o.contactId) : null;
+    const idContacto = o.idContacto ? Number(o.idContacto) : null;
     if (!this._existeContacto(idContacto)) throw new Error('Contacto inexistente.');
     const valores = [s(o.nombre), s(o.telefono), s(o.mail), s(o.notas), idContacto,
                   s(o.cedula), s(o.domicilio), s(o.estadoCivil), s(o.cuentaCobro)];
@@ -135,22 +135,22 @@ class MetodosPropietarios {
       this.db.run('DELETE FROM propietarios');
       this.db.run('DELETE FROM contactos');
       const idsContactos = new Map();
-      for (const c of plan.contacts) {
+      for (const c of plan.contactos) {
         this.db.run('INSERT INTO contactos (nombre, rol, telefono, mail, notas) VALUES (?,?,?,?,?)',
           [c.nombre, c.rol, c.telefono, c.mail, c.notas]);
-        idsContactos.set(c.key, this.ultimoId());
+        idsContactos.set(c.clave, this.ultimoId());
       }
       const idsPropietarios = new Map();
-      for (const o of plan.owners) {
+      for (const o of plan.propietarios) {
         this.db.run('INSERT INTO propietarios (nombre, telefono, mail, notas, contacto_id) VALUES (?,?,?,?,?)',
-          [o.nombre, o.telefono, o.mail, o.notas, o.contactKey ? idsContactos.get(o.contactKey) : null]);
-        idsPropietarios.set(o.key, this.ultimoId());
+          [o.nombre, o.telefono, o.mail, o.notas, o.claveContacto ? idsContactos.get(o.claveContacto) : null]);
+        idsPropietarios.set(o.clave, this.ultimoId());
       }
-      for (const l of plan.links) {
+      for (const l of plan.vinculos) {
         this.db.run('INSERT OR IGNORE INTO contratos_propietarios (contrato_id, propietario_id, orden) VALUES (?,?,?)',
-          [l.contractId, idsPropietarios.get(l.ownerKey), l.orden]);
+          [l.idContrato, idsPropietarios.get(l.clavePropietario), l.orden]);
       }
-      const nuevoIdPorNombre = new Map(plan.owners.map(o => [claveNombre(o.nombre), idsPropietarios.get(o.key)]));
+      const nuevoIdPorNombre = new Map(plan.propietarios.map(o => [claveNombre(o.nombre), idsPropietarios.get(o.clave)]));
       const viejoANuevo = new Map();
       for (const [k, viejo] of propietariosAnteriores) {
         const nid = nuevoIdPorNombre.get(k);
@@ -167,7 +167,7 @@ class MetodosPropietarios {
         this.db.run('INSERT OR IGNORE INTO cuentas_propietarios (propietario_id, direccion, cuenta) VALUES (?,?,?)',
           [viejoANuevo.get(a.propietario_id), a.direccion, a.cuenta]);
       }
-      return { owners: plan.owners.length, contacts: plan.contacts.length, links: plan.links.length };
+      return { propietarios: plan.propietarios.length, contactos: plan.contactos.length, vinculos: plan.vinculos.length };
     });
   }
 }

@@ -45,24 +45,24 @@ test('marca: valida lo que se guarda desde Configuracion', () => {
 });
 
 test('paleta: texto de la barra blanco u oscuro segun el color (contraste 4.5)', () => {
-  assert.equal(D.paleta('#2563EB').headerInk, '#FFFFFF');
-  assert.equal(D.paleta('#FD4108').headerInk, '#1A1A1A');   // naranja: el blanco no llega a 4.5
+  assert.equal(D.paleta('#2563EB').tintaCabecera, '#FFFFFF');
+  assert.equal(D.paleta('#FD4108').tintaCabecera, '#1A1A1A');   // naranja: el blanco no llega a 4.5
   for (const c of D.COLORES_SUGERIDOS) {
     const p = D.paleta(c);
-    assert.ok(D.contraste(c, p.headerInk) >= 4.5, `${c}: barra ${p.headerInk}`);
+    assert.ok(D.contraste(c, p.tintaCabecera) >= 4.5, `${c}: barra ${p.tintaCabecera}`);
     assert.equal(D.colorConPocoContraste(c), false, c);
   }
   assert.equal(D.colorConPocoContraste('#2563EB'), false);
   assert.equal(D.colorConPocoContraste('#808080'), true, 'gris medio: ni blanco ni negro llegan a 4.5');
-  assert.equal(D.paleta('#FACC15').headerInk, '#1A1A1A');   // amarillo: oscuro
-  assert.equal(D.paleta('#FACC15').headerFg, '26,26,26');
+  assert.equal(D.paleta('#FACC15').tintaCabecera, '#1A1A1A');   // amarillo: oscuro
+  assert.equal(D.paleta('#FACC15').cabeceraTexto, '26,26,26');
 });
 
 test('paleta: los textos de acento se leen sobre fondo claro y oscuro (contraste 4.5)', () => {
   for (const c of [...D.COLORES_SUGERIDOS, '#FACC15', '#A3E635', '#111111', '#FFFFFF']) {
     const p = D.paleta(c);
-    assert.ok(D.contraste(p.accentInk, '#FFFFFF') >= 4.5, `${c} claro: ${p.accentInk}`);
-    assert.ok(D.contraste(p.accentInkDark, '#0D0D0D') >= 4.5, `${c} oscuro: ${p.accentInkDark}`);
+    assert.ok(D.contraste(p.acentoTinta, '#FFFFFF') >= 4.5, `${c} claro: ${p.acentoTinta}`);
+    assert.ok(D.contraste(p.acentoTintaOscuro, '#0D0D0D') >= 4.5, `${c} oscuro: ${p.acentoTintaOscuro}`);
   }
 });
 
@@ -74,16 +74,16 @@ test('paleta: color secundario (o el principal si no hay) legible en claro y osc
   const p = D.paleta('#0F766E', '#FACC15');
   assert.equal(p.sec, '#FACC15');
   assert.equal(p.secOn, '#1A1A1A', 'texto oscuro sobre amarillo');
-  assert.ok(D.contraste(p.secInk, '#FFFFFF') >= 4.5);
-  assert.ok(D.contraste(p.secInkDark, '#0D0D0D') >= 4.5);
+  assert.ok(D.contraste(p.secTinta, '#FFFFFF') >= 4.5);
+  assert.ok(D.contraste(p.secTintaOscuro, '#0D0D0D') >= 4.5);
   assert.equal(D.paleta('#0F766E').sec, '#0F766E');
 });
 
 test('paleta: tema "Con mi color" tiñe los fondos con el color de la marca', () => {
   const p = D.paleta('#0F766E');
-  assert.ok(D.contraste(p.tinteBg, '#1A1A1A') >= 12, 'fondo claro con texto oscuro');
-  assert.ok(D.contraste(p.tinteBgDark, '#E8E8E8') >= 12, 'fondo oscuro con texto claro');
-  assert.notEqual(p.tinteBg, '#FFFFFF');
+  assert.ok(D.contraste(p.tinteFondo, '#1A1A1A') >= 12, 'fondo claro con texto oscuro');
+  assert.ok(D.contraste(p.tinteFondoOscuro, '#E8E8E8') >= 12, 'fondo oscuro con texto claro');
+  assert.notEqual(p.tinteFondo, '#FFFFFF');
 });
 
 test('temas y tipografias: todos tienen nombre; las fuentes tienen respaldo', () => {

@@ -83,13 +83,13 @@ function acSeleccionar(valor) {
 // (completa la calle).
 function acElegirDireccion(valor) {
   const set = (id, val) => { document.getElementById(id).value = val || ''; };
-  const apto = estado.entries.filter(e => e.direccion === valor).sort((a, b) => b.id - a.id)[0];
+  const apto = estado.entradas.filter(e => e.direccion === valor).sort((a, b) => b.id - a.id)[0];
   if (apto) {
     set('m-edificio', apto.edificio); set('m-calle', apto.calle); set('m-unidad', apto.unidad);
     acCompletarDesdeDireccion(valor);
     acResaltar(['m-edificio', 'm-calle', 'm-unidad']);
   } else {
-    const b = estado.entries.find(e => e.edificio === valor && e.calle);
+    const b = estado.entradas.find(e => e.edificio === valor && e.calle);
     if (b) { set('m-calle', b.calle); acResaltar(['m-calle']); }
     setTimeout(() => document.getElementById('m-unidad').focus(), 0);
   }
@@ -108,9 +108,9 @@ export function actualizarVistaDireccion() {
 }
 
 function acCompletarDesdeDireccion(dir) {
-  if (!estado.entries) return;
+  if (!estado.entradas) return;
   // si hay varios (misma dirección alquilada varias veces), tomar el más reciente
-  const coincidencias = estado.entries.filter(e => e.direccion === dir);
+  const coincidencias = estado.entradas.filter(e => e.direccion === dir);
   if (!coincidencias.length) return;
   const e = coincidencias.reduce((a, b) => (b.id > a.id ? b : a));
   const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
@@ -124,7 +124,7 @@ function acCompletarDesdeDireccion(dir) {
 }
 
 function acCompletarDesdePropietario(prop) {
-  const o = estado.owners.find(x => x.nombre === prop);
+  const o = estado.propietarios.find(x => x.nombre === prop);
   if (!o) return;
   const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
   set('m-tel-prop',  o.telefono);
@@ -133,8 +133,8 @@ function acCompletarDesdePropietario(prop) {
 }
 
 function acCompletarDesdeInquilino(inq) {
-  if (!estado.entries) return;
-  const coincidencias = estado.entries.filter(e => e.inquilino === inq || Separadores.personas(e.inquilino).includes(inq));
+  if (!estado.entradas) return;
+  const coincidencias = estado.entradas.filter(e => e.inquilino === inq || Separadores.personas(e.inquilino).includes(inq));
   if (!coincidencias.length) return;
   const e = coincidencias.reduce((a, b) => (b.id > a.id ? b : a));
   const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
@@ -171,15 +171,15 @@ export function conectarAutocompletado() {
     if (!inp) return;
 
     inp.addEventListener('input', () => {
-      if (!estado.entries) { acOcultar(); return; }
+      if (!estado.entradas) { acOcultar(); return; }
       const q = normalizar(inp.value.trim());
       if (!q) { acOcultar(); return; }
-      const origen = id === 'm-prop-entry' ? estado.owners.map(o => o.nombre)
-        : id === 'm-inq-entry' ? estado.entries.flatMap(e => Separadores.personas(e.inquilino))
-        : /^m-tel-/.test(id) ? estado.entries.flatMap(e => Separadores.telefonos(lector(e) || ''))
-        : /^m-mail-/.test(id) ? estado.entries.flatMap(e => Separadores.mails(lector(e) || ''))
-        : id === 'm-edificio' ? [...estado.entries.map(e => e.direccion), ...estado.entries.map(lector)]
-        : estado.entries.map(lector);
+      const origen = id === 'm-prop-entry' ? estado.propietarios.map(o => o.nombre)
+        : id === 'm-inq-entry' ? estado.entradas.flatMap(e => Separadores.personas(e.inquilino))
+        : /^m-tel-/.test(id) ? estado.entradas.flatMap(e => Separadores.telefonos(lector(e) || ''))
+        : /^m-mail-/.test(id) ? estado.entradas.flatMap(e => Separadores.mails(lector(e) || ''))
+        : id === 'm-edificio' ? [...estado.entradas.map(e => e.direccion), ...estado.entradas.map(lector)]
+        : estado.entradas.map(lector);
       const unicos = [...new Set(origen.filter(v => v && v.trim()))];
       const coincidencias = unicos.filter(v => normalizar(v).includes(q)).slice(0, 12);
       acMostrar(inp, coincidencias);

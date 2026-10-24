@@ -25,7 +25,7 @@ let idUnificarConservar = null;
 
 let idUnificarQuitar = null;
 
-const contactoPorId = id => estado.contacts.find(c => c.id === id);
+const contactoPorId = id => estado.contactos.find(c => c.id === id);
 
 function insigniaContacto(c) {
   if (!c) return '';
@@ -34,14 +34,14 @@ function insigniaContacto(c) {
 
 // Fila "Contacto:" para tarjetas y detalle de la Base de Datos.
 export function filaContacto(e, cls) {
-  if (!e.contacts || !e.contacts.length) return '';
-  return e.contacts.map(c => `<div class="${cls}"><span class="lbl">Contacto: </span>${esc(c.nombre)}${
+  if (!e.contactos || !e.contactos.length) return '';
+  return e.contactos.map(c => `<div class="${cls}"><span class="lbl">Contacto: </span>${esc(c.nombre)}${
     c.rol ? ` <span class="contact-tag">${esc(c.rol)}</span>` : ''} ${c.telefono ? enlaceTelefono(c.telefono) : ''}</div>`).join('');
 }
 
 export function contratosPorPropietario() {
   const mapa = new Map();
-  for (const e of estado.entries || []) for (const o of e.owners || []) {
+  for (const e of estado.entradas || []) for (const o of e.propietarios || []) {
     if (!mapa.has(o.id)) mapa.set(o.id, []);
     mapa.get(o.id).push(e);
   }
@@ -53,7 +53,7 @@ function unidadesPropietario(aptos) {
   const m = new Map();
   for (const e of aptos) {
     const u = m.get(e.direccion) || { direccion: e.direccion, activo: false, ids: [] };
-    u.activo = u.activo || !e.inactive; u.ids.push(e.id);
+    u.activo = u.activo || !e.inactivo; u.ids.push(e.id);
     m.set(e.direccion, u);
   }
   return [...m.values()].sort((a, b) => (b.activo - a.activo) || a.direccion.localeCompare(b.direccion, 'es'));
@@ -62,10 +62,10 @@ function unidadesPropietario(aptos) {
 function datosFaltantesContrato(o) {
   const faltan = [];
   if (!o.cedula) faltan.push('cedula');
-  if (!estado.ownerDocs.some(d => d.ownerId === o.id)) faltan.push('foto de cedula');
+  if (!estado.docsPropietarios.some(d => d.idPropietario === o.id)) faltan.push('foto de cedula');
   if (!o.domicilio) faltan.push('domicilio');
   if (!o.estadoCivil) faltan.push('estado civil');
-  if (!o.cuentaCobro && !estado.ownerAccounts.some(a => a.ownerId === o.id)) faltan.push('cuenta de cobro');
+  if (!o.cuentaCobro && !estado.cuentasPropietarios.some(a => a.idPropietario === o.id)) faltan.push('cuenta de cobro');
   return faltan;
 }
 
@@ -73,15 +73,15 @@ export function dibujarPanelPropietarios() {
   const porPropietario = contratosPorPropietario();
   const q = normalizar(busquedaPropietarios.trim());
   const qDigits = q.replace(/\D/g, '');
-  const lista = estado.owners.filter(o => {
+  const lista = estado.propietarios.filter(o => {
     const aptos = porPropietario.get(o.id) || [];
-    if (propietariosSoloActivos && !aptos.some(e => !e.inactive)) return false;
+    if (propietariosSoloActivos && !aptos.some(e => !e.inactivo)) return false;
     if (!q) return true;
-    const c = o.contactId ? contactoPorId(o.contactId) : null;
+    const c = o.idContacto ? contactoPorId(o.idContacto) : null;
     const hay = [o.nombre, o.telefono, o.mail, o.cedula, o.domicilio, o.notas, c && c.nombre, ...aptos.map(e => e.direccion)].map(normalizar).join(' ');
     return hay.includes(q) || (qDigits.length >= 4 && [o.telefono, o.cedula].some(v => (v || '').replace(/\D/g, '').includes(qDigits)));
   });
-  document.getElementById('owners-count').textContent = `${lista.length} / ${estado.owners.length} propietarios`;
+  document.getElementById('owners-count').textContent = `${lista.length} / ${estado.propietarios.length} propietarios`;
   const tbody = document.getElementById('owners-tbody');
   if (!lista.length) { tbody.innerHTML = `<tr><td colspan="5" class="empty">Sin propietarios que coincidan.</td></tr>`; return; }
 
@@ -89,7 +89,7 @@ export function dibujarPanelPropietarios() {
     const aptos = porPropietario.get(o.id) || [];
     const unidades = unidadesPropietario(aptos);
     const act = unidades.filter(u => u.activo).length;
-    const c = o.contactId ? contactoPorId(o.contactId) : null;
+    const c = o.idContacto ? contactoPorId(o.idContacto) : null;
     const exp = propietariosAbiertos.has(o.id);
     return `<tr class="db-row${exp ? ' expanded' : ''}" data-owner-row="${o.id}">
         <td><span class="db-dir">${esc(o.nombre)}</span> ${insigniaContacto(c)}</td>
@@ -107,8 +107,8 @@ export function dibujarPanelPropietarios() {
 
 function detallePropietario(o, unidades, c) {
   const faltan = datosFaltantesContrato(o);
-  const documentos = estado.ownerDocs.filter(d => d.ownerId === o.id);
-  const cuenta = d => (estado.ownerAccounts.find(a => a.ownerId === o.id && a.direccion === d) || {}).cuenta || '';
+  const documentos = estado.docsPropietarios.filter(d => d.idPropietario === o.id);
+  const cuenta = d => (estado.cuentasPropietarios.find(a => a.idPropietario === o.id && a.direccion === d) || {}).cuenta || '';
   return `<div class="db-detail-inner">
     <div class="db-detail-grid">
       <div><span class="lbl">Cedula: </span>${o.cedula ? esc(o.cedula) : '<span class="missing">falta</span>'}</div>
@@ -148,11 +148,11 @@ function detallePropietario(o, unidades, c) {
 }
 
 async function cargarMiniaturasDocs(o) {
-  for (const d of estado.ownerDocs.filter(x => x.ownerId === o.id)) {
+  for (const d of estado.docsPropietarios.filter(x => x.idPropietario === o.id)) {
     const el = document.querySelector(`[data-doc-thumb="${d.id}"]`);
     if (!el || /\.pdf$/i.test(d.archivo)) continue;
     if (!miniaturasDocs.has(d.id)) {
-      try { const r = await call('vistaPreviaDoc', d.id); miniaturasDocs.set(d.id, r.image ? r.dataUrl : null); }
+      try { const r = await call('vistaPreviaDoc', d.id); miniaturasDocs.set(d.id, r.image ? r.urlDatos : null); }
       catch (_) { miniaturasDocs.set(d.id, null); }
     }
     const url = miniaturasDocs.get(d.id);
@@ -172,7 +172,7 @@ function completarCamposContacto() {
   const c = sel ? contactoPorId(+sel) : null;
   if (!c) return;
   ponerValor('m-con-nombre', c.nombre); ponerValor('m-con-rol', c.rol); ponerValor('m-con-tel', c.telefono); ponerValor('m-con-mail', c.mail);
-  const n = estado.owners.filter(o => o.contactId === c.id && o.id !== idPropietarioEditando).length;
+  const n = estado.propietarios.filter(o => o.idContacto === c.id && o.id !== idPropietarioEditando).length;
   document.getElementById('m-con-shared').textContent = n ? `Este contacto tambien figura en ${n} propietario(s): los cambios se aplican a todos.` : '';
 }
 
@@ -190,12 +190,12 @@ function mostrarModalPropietario(o) {
   ponerValor('m-own-cuenta', o && o.cuentaCobro); ponerValor('m-own-notas', o && o.notas);
   const sel = document.getElementById('m-own-contact');
   sel.innerHTML = `<option value="">Se habla directamente con el propietario</option>` +
-    estado.contacts.map(c => `<option value="${c.id}">${esc(c.nombre)}${c.rol ? ' (' + esc(c.rol) + ')' : ''}</option>`).join('') +
+    estado.contactos.map(c => `<option value="${c.id}">${esc(c.nombre)}${c.rol ? ' (' + esc(c.rol) + ')' : ''}</option>`).join('') +
     `<option value="new">&#65291; Nuevo contacto...</option>`;
-  sel.value = o && o.contactId ? String(o.contactId) : '';
+  sel.value = o && o.idContacto ? String(o.idContacto) : '';
   completarCamposContacto();
   // Contacto y notas plegados salvo que ya tengan datos (se abren con su viñeta +).
-  ponerOpcionPropia(!!(o && o.contactId), !!(o && o.notas));
+  ponerOpcionPropia(!!(o && o.idContacto), !!(o && o.notas));
   abrirModal('modal-owner');
   setTimeout(() => document.getElementById('m-own-nombre').focus(), 60);
 }
@@ -206,14 +206,14 @@ async function enviarPropietario() {
     id: idPropietarioEditando, nombre: val('m-own-nombre'), cedula: val('m-own-cedula'), estadoCivil: val('m-own-estado'),
     domicilio: val('m-own-domicilio'), telefono: val('m-own-tel'), mail: val('m-own-mail'),
     cuentaCobro: val('m-own-cuenta'), notas: val('m-own-notas'),
-    contact: sel === '' ? { mode: 'none' } : {
-      mode: sel === 'new' ? 'new' : 'existing', id: sel === 'new' ? null : +sel,
+    contacto: sel === '' ? { modo: 'none' } : {
+      modo: sel === 'new' ? 'new' : 'existing', id: sel === 'new' ? null : +sel,
       nombre: val('m-con-nombre'), rol: val('m-con-rol'), telefono: val('m-con-tel'), mail: val('m-con-mail'),
       notas: sel === 'new' ? '' : (contactoPorId(+sel) || {}).notas,
     },
   };
   if (!carga.nombre) { mostrarAviso('El nombre es obligatorio.', 'err'); return; }
-  if (carga.contact.mode !== 'none' && !carga.contact.nombre) { mostrarAviso('Falta el nombre del contacto.', 'err'); return; }
+  if (carga.contacto.modo !== 'none' && !carga.contacto.nombre) { mostrarAviso('Falta el nombre del contacto.', 'err'); return; }
   try {
     aplicarPropietarios(await call('guardarPropietario', carga));
     cerrarModal('modal-owner');
@@ -224,7 +224,7 @@ async function enviarPropietario() {
 
 function mostrarModalUnificar(idConservar) {
   idUnificarConservar = idConservar; idUnificarQuitar = null;
-  document.getElementById('merge-keep-name').textContent = estado.owners.find(o => o.id === idConservar).nombre;
+  document.getElementById('merge-keep-name').textContent = estado.propietarios.find(o => o.id === idConservar).nombre;
   ponerValor('m-merge-search', '');
   document.getElementById('modal-merge-submit').disabled = true;
   dibujarResultadosUnificar();
@@ -235,14 +235,14 @@ function mostrarModalUnificar(idConservar) {
 function dibujarResultadosUnificar() {
   const q = normalizar(val('m-merge-search'));
   const porPropietario = contratosPorPropietario();
-  const lista = estado.owners.filter(o => o.id !== idUnificarConservar && (!q || normalizar(o.nombre).includes(q))).slice(0, 40);
+  const lista = estado.propietarios.filter(o => o.id !== idUnificarConservar && (!q || normalizar(o.nombre).includes(q))).slice(0, 40);
   document.getElementById('merge-results').innerHTML = lista.map(o =>
     `<div class="merge-item${o.id === idUnificarQuitar ? ' selected' : ''}" data-merge-pick="${o.id}">${esc(o.nombre)}<small>${esc(o.telefono || '')} &middot; ${unidadesPropietario(porPropietario.get(o.id) || []).length} aptos</small></div>`
   ).join('') || '<div class="merge-item" style="color:var(--dim);cursor:default">Sin resultados</div>';
 }
 
 async function enviarUnificar() {
-  const quitar = estado.owners.find(o => o.id === idUnificarQuitar), conservar = estado.owners.find(o => o.id === idUnificarConservar);
+  const quitar = estado.propietarios.find(o => o.id === idUnificarQuitar), conservar = estado.propietarios.find(o => o.id === idUnificarConservar);
   if (!quitar || !conservar) return;
   if (!confirm(`Unificar "${quitar.nombre}" dentro de "${conservar.nombre}"?\n\nLos aptos y datos de "${quitar.nombre}" pasan a "${conservar.nombre}". Se puede deshacer con Ctrl+Z.`)) return;
   try {
@@ -254,7 +254,7 @@ async function enviarUnificar() {
 }
 
 export async function borrarPropietario(id) {
-  const o = estado.owners.find(x => x.id === id);
+  const o = estado.propietarios.find(x => x.id === id);
   const n = unidadesPropietario(contratosPorPropietario().get(id) || []).length;
   if (!confirm(`Eliminar el propietario "${o.nombre}"?${n ? `\n\n${n} apto(s) quedaran sin este propietario vinculado.` : ''}`)) return;
   try { aplicarPropietarios(await call('borrarPropietario', id)); propietariosAbiertos.delete(id); dibujar(); }
@@ -264,19 +264,19 @@ export async function borrarPropietario(id) {
 // Desde un apto: ir a la Base de Datos con ese contrato abierto (sin cambiar el filtro
 // salvo que el contrato este inactivo).
 function irAContrato(id) {
-  const e = estado.entries.find(x => x.id === id);
+  const e = estado.entradas.find(x => x.id === id);
   if (!e) return;
-  estado.activeTab = 'basedatos';
-  estado.dbSearchText = e.direccion;
-  if (e.inactive && estado.dbShowActive) {
-    estado.dbShowActive = false; estado.dbShowInactive = false;
+  estado.pestanaActiva = 'basedatos';
+  estado.baseTextoBusqueda = e.direccion;
+  if (e.inactivo && estado.baseMostrarActivos) {
+    estado.baseMostrarActivos = false; estado.baseMostrarInactivos = false;
     document.getElementById('db-show-active').checked = false;
     document.getElementById('db-show-inactive').checked = false;
   }
   const inp = document.getElementById('db-search');
   inp.value = e.direccion;
   inp.closest('.search-wrap').classList.add('has-text');
-  estado.expandedRows.add(id);
+  estado.filasAbiertas.add(id);
   dibujar();
 }
 
@@ -312,7 +312,7 @@ export function iniciar() {
     }
     const vista = t.closest('[data-doc-view]');
     if (vista) {
-      const id = +vista.dataset.docView, d = estado.ownerDocs.find(x => x.id === id);
+      const id = +vista.dataset.docView, d = estado.docsPropietarios.find(x => x.id === id);
       if (d && /\.pdf$/i.test(d.archivo)) { call('abrirDoc', id).catch(err => mostrarAviso('Error: ' + esc(err.message), 'err')); return; }
       const url = miniaturasDocs.get(id);
       if (url) {
@@ -331,7 +331,7 @@ export function iniciar() {
     const ir = t.closest('[data-goto-contract]');
     if (ir) return irAContrato(+ir.dataset.gotoContract);
     const ed = t.closest('[data-owner-edit]');
-    if (ed) return mostrarModalPropietario(estado.owners.find(o => o.id === +ed.dataset.ownerEdit));
+    if (ed) return mostrarModalPropietario(estado.propietarios.find(o => o.id === +ed.dataset.ownerEdit));
     const mg = t.closest('[data-owner-merge]');
     if (mg) return mostrarModalUnificar(+mg.dataset.ownerMerge);
     const dl = t.closest('[data-owner-del]');
@@ -370,6 +370,6 @@ export function iniciar() {
   // Celulares y mails de la ficha y del contacto, como viñetas.
   for (const [id, tipo, lbl, ph] of [['m-own-tel', 'telefonos', 'Celular', '09X XXX XXX'], ['m-own-mail', 'mails', 'Mail', 'mail@ejemplo.com'],
                                      ['m-con-tel', 'telefonos', 'Teléfono', '09X XXX XXX'], ['m-con-mail', 'mails', 'Mail', 'mail@ejemplo.com']]) {
-    armarChips(id, { split: Separadores[tipo], join: a => a.join(' / '), placeholder: ph, addLabel: lbl });
+    armarChips(id, { split: Separadores[tipo], join: a => a.join(' / '), placeholder: ph, etiquetaAgregar: lbl });
   }
 }

@@ -9,11 +9,11 @@ class MetodosMarcas {
     return salida;
   }
 
-  reemplazarMarcas(marks) {
+  reemplazarMarcas(marcas) {
     this.transaccion(() => {
       this.db.run('DELETE FROM marcas');
       const st = this.db.prepare('INSERT INTO marcas (clave, datos) VALUES (?, ?)');
-      try { for (const [k, v] of Object.entries(marks || {})) st.run([k, JSON.stringify(v)]); }
+      try { for (const [k, v] of Object.entries(marcas || {})) st.run([k, JSON.stringify(v)]); }
       finally { st.free(); }
     });
   }

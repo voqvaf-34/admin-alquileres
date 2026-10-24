@@ -24,7 +24,7 @@ async function lanzar(carpetaDatos, entornoExtra = {}, { ejecutable = null, tama
   await page.setViewportSize(tamano).catch(() => {});
   // El modo de color sigue al de Windows: las pruebas lo fijan en claro para no depender de la PC.
   await page.emulateMedia({ colorScheme: 'light' });
-  return { app, page, errors: errores };
+  return { app, page, errores };
 }
 
 const carpetaTemporal = (prefijo = 'alq-e2e-') => fs.mkdtempSync(path.join(os.tmpdir(), prefijo));

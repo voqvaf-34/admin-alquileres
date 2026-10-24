@@ -11,17 +11,17 @@ import { NOMBRES_MESES, formatearMails, formatearDinero, formatearNombres, insig
 import { filaContacto } from './propietarios.js';
 
 function baseFiltrada() {
-  if (!estado.entries) return [];
+  if (!estado.entradas) return [];
   // ninguno seleccionado = mostrar todos; uno seleccionado = filtrar
-  let lista = (!estado.dbShowActive && !estado.dbShowInactive)
-    ? estado.entries
-    : estado.entries.filter(e => e.inactive ? estado.dbShowInactive : estado.dbShowActive);
-  if (estado.dbFilterYear > 0)
-    lista = lista.filter(e => e.fechaInicio && e.fechaInicio.getFullYear() === estado.dbFilterYear);
-  if (estado.dbFilterMonth > 0)
-    lista = lista.filter(e => e.fechaInicio && e.fechaInicio.getMonth() + 1 === estado.dbFilterMonth);
-  if (estado.dbSearchText.trim()) {
-    const q = normalizar(estado.dbSearchText);
+  let lista = (!estado.baseMostrarActivos && !estado.baseMostrarInactivos)
+    ? estado.entradas
+    : estado.entradas.filter(e => e.inactivo ? estado.baseMostrarInactivos : estado.baseMostrarActivos);
+  if (estado.baseFiltroAnio > 0)
+    lista = lista.filter(e => e.fechaInicio && e.fechaInicio.getFullYear() === estado.baseFiltroAnio);
+  if (estado.baseFiltroMes > 0)
+    lista = lista.filter(e => e.fechaInicio && e.fechaInicio.getMonth() + 1 === estado.baseFiltroMes);
+  if (estado.baseTextoBusqueda.trim()) {
+    const q = normalizar(estado.baseTextoBusqueda);
     lista = lista.filter(e =>
       normalizar(e.direccion).includes(q) ||
       normalizar(e.propietario).includes(q) ||
@@ -51,9 +51,9 @@ function filaSeparadoraBase(etiqueta, cantidad) {
 }
 
 export function dibujarTablaBase() {
-  if (!estado.entries) return;
+  if (!estado.entradas) return;
   const filtrados = baseFiltrada();
-  const porDireccion = D.indicePorDireccion(estado.entries);   // una vez por dibujo, no por fila
+  const porDireccion = D.indicePorDireccion(estado.entradas);   // una vez por dibujo, no por fila
   // Ordenar cronologicamente por fecha de inicio (null al final)
   const ordenados = filtrados.slice().sort((a, b) => {
     const fa = a.fechaInicio ? a.fechaInicio.getTime() : Infinity;
@@ -62,7 +62,7 @@ export function dibujarTablaBase() {
   });
 
   const elCantidad = document.getElementById('db-count');
-  if (elCantidad) elCantidad.textContent = `${ordenados.length} / ${estado.entries.length} registros`;
+  if (elCantidad) elCantidad.textContent = `${ordenados.length} / ${estado.entradas.length} registros`;
 
   const tbody = document.getElementById('db-tbody');
   if (!tbody) return;
@@ -77,8 +77,8 @@ export function dibujarTablaBase() {
   // Filtro solo ano    -> agrupar por MES dentro de ese ano
   // Filtro solo mes    -> agrupar por ANO (solo meses coincidentes)
   // Filtro ano + mes   -> sin separadores
-  const tieneAnio  = estado.dbFilterYear  > 0;
-  const tieneMes   = estado.dbFilterMonth > 0;
+  const tieneAnio  = estado.baseFiltroAnio  > 0;
+  const tieneMes   = estado.baseFiltroMes > 0;
   let agruparPor = 'none';
   if      (!tieneAnio && !tieneMes) agruparPor = 'year';
   else if ( tieneAnio && !tieneMes) agruparPor = 'month';
@@ -111,9 +111,9 @@ export function dibujarTablaBase() {
 
   // Fila principal (+ detalle si esta abierta; si no, se arma al abrirla)
   const fila = e => {
-    const estaAbierto = estado.expandedRows.has(e.id);
-    return `<tr class="db-row${estaAbierto ? ' expanded' : ''}${e.inactive ? ' db-row-inactive' : ''}" data-id="${e.id}">
-      <td class="db-dir">${esc(e.direccion)}${e.inactive ? `<span class="inactive-badge">INACTIVO</span>` : ''}${insigniaGarantia(e)}${e.remitente ? `<span class="delegado-badge" style="margin-left:8px;font-size:10px" title="Aumentos los hace ${esc(e.remitente)}">&#8618; ${esc(e.remitente)}</span>` : ''}</td>
+    const estaAbierto = estado.filasAbiertas.has(e.id);
+    return `<tr class="db-row${estaAbierto ? ' expanded' : ''}${e.inactivo ? ' db-row-inactive' : ''}" data-id="${e.id}">
+      <td class="db-dir">${esc(e.direccion)}${e.inactivo ? `<span class="inactive-badge">INACTIVO</span>` : ''}${insigniaGarantia(e)}${e.remitente ? `<span class="delegado-badge" style="margin-left:8px;font-size:10px" title="Aumentos los hace ${esc(e.remitente)}">&#8618; ${esc(e.remitente)}</span>` : ''}</td>
       <td>${formatearNombres(e.propietario)}</td>
       <td>${formatearNombres(e.inquilino)}</td>
       <td style="white-space:nowrap;color:var(--dim)">${formatearFecha(e.fechaInicio)}</td>
@@ -144,24 +144,24 @@ export function dibujarTablaBase() {
 
 // Recuadro verde "Renovado el ..." (o "2a renovacion") con su boton para desmarcar.
 function insigniaRenovacion(e, dir) {
-  const mkV  = estado.marks[claveVenc(e)];
-  const mkVR = estado.marks[claveVencRenovado(e)];
+  const mkV  = estado.marcas[claveVenc(e)];
+  const mkVR = estado.marcas[claveVencRenovado(e)];
   if (mkVR) {
     return `<div class="renov-badge">
-      <span>&#10003; 2a renovacion el ${mkVR.date}${mkVR.nuevaInicio ? ` &middot; Nuevo inicio: ${mkVR.nuevaInicio} &middot; ${mkVR.renewYears}a` : ''}</span>
+      <span>&#10003; 2a renovacion el ${mkVR.fecha}${mkVR.nuevaInicio ? ` &middot; Nuevo inicio: ${mkVR.nuevaInicio} &middot; ${mkVR.aniosRenovacion}a` : ''}</span>
       <button class="unmark-btn" data-db-vunc-r="${dir}" title="Desmarcar 2a renovacion" style="margin-left:auto">&times;</button>
     </div>`;
   }
   if (!mkV) return '';
   // Si el vencimiento de la renovacion ya paso, avisar
   let vencNote = '';
-  const ni = mkV.nuevaInicio && mkV.renewYears && interpretarDMA(mkV.nuevaInicio);
+  const ni = mkV.nuevaInicio && mkV.aniosRenovacion && interpretarDMA(mkV.nuevaInicio);
   if (ni) {
-    const nvDate = new Date(ni.getFullYear() + mkV.renewYears, ni.getMonth(), Math.min(ni.getDate(), 28));
+    const nvDate = new Date(ni.getFullYear() + mkV.aniosRenovacion, ni.getMonth(), Math.min(ni.getDate(), 28));
     if (nvDate <= new Date()) vencNote = `<span style="color:var(--amber)"> &middot; &#9888; Venc. renovacion: ${formatearFecha(nvDate)}</span>`;
   }
   return `<div class="renov-badge">
-    <span>&#10003; Renovado el ${mkV.date}${mkV.nuevaInicio ? ` &middot; Inicio: ${mkV.nuevaInicio} &middot; ${mkV.renewYears}a` : ''}${vencNote}</span>
+    <span>&#10003; Renovado el ${mkV.fecha}${mkV.nuevaInicio ? ` &middot; Inicio: ${mkV.nuevaInicio} &middot; ${mkV.aniosRenovacion}a` : ''}${vencNote}</span>
     <button class="unmark-btn" data-db-vunc="${dir}" title="Desmarcar renovacion" style="margin-left:auto">&times;</button>
   </div>`;
 }
@@ -175,7 +175,7 @@ function filaDetalle(e, porDireccion) {
           <div class="db-detail-grid">
             <div><span class="lbl">Alquiler: </span><strong>${formatearDinero(e.importe, e.moneda)}</strong></div>
             <div><span class="lbl">Ult. aumento: </span>${e.ultimoAumento ? formatearFecha(e.ultimoAumento) : '<span style="color:var(--dim)">-</span>'}</div>
-            <div><span class="lbl">Contrato: </span>${esc(e.contratoStr||'-')}</div>
+            <div><span class="lbl">Contrato: </span>${esc(e.contratoTexto||'-')}</div>
             <div><span class="lbl">Garantía: </span>${e.garantia ? esc(e.garantia) : '<span class="missing">sin cargar</span>'}</div>
             <div><span class="lbl">Aumentos: </span>${D.gestionadoPor(e) ? esc(D.gestionadoPor(e)) : 'La inmobiliaria'}</div>
             ${e.propietario ? `<div><span class="lbl">Propietario: </span>${formatearNombres(e.propietario)}</div>` : ''}
@@ -195,7 +195,7 @@ function filaDetalle(e, porDireccion) {
             </div>
             <div class="nota-bar">
               <button class="chip chip-add" data-nota-add="${e.id}">&#65291; Comentario</button>
-              ${D.renovaciones(e, estado.marks, porDireccion).lista.length ? `<button class="mark-btn" data-timeline="${e.id}" title="Cuándo entró, cuándo venció y cada renovación">&#128339; Línea de tiempo</button>` : ''}
+              ${D.renovaciones(e, estado.marcas, porDireccion).lista.length ? `<button class="mark-btn" data-timeline="${e.id}" title="Cuándo entró, cuándo venció y cada renovación">&#128339; Línea de tiempo</button>` : ''}
             </div>
             <div class="nota-new" hidden>
               <textarea class="nota-textarea" rows="2" placeholder="Escribí el comentario (Enter guarda)"></textarea>
@@ -207,7 +207,7 @@ function filaDetalle(e, porDireccion) {
           </div>
           <div class="db-detail-acciones">
             <button class="mark-btn btn-editar-fila" data-edit-row="${e.id}">&#9998; Editar datos</button>
-            ${!e.inactive ? `<button class="mark-btn btn-inactivar-fila" data-delete-row="${e.id}" data-delete-dir="${dir}">&#8855; Marcar como inactivo</button>` : ''}
+            ${!e.inactivo ? `<button class="mark-btn btn-inactivar-fila" data-delete-row="${e.id}" data-delete-dir="${dir}">&#8855; Marcar como inactivo</button>` : ''}
           </div>
         </div>
       </td>
@@ -217,16 +217,16 @@ function filaDetalle(e, porDireccion) {
 // Inicializa el dropdown de anos del panel DB con los anos en entries
 export function llenarAniosBase() {
   const sel = document.getElementById('db-year');
-  if (!sel || !estado.entries) return;
+  if (!sel || !estado.entradas) return;
   const anios = [...new Set(
-    estado.entries.filter(e => e.fechaInicio).map(e => e.fechaInicio.getFullYear())
+    estado.entradas.filter(e => e.fechaInicio).map(e => e.fechaInicio.getFullYear())
   )].sort();
   // Limpiar y repoblar (conservar "Todos")
   sel.innerHTML = '<option value="0">Todos</option>';
   anios.forEach(y => {
     const o = document.createElement('option');
     o.value = y; o.textContent = y;
-    if (y === estado.dbFilterYear) o.selected = true;
+    if (y === estado.baseFiltroAnio) o.selected = true;
     sel.appendChild(o);
   });
 }
@@ -235,33 +235,33 @@ export function llenarAniosBase() {
 export function iniciar() {
   // Filtros Base de Datos
   document.getElementById('db-search').addEventListener('input', e => {
-    estado.dbSearchText = e.target.value;
+    estado.baseTextoBusqueda = e.target.value;
     e.target.closest('.search-wrap').classList.toggle('has-text', !!e.target.value);
     dibujarTablaBase();
   });
   document.getElementById('db-year').addEventListener('change', e => {
-    estado.dbFilterYear = +e.target.value;
+    estado.baseFiltroAnio = +e.target.value;
     dibujarTablaBase();
   });
   document.getElementById('db-month').addEventListener('change', e => {
-    estado.dbFilterMonth = +e.target.value;
+    estado.baseFiltroMes = +e.target.value;
     dibujarTablaBase();
   });
   document.getElementById('db-show-active').addEventListener('change', e => {
-    estado.dbShowActive = e.target.checked;
-    if (estado.dbShowActive) { estado.dbShowInactive = false; document.getElementById('db-show-inactive').checked = false; }
+    estado.baseMostrarActivos = e.target.checked;
+    if (estado.baseMostrarActivos) { estado.baseMostrarInactivos = false; document.getElementById('db-show-inactive').checked = false; }
     dibujarTablaBase();
   });
   document.getElementById('db-show-inactive').addEventListener('change', e => {
-    estado.dbShowInactive = e.target.checked;
-    if (estado.dbShowInactive) { estado.dbShowActive = false; document.getElementById('db-show-active').checked = false; }
+    estado.baseMostrarInactivos = e.target.checked;
+    if (estado.baseMostrarInactivos) { estado.baseMostrarActivos = false; document.getElementById('db-show-active').checked = false; }
     dibujarTablaBase();
   });
 
   // Botones clear en buscadores
   document.getElementById('db-search-clear').addEventListener('click', () => {
     const inp = document.getElementById('db-search');
-    inp.value = ''; estado.dbSearchText = '';
+    inp.value = ''; estado.baseTextoBusqueda = '';
     inp.closest('.search-wrap').classList.remove('has-text');
     inp.focus(); dibujarTablaBase();
   });
@@ -277,7 +277,7 @@ export function iniciar() {
     }
   });
   document.getElementById('db-tbody').addEventListener('click', async e => {
-    const porId = id => estado.entries && estado.entries.find(en => en.id === id);
+    const porId = id => estado.entradas && estado.entradas.find(en => en.id === id);
 
     // ── Editar alquiler ──
     const btnEditar = e.target.closest('[data-edit-row]');
@@ -301,8 +301,8 @@ export function iniciar() {
     if (dbVunc) {
       e.stopPropagation();
       const dir = dbVunc.dataset.dbVunc;
-      delete estado.marks[`v|${dir}`];
-      delete estado.marks[`vr|${dir}`];
+      delete estado.marcas[`v|${dir}`];
+      delete estado.marcas[`vr|${dir}`];
       guardarMarcas();
       dibujarTablaBase();
       return;
@@ -310,7 +310,7 @@ export function iniciar() {
     const dbVuncR = e.target.closest('[data-db-vunc-r]');
     if (dbVuncR) {
       e.stopPropagation();
-      delete estado.marks[`vr|${dbVuncR.dataset.dbVuncR}`];
+      delete estado.marcas[`vr|${dbVuncR.dataset.dbVuncR}`];
       guardarMarcas();
       dibujarTablaBase();
       return;
@@ -372,15 +372,15 @@ export function iniciar() {
     if (!fila) return;
     const id = +fila.dataset.id;
     const filaDet = document.querySelector(`.db-detail-row[data-detail-id="${id}"]`);
-    if (estado.expandedRows.has(id)) {
-      estado.expandedRows.delete(id);
+    if (estado.filasAbiertas.has(id)) {
+      estado.filasAbiertas.delete(id);
       fila.classList.remove('expanded');
       if (filaDet) filaDet.remove();
     } else {
-      estado.expandedRows.add(id);
+      estado.filasAbiertas.add(id);
       fila.classList.add('expanded');
       const entrada = porId(id);
-      if (!filaDet && entrada) fila.insertAdjacentHTML('afterend', filaDetalle(entrada, D.indicePorDireccion(estado.entries)));
+      if (!filaDet && entrada) fila.insertAdjacentHTML('afterend', filaDetalle(entrada, D.indicePorDireccion(estado.entradas)));
     }
   });
 }

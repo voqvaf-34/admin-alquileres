@@ -18,7 +18,7 @@ async function desplegarPrimeraFila(page) {
 
 test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) => {
   const carpetaDatos = carpetaTemporal();
-  const { app, page, errors: errores } = await lanzar(carpetaDatos);
+  const { app, page, errores } = await lanzar(carpetaDatos);
   await page.evaluate(() => { window.confirm = () => true; });
   // Los formularios solo se cierran con Cancelar/Guardar: si una prueba falla con uno abierto,
   // se cierra antes de la siguiente para que no queden todas trabadas.
@@ -32,7 +32,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.click('#btn-start-demo');
     await page.waitForSelector('#app-screen', { state: 'visible' });
     assert.equal(await page.textContent('#tab-basedatos'), 'Base de Datos', 'las pestañas no muestran numeros');
-    assert.equal(await page.evaluate(() => app.estado.entries.length), 21);
+    assert.equal(await page.evaluate(() => app.estado.entradas.length), 21);
   });
 
   await t.test('modo oscuro persistente', async () => {
@@ -74,10 +74,10 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
 
   await t.test('nombres y direcciones estandarizados; delegado sin prefijo', async () => {
     const r = await page.evaluate(() => ({
-      upper: app.estado.owners.filter(o => o.nombre === o.nombre.toUpperCase()).map(o => o.nombre),
-      ceibo: app.estado.entries.filter(e => e.direccion === 'Torre Ceibo - Av. Italia 2875 U403').length,
-      delegados: app.estado.entries.map(e => e.remitente).filter(Boolean),
-      garantias: app.estado.entries.map(e => e.garantia).filter(Boolean).sort(),
+      upper: app.estado.propietarios.filter(o => o.nombre === o.nombre.toUpperCase()).map(o => o.nombre),
+      ceibo: app.estado.entradas.filter(e => e.direccion === 'Torre Ceibo - Av. Italia 2875 U403').length,
+      delegados: app.estado.entradas.map(e => e.remitente).filter(Boolean),
+      garantias: app.estado.entradas.map(e => e.garantia).filter(Boolean).sort(),
     }));
     assert.deepEqual(r.upper, [], 'sin nombres en mayusculas');
     assert.equal(r.ceibo, 2, 'mismo apto con dos inquilinos (uno inactivo)');
@@ -108,7 +108,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   });
 
   await t.test('alta de alquiler con autocompletado', async () => {
-    const existentes = await page.evaluate(() => app.estado.owners.find(o => o.nombre === 'Bruno Silva'));
+    const existentes = await page.evaluate(() => app.estado.propietarios.find(o => o.nombre === 'Bruno Silva'));
     await page.click('#btn-add-entry');
     await esperarFoco(page, 'm-edificio');
     // Elegir un apto existente en "Edificio" completa las tres partes y el propietario.
@@ -152,7 +152,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.waitForSelector('#modal-add', { state: 'hidden' });
     await page.fill('#db-search', 'e2e prueba');
     assert.equal(await page.locator('#db-tbody .db-row').count(), 1);
-    assert.equal(await page.evaluate(d => app.estado.entries.find(e => e.direccion === d).inquilino, DIR), 'Inquilino E2E / Segundo Inquilino E2E');
+    assert.equal(await page.evaluate(d => app.estado.entradas.find(e => e.direccion === d).inquilino, DIR), 'Inquilino E2E / Segundo Inquilino E2E');
   });
 
   await t.test('edicion y comentarios como viñetas', async () => {
@@ -169,26 +169,26 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.click('#db-tbody [data-nota-add]');
     await page.fill('#db-tbody .nota-textarea', 'comentario e2e');
     await page.keyboard.press('Enter');
-    await page.waitForFunction(d => app.estado.entries.find(e => e.direccion === d).notas === 'comentario e2e', DIR);
+    await page.waitForFunction(d => app.estado.entradas.find(e => e.direccion === d).notas === 'comentario e2e', DIR);
     await page.click('#db-tbody [data-nota-add]');
     await page.fill('#db-tbody .nota-textarea', 'segundo comentario');
     await page.click('#db-tbody [data-nota-row]');
-    await page.waitForFunction(d => app.estado.entries.find(e => e.direccion === d).notas === 'comentario e2e | segundo comentario', DIR);
+    await page.waitForFunction(d => app.estado.entradas.find(e => e.direccion === d).notas === 'comentario e2e | segundo comentario', DIR);
     assert.equal(await page.locator('#db-tbody .nota-chip').count(), 2);
     await page.locator('#db-tbody .nota-txt', { hasText: 'segundo' }).click();
     await page.fill('#db-tbody .nota-textarea', 'segundo corregido');
     await page.keyboard.press('Enter');
-    await page.waitForFunction(d => app.estado.entries.find(e => e.direccion === d).notas === 'comentario e2e | segundo corregido', DIR);
+    await page.waitForFunction(d => app.estado.entradas.find(e => e.direccion === d).notas === 'comentario e2e | segundo corregido', DIR);
     await page.locator('#db-tbody .nota-chip', { hasText: 'segundo corregido' }).locator('.chip-x').click();
-    await page.waitForFunction(d => app.estado.entries.find(e => e.direccion === d).notas === 'comentario e2e', DIR);
+    await page.waitForFunction(d => app.estado.entradas.find(e => e.direccion === d).notas === 'comentario e2e', DIR);
   });
 
   await t.test('linea de tiempo y renovaciones viejas fuera de comentarios', async () => {
-    const id = await page.evaluate(d => app.estado.entries.find(e => e.direccion === d).id, DIR);
+    const id = await page.evaluate(d => app.estado.entradas.find(e => e.direccion === d).id, DIR);
     const y0 = new Date().getFullYear() - 1, mm = String(new Date().getMonth() + 1).padStart(2, '0');
     const viejas = `20/${mm}/${y0} Renovacion 2 años | comentario e2e | En fecha 25/${mm}/${y0 + 1} se renovo a 2 años`;
-    await page.evaluate(([i, n]) => app.guardarNotas(app.estado.entries.find(e => e.id === i), n), [id, viejas]);
-    await page.waitForFunction(i => /Renovacion/.test(app.estado.entries.find(e => e.id === i).notas), id);
+    await page.evaluate(([i, n]) => app.guardarNotas(app.estado.entradas.find(e => e.id === i), n), [id, viejas]);
+    await page.waitForFunction(i => /Renovacion/.test(app.estado.entradas.find(e => e.id === i).notas), id);
     await page.evaluate(() => app.dibujarTablaBase());
     assert.equal(await page.locator(`[data-detail-id="${id}"] .nota-chip`).count(), 1, 'las renovaciones no aparecen como comentario');
     await page.click(`[data-detail-id="${id}"] [data-timeline]`);
@@ -204,9 +204,9 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     assert.equal(await page.locator('#m-notas-chips .chip:not(.chip-add)').count(), 1);
     await page.click('#modal-submit');
     await page.waitForSelector('#modal-add', { state: 'hidden' });
-    const notas = await page.evaluate(i => app.estado.entries.find(e => e.id === i).notas, id);
+    const notas = await page.evaluate(i => app.estado.entradas.find(e => e.id === i).notas, id);
     for (const x of ['Renovacion 2 años', 'comentario e2e', 'se renovo a 2 años']) assert.ok(notas.includes(x), notas);
-    await page.evaluate(i => app.guardarNotas(app.estado.entries.find(e => e.id === i), 'comentario e2e'), id);
+    await page.evaluate(i => app.guardarNotas(app.estado.entradas.find(e => e.id === i), 'comentario e2e'), id);
     await page.evaluate(() => app.dibujarTablaBase());
   });
 
@@ -229,14 +229,14 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.click('#modal-submit');
     await page.waitForSelector('#modal-add .modal-box', { state: 'hidden' });
     assert.match(await page.textContent('#db-tbody .db-row .garantia-badge'), /Fianza E2E/);
-    assert.match(await page.evaluate(() => app.estado.appSettings.garantias), /Fianza E2E/, 'la opcion nueva queda guardada');
+    assert.match(await page.evaluate(() => app.estado.ajustesApp.garantias), /Fianza E2E/, 'la opcion nueva queda guardada');
     assert.match(await page.textContent('#db-tbody .db-detail-row'), /Alquiler: US\$ 20\.000/);
     await page.click('#db-tbody [data-edit-row]');
     await esperarFoco(page, 'm-importe');
     await page.click('#m-moneda-seg [data-moneda="UYU"]');
     await page.click('#modal-submit');
     await page.waitForSelector('#modal-add .modal-box', { state: 'hidden' });
-    assert.equal(await page.evaluate(d => app.estado.entries.find(e => e.direccion === d).moneda, DIR), 'UYU');
+    assert.equal(await page.evaluate(d => app.estado.entradas.find(e => e.direccion === d).moneda, DIR), 'UYU');
     await page.fill('#db-search', 'fianza e2e');                     // el buscador encuentra por garantia
     assert.equal(await page.locator('#db-tbody .db-row').count(), 1);
     await page.click('#db-search-clear');
@@ -245,7 +245,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   await t.test('ficha del propietario: datos para contrato, contacto y cuenta por apto', async () => {
     await page.click('#tab-propietarios');
     await page.fill('#owners-search', 'propietario editado');
-    const id = await page.evaluate(() => app.estado.owners.find(o => o.nombre === 'Propietario Editado').id);
+    const id = await page.evaluate(() => app.estado.propietarios.find(o => o.nombre === 'Propietario Editado').id);
     await page.click(`[data-owner-row="${id}"]`);
     assert.match(await page.textContent('#owners-tbody .db-detail-row'), /Falta para contratos: cedula, foto de cedula, domicilio, estado civil, cuenta de cobro/);
     await page.click(`[data-owner-edit="${id}"]`);
@@ -265,7 +265,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     const cuenta = page.locator(`[data-acct-owner="${id}"]`).first();
     await cuenta.fill('BROU 001234567-00001');
     await cuenta.press('Tab');
-    await page.waitForFunction(i => app.estado.ownerAccounts.some(a => a.ownerId === i && a.cuenta === 'BROU 001234567-00001'), id);
+    await page.waitForFunction(i => app.estado.cuentasPropietarios.some(a => a.idPropietario === i && a.cuenta === 'BROU 001234567-00001'), id);
     assert.match(await page.textContent('#owners-tbody .db-detail-row'), /Falta para contratos: foto de cedula/);
     // El contacto aparece tambien en el detalle del apto.
     await page.click('#owners-tbody [data-goto-contract]');
@@ -277,33 +277,33 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
   await t.test('unificar propietarios y deshacer con Ctrl+Z / rehacer con Ctrl+Y', async () => {
     // Un duplicado: el mismo dueño cargado con otro nombre en un alquiler nuevo.
     await page.evaluate(async () => {
-      const r = await window.api.agregarContrato({ direccion: 'E2E Duplicado 1', calle: 'E2E Duplicado 1', importeBase: 15000, propietario: 'A. Perez', inquilino: 'X', contratoStr: '2 años' });
+      const r = await window.api.agregarContrato({ direccion: 'E2E Duplicado 1', calle: 'E2E Duplicado 1', importeBase: 15000, propietario: 'A. Perez', inquilino: 'X', contratoTexto: '2 años' });
       if (!r.ok) throw new Error(r.error);
     });
     await page.reload();
     await page.waitForSelector('#app-screen', { state: 'visible' });
     await page.evaluate(() => { window.confirm = () => true; });
     const ids = await page.evaluate(() => ({
-      keep: app.estado.owners.find(o => o.nombre === 'Ana Perez').id,
-      drop: app.estado.owners.find(o => o.nombre === 'A. Perez').id,
+      conservar: app.estado.propietarios.find(o => o.nombre === 'Ana Perez').id,
+      quitar: app.estado.propietarios.find(o => o.nombre === 'A. Perez').id,
     }));
-    const total = await page.evaluate(i => app.estado.contractOwners.filter(l => l.ownerId === i.keep || l.ownerId === i.drop).length, ids);
+    const total = await page.evaluate(i => app.estado.contratosPropietarios.filter(l => l.idPropietario === i.conservar || l.idPropietario === i.quitar).length, ids);
     await page.click('#tab-propietarios');
     await page.fill('#owners-search', 'perez');
-    await page.click(`[data-owner-row="${ids.keep}"]`);
+    await page.click(`[data-owner-row="${ids.conservar}"]`);
     await new Promise(r => setTimeout(r, 1600));     // un paso de deshacer propio (no junto al cambio anterior)
-    await page.click(`[data-owner-merge="${ids.keep}"]`);
+    await page.click(`[data-owner-merge="${ids.conservar}"]`);
     await page.fill('#m-merge-search', 'a. perez');
-    await page.click(`[data-merge-pick="${ids.drop}"]`);
+    await page.click(`[data-merge-pick="${ids.quitar}"]`);
     await page.click('#modal-merge-submit');
-    await page.waitForFunction(id => !app.estado.owners.some(o => o.id === id), ids.drop);
-    assert.equal(await page.evaluate(id => app.estado.contractOwners.filter(l => l.ownerId === id).length, ids.keep), total, 'todos los aptos quedan en uno');
+    await page.waitForFunction(id => !app.estado.propietarios.some(o => o.id === id), ids.quitar);
+    assert.equal(await page.evaluate(id => app.estado.contratosPropietarios.filter(l => l.idPropietario === id).length, ids.conservar), total, 'todos los aptos quedan en uno');
     assert.match(await page.getAttribute('#btn-undo', 'title'), /Deshacer: Unificar propietarios/);
     await page.click('#owners-count');                // foco fuera de los campos de texto
     await page.keyboard.press('Control+z');
-    await page.waitForFunction(id => app.estado.owners.some(o => o.id === id), ids.drop);
+    await page.waitForFunction(id => app.estado.propietarios.some(o => o.id === id), ids.quitar);
     await page.keyboard.press('Control+y');
-    await page.waitForFunction(id => !app.estado.owners.some(o => o.id === id), ids.drop);
+    await page.waitForFunction(id => !app.estado.propietarios.some(o => o.id === id), ids.quitar);
     await page.click('#owners-search-clear');
   });
 
@@ -320,7 +320,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await compacto.waitFor();
     assert.match(await compacto.textContent(), /Enviado .*\$20\.000.*\$21\.000/);
     assert.equal(await pendientes(), antes - 1, 'el circulito cuenta solo los pendientes');
-    const e = await page.evaluate(d => { const x = app.estado.entries.find(y => y.direccion === d); return { importe: x.importe, ult: x.ultimoAumento && x.ultimoAumento.getMonth() }; }, DIR);
+    const e = await page.evaluate(d => { const x = app.estado.entradas.find(y => y.direccion === d); return { importe: x.importe, ult: x.ultimoAumento && x.ultimoAumento.getMonth() }; }, DIR);
     assert.deepEqual(e, { importe: 21000, ult: new Date().getMonth() });
     await page.check('#op-show-sinresolver');
     assert.equal(await page.locator('.card', { hasText: DIR }).count(), 0, 'filtro sin resolver lo oculta');
@@ -332,7 +332,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     assert.match(await abierta.textContent(), /IPC aplicado: 5,00%/);
     await abierta.locator('[data-aum-undo]').click();
     await page.locator('.card:not(.card-compact)', { hasText: DIR }).waitFor();
-    assert.equal(await page.evaluate(d => app.estado.entries.find(x => x.direccion === d).importe, DIR), 20000, 'deshacer revierte el importe');
+    assert.equal(await page.evaluate(d => app.estado.entradas.find(x => x.direccion === d).importe, DIR), 20000, 'deshacer revierte el importe');
     assert.equal(await pendientes(), antes, 'al desmarcar vuelve a contar');
   });
 
@@ -381,14 +381,14 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await tarjeta.locator('[data-vstart]').click();
     await page.fill('#inp-venc-date', `${new Date().getFullYear()}-01-01`);
     await page.click('[data-vconf]');
-    await page.waitForFunction(d => !!app.estado.marks['v|' + d], dir);
+    await page.waitForFunction(d => !!app.estado.marcas['v|' + d], dir);
     assert.equal(await page.evaluate(d => app.entradaPorDireccion(d).notas, dir), notasAntes, 'la renovacion no se escribe en comentarios');
     await page.click('#tab-basedatos');
     await page.fill('#db-search', dir);
     const id = await page.evaluate(d => app.entradaPorDireccion(d).id, dir);
     await page.click(`#db-tbody .db-row[data-id="${id}"]`);
     await page.click(`[data-detail-id="${id}"] [data-db-vunc]`);
-    await page.waitForFunction(d => !app.estado.marks['v|' + d], dir);
+    await page.waitForFunction(d => !app.estado.marcas['v|' + d], dir);
     await page.click('#db-search-clear');
   });
 
@@ -401,17 +401,17 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.click(`[data-nr-start="${dir}"]`);
     await page.check('#inp-nr-sigue');
     await page.click('[data-nr-conf]');
-    await page.waitForFunction(d => app.estado.marks['nr|' + d] && app.estado.marks['nr|' + d].sigueActivo, dir);
-    assert.equal(await page.evaluate(d => app.entradaPorDireccion(d).inactive, dir), false, 'sigue activo');
+    await page.waitForFunction(d => app.estado.marcas['nr|' + d] && app.estado.marcas['nr|' + d].sigueActivo, dir);
+    assert.equal(await page.evaluate(d => app.entradaPorDireccion(d).inactivo, dir), false, 'sigue activo');
     await page.click('#btn-undo');
-    await page.waitForFunction(d => !app.estado.marks['nr|' + d], dir);
+    await page.waitForFunction(d => !app.estado.marcas['nr|' + d], dir);
     dir = await elegir();
     await espera(1600);
     await page.click(`[data-nr-start="${dir}"]`);
     await page.click('[data-nr-conf]');
-    await page.waitForFunction(d => app.entradaPorDireccion(d) && app.entradaPorDireccion(d).inactive, dir);
+    await page.waitForFunction(d => app.entradaPorDireccion(d) && app.entradaPorDireccion(d).inactivo, dir);
     await page.click('#btn-undo');                         // marca + inactivo = un solo paso
-    await page.waitForFunction(d => !app.estado.marks['nr|' + d] && !app.entradaPorDireccion(d).inactive, dir);
+    await page.waitForFunction(d => !app.estado.marcas['nr|' + d] && !app.entradaPorDireccion(d).inactivo, dir);
   });
 
   await t.test('administraciones: alta con viñetas, edicion y baja', async () => {
@@ -435,7 +435,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     assert.equal(await page.locator('#admin-tbody tr[data-admin-row]').count(), antesDe + 1);
     const fila = page.locator('#admin-tbody tr', { hasText: 'ADMIN E2E' });
     assert.equal(await fila.locator('a.wa').first().getAttribute('href'), 'https://wa.me/59899123456');
-    const guardado = await page.evaluate(() => app.estado.admins.find(a => a.nombre === 'ADMIN E2E'));
+    const guardado = await page.evaluate(() => app.estado.administraciones.find(a => a.nombre === 'ADMIN E2E'));
     assert.deepEqual([guardado.edificios, guardado.telefono], ['Edificio Uno; Edificio Dos', '099 123 456; 098 765 432']);
     await fila.locator('[data-admin-edit]').click();
     await esperarFoco(page, 'm-adm-nombre');
@@ -467,7 +467,7 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     await page.fill('#db-search', 'e2e prueba');
     await desplegarPrimeraFila(page);
     await page.click('#db-tbody [data-delete-row]');
-    await page.waitForFunction(d => app.estado.entries.find(e => e.direccion === d).inactive, DIR);
+    await page.waitForFunction(d => app.estado.entradas.find(e => e.direccion === d).inactivo, DIR);
     assert.equal(await page.locator('#db-tbody .db-row').count(), 0, 'filtro activos lo oculta');
   });
 
@@ -489,13 +489,13 @@ test('recorrido completo con datos de ejemplo', { timeout: 300000 }, async (t) =
     const r = await lanzar(carpetaDatos);
     try {
       await r.page.waitForSelector('#app-screen', { state: 'visible' });
-      const c = await r.page.evaluate(d => app.estado.entries.find(e => e.direccion === d), DIR);
+      const c = await r.page.evaluate(d => app.estado.entradas.find(e => e.direccion === d), DIR);
       assert.equal(c.propietario, 'Propietario Editado');
       assert.equal(c.notas, 'comentario e2e | NO AUMENTA: acuerdo e2e');
-      assert.equal(c.inactive, true);
+      assert.equal(c.inactivo, true);
       assert.equal(c.garantia, 'Fianza E2E');
       assert.ok(fs.readdirSync(path.join(carpetaDatos, 'backups')).length >= 1, 'hay copias de seguridad');
-      assert.deepEqual(r.errors, []);
+      assert.deepEqual(r.errores, []);
     } finally { await r.app.close(); }
   });
 });

@@ -8,7 +8,7 @@ const proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value
 
 export function armarChips(id, opciones) {
   const store = document.getElementById(id);
-  const { split, join: unir, placeholder: marcador = 'Agregar...', addLabel: etiquetaAgregar = 'Agregar', isBusy: estaOcupado = () => false } = opciones;
+  const { split, join: unir, placeholder: marcador = 'Agregar...', etiquetaAgregar = 'Agregar', estaOcupado = () => false } = opciones;
   let elementos = split(store.value || '');
 
   const caja = document.createElement('div');
@@ -84,7 +84,7 @@ export function armarChips(id, opciones) {
 // como dato: sus <option> son las viñetas. Tocar la elegida la deselecciona. La viñeta
 // "+" permite escribir otra opcion; onAdd(nombre) la agrega al select y la elige.
 const selectorModelo = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
-export function armarSelector(id, { onAdd: alAgregar, addLabel: etiquetaAgregar = 'Otra', placeholder: marcador = 'Escribí y Enter' }) {
+export function armarSelector(id, { onAdd: alAgregar, etiquetaAgregar = 'Otra', placeholder: marcador = 'Escribí y Enter' }) {
   const sel = document.getElementById(id);
   const caja = document.createElement('div');
   caja.className = 'chips picker';

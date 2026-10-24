@@ -9,71 +9,71 @@ const publicacion = require('./publicacion');
 const { rutaBase } = require('./rutas');
 const visor = require('./visor');
 
-function state() {
-  if (ES_VISOR && !ctx.store) return { mode: MODO, needsShared: true, viewer: visor.estadoVisor() };
+function estadoActual() {
+  if (ES_VISOR && !ctx.base) return { modo: MODO, necesitaCompartida: true, visor: visor.estadoVisor() };
   return {
-    mode:      MODO,
-    share:     ES_VISOR ? null : publicacion.estadoCompartir(),
-    save:      ES_VISOR ? null : ctx.store.saveStatus,
-    viewer:    ES_VISOR ? visor.estadoVisor() : null,
-    contracts: ctx.store.listarContratos(),
-    admins:    ctx.store.listarAdmins(),
-    owners:    ctx.store.listarPropietarios(),
-    contacts:  ctx.store.listarContactos(),
-    contractOwners: ctx.store.listarPropietariosDeContratos(),
-    ownerDocs: ctx.store.listarDocsPropietarios(),
-    ownerAccounts: ctx.store.listarCuentasPropietarios(),
-    marks:     ctx.store.obtenerMarcas(),
-    settings:  ctx.store.obtenerAjustes(),
-    estadoDeshacer:      ctx.store.estadoDeshacer(),
-    needsImport: !ES_VISOR && ctx.store.estaVacia() && ctx.store.obtenerAjustes().inicializada !== '1',
+    modo:      MODO,
+    compartido:     ES_VISOR ? null : publicacion.estadoCompartir(),
+    save:      ES_VISOR ? null : ctx.base.estadoGuardado,
+    visor:    ES_VISOR ? visor.estadoVisor() : null,
+    contratos: ctx.base.listarContratos(),
+    administraciones:    ctx.base.listarAdmins(),
+    propietarios:    ctx.base.listarPropietarios(),
+    contactos:  ctx.base.listarContactos(),
+    contratosPropietarios: ctx.base.listarPropietariosDeContratos(),
+    docsPropietarios: ctx.base.listarDocsPropietarios(),
+    cuentasPropietarios: ctx.base.listarCuentasPropietarios(),
+    marcas:     ctx.base.obtenerMarcas(),
+    ajustes:  ctx.base.obtenerAjustes(),
+    estadoDeshacer:      ctx.base.estadoDeshacer(),
+    necesitaImportar: !ES_VISOR && ctx.base.estaVacia() && ctx.base.obtenerAjustes().inicializada !== '1',
     // Asistente de primer uso (marca y apariencia). ADMIN_ALQ_SIN_ASISTENTE lo saltea (pruebas).
-    asistente: !ES_VISOR && ctx.store.estaVacia() && !ctx.store.obtenerAjustes().asistenteVisto && !process.env.ADMIN_ALQ_SIN_ASISTENTE,
+    asistente: !ES_VISOR && ctx.base.estaVacia() && !ctx.base.obtenerAjustes().asistenteVisto && !process.env.ADMIN_ALQ_SIN_ASISTENTE,
     rutaBase:    rutaBase(),
   };
 }
 
 function importarDesde(rutaArchivo) {
   const datos = leerArchivoLibro(rutaArchivo);
-  if (!datos.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
-  ctx.store.respaldar('pre-import');
-  const cantidades = ctx.store.importarDatos(datos);
+  if (!datos.contratos.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
+  ctx.base.respaldar('pre-import');
+  const cantidades = ctx.base.importarDatos(datos);
   asegurarDatos(true, { heuristicas: datos.formato === 'clasico' });
-  ctx.store.guardarAjuste('inicializada', '1');
-  ctx.store.guardarAjuste('importadoDe', rutaArchivo);
-  ctx.store.guardarAjuste('importadoEl', new Date().toISOString());
+  ctx.base.guardarAjuste('inicializada', '1');
+  ctx.base.guardarAjuste('importadoDe', rutaArchivo);
+  ctx.base.guardarAjuste('importadoEl', new Date().toISOString());
   return cantidades;
 }
 
 // Suma una planilla a lo que ya hay (con la app en uso): no toca lo cargado y saltea repetidos.
 function agregarDesde(rutaArchivo) {
   const datos = leerArchivoLibro(rutaArchivo);
-  if (!datos.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
+  if (!datos.contratos.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
   const clasico = datos.formato === 'clasico';
-  ctx.store.respaldar('pre-agregar');
-  const res = ctx.store.agregarImportados({ contracts: datos.contracts.map(c => D.prepararImportado(c, { reglasDirecciones: REGLAS_DIRECCIONES, clasico })), admins: datos.admins }, D.claveNombre);
-  ctx.store.guardarAjuste('inicializada', '1');
+  ctx.base.respaldar('pre-agregar');
+  const res = ctx.base.agregarImportados({ contratos: datos.contratos.map(c => D.prepararImportado(c, { reglasDirecciones: REGLAS_DIRECCIONES, clasico })), administraciones: datos.administraciones }, D.claveNombre);
+  ctx.base.guardarAjuste('inicializada', '1');
   return res;
 }
 
 // Datos de ejemplo inventados (ver dominios/demo.js): pasan por las mismas normalizaciones que
 // una importacion.
 function cargarDemo() {
-  const { contracts: contratos, admins, marks } = D.datosDemo(new Date());
-  ctx.store.respaldar('pre-ejemplo');
-  const cantidades = ctx.store.importarDatos({ contracts: contratos, admins });
+  const { contratos, administraciones, marcas } = D.datosDemo(new Date());
+  ctx.base.respaldar('pre-ejemplo');
+  const cantidades = ctx.base.importarDatos({ contratos, administraciones });
   asegurarDatos(true, { heuristicas: false });
-  ctx.store.reemplazarMarcas(marks);
-  ctx.store.guardarAjuste('inicializada', '1');
-  ctx.store.guardarAjuste('importadoDe', 'datos de ejemplo');
-  ctx.store.guardarAjuste('importadoEl', new Date().toISOString());
-  return { counts: cantidades, state: state() };
+  ctx.base.reemplazarMarcas(marcas);
+  ctx.base.guardarAjuste('inicializada', '1');
+  ctx.base.guardarAjuste('importadoDe', 'datos de ejemplo');
+  ctx.base.guardarAjuste('importadoEl', new Date().toISOString());
+  return { cantidades, estado: estadoActual() };
 }
 
 async function abrirBase() {
-  ctx.store = await BaseDatos.open(rutaBase());
+  ctx.base = await BaseDatos.open(rutaBase());
   asegurarDatos(false);
   publicacion.conectarCompartir();
 }
 
-Object.assign(module.exports, { state, importarDesde, agregarDesde, cargarDemo, abrirBase });
+Object.assign(module.exports, { estado: estadoActual, importarDesde, agregarDesde, cargarDemo, abrirBase });
