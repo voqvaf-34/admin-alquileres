@@ -67,10 +67,14 @@ src/
   dominios/        Reglas de negocio puras (sin Electron ni base de datos): aumentos, vencimientos,
                    línea de tiempo, propietarios, direcciones, marca y paleta de colores, mensajes,
                    planilla de importación y datos de ejemplo. Se prueban con node:test.
-  infraestructura/ Proceso principal: base de datos, migraciones, canales con la ventana,
-                   publicación para el Visor, importación de Excel/CSV y descarga del IPC.
+  infraestructura/ Proceso principal: base de datos (base-datos/, un archivo por tema), migraciones,
+                   canales con la ventana, publicación para el Visor, importación de Excel/CSV y
+                   descarga del IPC.
   interfaz/        La ventana: vistas (pestañas), ventanas secundarias y componentes.
 ```
+
+- Los nombres del código están en español. Quedan en inglés los nombres guardados (tablas y columnas
+  de la base, claves de configuración) para que las bases existentes sigan abriendo igual.
 
 - La ventana solo se comunica con el proceso principal por los canales definidos en `preload.js`. El
   Visor registra únicamente canales de lectura.
@@ -83,7 +87,8 @@ src/
 ```bash
 npm test            # unitarias: reglas de negocio, base de datos e importador
 npm run test:e2e    # de punta a punta: abre la app real con Playwright
-npm run test:all    # las dos
+npm run lint        # estilo y errores comunes (ESLint)
+npm run test:all    # lint, unitarias y de punta a punta
 ```
 
 La accesibilidad se revisa automáticamente con [axe-core](https://github.com/dequelabs/axe-core) (WCAG 2.1 A y AA):

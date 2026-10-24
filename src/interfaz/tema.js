@@ -3,20 +3,20 @@
   // Modo de color: 'auto' (como Windows, por defecto), 'light' o 'dark'. Es de cada PC, no de la base.
   const KEY = 'alq-theme';
   const sistema = window.matchMedia('(prefers-color-scheme: dark)');
-  const getModo = () => { try { const m = localStorage.getItem(KEY); return m === 'dark' || m === 'light' ? m : 'auto'; } catch (_) { return 'auto'; } };
-  const get = () => { const m = getModo(); return m === 'auto' ? (sistema.matches ? 'dark' : 'light') : m; };
-  const apply = () => {
+  const obtenerModo = () => { try { const m = localStorage.getItem(KEY); return m === 'dark' || m === 'light' ? m : 'auto'; } catch (_) { return 'auto'; } };
+  const get = () => { const m = obtenerModo(); return m === 'auto' ? (sistema.matches ? 'dark' : 'light') : m; };
+  const aplicar = () => {
     if (get() === 'dark') document.documentElement.dataset.theme = 'dark';
     else delete document.documentElement.dataset.theme;
     document.dispatchEvent(new CustomEvent('modo-color'));
   };
-  apply();
-  sistema.addEventListener('change', () => { if (getModo() === 'auto') apply(); });
+  aplicar();
+  sistema.addEventListener('change', () => { if (obtenerModo() === 'auto') aplicar(); });
   window.Theme = {
-    get, getModo,
+    get, getModo: obtenerModo,
     setModo(m) {
       try { if (m === 'auto') localStorage.removeItem(KEY); else localStorage.setItem(KEY, m); } catch (_) {}
-      apply();
+      aplicar();
     },
     // Boton de la cabecera: pasa al modo contrario al que se ve ahora.
     toggle() { this.setModo(get() === 'dark' ? 'light' : 'dark'); return get(); },
@@ -34,7 +34,7 @@
     cl.toggle('a11y-subrayar', !!p.subrayar);
     cl.toggle('a11y-sin-animaciones', p.animaciones === 'no');
     cl.toggle('a11y-con-animaciones', p.animaciones === 'si');
-    if (window.api && window.api.setZoom) window.api.setZoom(+p.tamano || 1).catch(() => {});
+    if (window.api && window.api.ponerZoom) window.api.ponerZoom(+p.tamano || 1).catch(() => {});
   };
   aplicarA11y(leerA11y());
   window.A11y = {

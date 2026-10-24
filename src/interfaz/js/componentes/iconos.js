@@ -1,6 +1,7 @@
 // Icono de la app: prediseñado (un dibujo sobre un color), generado del logo o imagen propia.
 // Se dibuja en un canvas y se manda como PNG al proceso principal.
 import { paleta } from '../../../dominios/index.js';
+import { cargarImagen } from '../nucleo/dom.js';
 
 // Dibujos en coordenadas 0..1 (el canvas ya esta escalado); "tinta" es el color del dibujo y
 // "fondo" el del cuadrado (para "recortar" ventanas y puertas).
@@ -43,13 +44,6 @@ const DIBUJOS = {
   },
 };
 
-const cargarImagen = src => new Promise((resolve, reject) => {
-  const img = new Image();
-  img.onload = () => resolve(img);
-  img.onerror = () => reject(new Error('No se pudo leer la imagen.'));
-  img.src = src;
-});
-
 function cuadrado(lado, color) {
   const c = document.createElement('canvas');
   c.width = c.height = lado;
@@ -67,6 +61,12 @@ async function conImagen(src, lado, fondo, margen) {
   g.drawImage(img, (lado - img.width * k) / 2, (lado - img.height * k) / 2, img.width * k, img.height * k);
   return c.toDataURL('image/png');
 }
+
+// Lo que cambia el dibujo del icono: si la clave es la misma, no hace falta volver a dibujarlo.
+export const claveIcono = marca => JSON.stringify([marca.icono, marca.icono.tipo === 'logo' ? marca.logo : '', marca.color, marca.nombre[0], marca.fuente]);
+
+// Lo que cambia los botones de diseños prediseñados (color, inicial y tipografia).
+export const claveDisenos = marca => JSON.stringify([marca.icono.color || marca.color, marca.nombre[0], marca.fuente]);
 
 // marca: lo que devuelve leerMarca. Devuelve un data URL PNG de lado x lado.
 export async function dibujarIcono(marca, lado = 256) {

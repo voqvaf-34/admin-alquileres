@@ -2,8 +2,7 @@
 // app con datos de ejemplo, en modo claro y oscuro, y devuelve lo que no cumple.
 // La usan la prueba accesibilidad.e2e.test.js y el diagnostico: node test/e2e/accesibilidad.js
 const fs   = require('fs');
-const path = require('path');
-const { launch, tmpDir } = require('./helpers');
+const { lanzar, carpetaTemporal } = require('./helpers');
 
 const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const ETIQUETAS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
@@ -11,7 +10,7 @@ const ETIQUETAS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 async function revisar(page, pantalla, modo) {
   await page.waitForTimeout(100);
   const res = await page.evaluate(async etiquetas => {
-    // eslint-disable-next-line no-undef
+
     // Con una ventana abierta se revisa solo esa (lo de atras queda tapado a proposito).
     const abierta = document.querySelector('.modal.open, #modal-add.open, #modal-admin.open');
     const r = await axe.run(abierta || document, { runOnly: { type: 'tag', values: etiquetas }, resultTypes: ['violations'] });
@@ -27,7 +26,7 @@ async function revisar(page, pantalla, modo) {
 // marca: { color, color2 } para probar con colores de marca; a11y: opciones de Accesibilidad.
 async function recorrer({ temas = ['clasico'], marca = null, a11y = null, soloApp = false, alPaso } = {}) {
   const problemas = [];
-  const { app, page } = await launch(tmpDir());
+  const { app, page } = await lanzar(carpetaTemporal());
   const paso = async (pantalla, modo) => {
     const r = await revisar(page, pantalla, modo);
     problemas.push(...r);
@@ -47,7 +46,7 @@ async function recorrer({ temas = ['clasico'], marca = null, a11y = null, soloAp
     if (marca || a11y) {
       await page.evaluate(async ({ marca, a11y }) => {
         if (a11y) A11y.set({ ...a11y, animaciones: 'no' });
-        if (marca) await window.api.saveConfig({ marca: { nombre: '', color: marca.color, color2: marca.color2 || '' } });
+        if (marca) await window.api.guardarConfig({ marca: { nombre: '', color: marca.color, color2: marca.color2 || '' } });
       }, { marca, a11y });
       await page.reload();
       await page.waitForSelector('#app-screen', { state: 'visible' });

@@ -1,11 +1,10 @@
 // Autocompletado del formulario de alquiler.
 import * as D from '../../../dominios/index.js';
-import { Splitters, norm } from '../../../dominios/index.js';
-import { chipFields, setMoneda } from '../modales/alquiler.js';
+import { Separadores, normalizar } from '../../../dominios/index.js';
+import { camposConChips, ponerMoneda } from '../modales/alquiler.js';
 import { estado } from '../nucleo/estado.js';
-import { val } from '../vistas/propietarios.js';
 
-export const AC_FIELD_MAP = {
+const AC_CAMPOS = {
   'm-edificio':  e => e.edificio,
   'm-calle':     e => e.calle,
   'm-prop-entry': e => e.propietario,
@@ -16,135 +15,135 @@ export const AC_FIELD_MAP = {
   'm-mail-inq-entry':  e => e.mailInq,
 };
 
-export let _acIdx       = -1;
+export let _acIndice       = -1;
 
-export let _acItems     = [];
+export let _acOpciones     = [];
 
-export let _acInput     = null;
+let _acCampo     = null;
 
-export let _acHideTimer = null;
+let _acTemporizador = null;
 
-export function _acEl() { return document.getElementById('ac-dropdown'); }
+function _acElemento() { return document.getElementById('ac-dropdown'); }
 
-export function acShow(inputEl, suggestions) {
-  const el = _acEl();
-  if (!suggestions.length) { acHide(); return; }
-  _acInput = inputEl;
-  _acItems = suggestions;
-  _acIdx   = -1;
+function acMostrar(elCampo, sugerencias) {
+  const el = _acElemento();
+  if (!sugerencias.length) { acOcultar(); return; }
+  _acCampo = elCampo;
+  _acOpciones = sugerencias;
+  _acIndice   = -1;
 
-  const q = norm(inputEl.value.trim());
-  el.innerHTML = suggestions.map((s, i) => {
-    const safe  = s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    const start = norm(safe).indexOf(q);
-    const hi = (start >= 0 && q.length)
-      ? safe.slice(0, start) + '<mark>' + safe.slice(start, start + q.length) + '</mark>' + safe.slice(start + q.length)
-      : safe;
+  const q = normalizar(elCampo.value.trim());
+  el.innerHTML = sugerencias.map((s, i) => {
+    const seguro  = s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const inicio = normalizar(seguro).indexOf(q);
+    const hi = (inicio >= 0 && q.length)
+      ? seguro.slice(0, inicio) + '<mark>' + seguro.slice(inicio, inicio + q.length) + '</mark>' + seguro.slice(inicio + q.length)
+      : seguro;
     return `<div class="ac-item" data-ac-i="${i}">${hi}</div>`;
   }).join('');
 
-  const rect = inputEl.getBoundingClientRect();
+  const rect = elCampo.getBoundingClientRect();
   el.style.left    = rect.left + 'px';
   el.style.top     = (rect.bottom + 2) + 'px';
   el.style.width   = Math.max(rect.width, 200) + 'px';
   el.style.display = 'block';
 }
 
-export function acHide() {
-  const el = _acEl();
+function acOcultar() {
+  const el = _acElemento();
   if (el) { el.style.display = 'none'; el.innerHTML = ''; }
-  _acIdx = -1; _acItems = []; _acInput = null;
+  _acIndice = -1; _acOpciones = []; _acCampo = null;
 }
 
-export function acSetActive(idx) {
-  const items = _acEl().querySelectorAll('.ac-item');
-  items.forEach((el, i) => el.classList.toggle('ac-active', i === idx));
-  if (idx >= 0 && items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
-  _acIdx = idx;
+function acMarcarActiva(idx) {
+  const elementos = _acElemento().querySelectorAll('.ac-item');
+  elementos.forEach((el, i) => el.classList.toggle('ac-active', i === idx));
+  if (idx >= 0 && elementos[idx]) elementos[idx].scrollIntoView({ block: 'nearest' });
+  _acIndice = idx;
 }
 
-export function acSelect(value) {
-  const inputId = _acInput ? _acInput.id : null;
-  if (inputId && inputId.endsWith('-entry') && chipFields[inputId.replace('-entry', '')]) {
-    const base = inputId.replace('-entry', '');
-    chipFields[base].add(value);                                 // cada valor elegido es una viñeta
+function acSeleccionar(valor) {
+  const idCampo = _acCampo ? _acCampo.id : null;
+  if (idCampo && idCampo.endsWith('-entry') && camposConChips[idCampo.replace('-entry', '')]) {
+    const base = idCampo.replace('-entry', '');
+    camposConChips[base].add(valor);                                 // cada valor elegido es una viñeta
     // tel/mail se completan con el primer nombre; con un segundo nombre no se pisan.
-    if ((base === 'm-prop' || base === 'm-inq') && Splitters.personas(document.getElementById(base).value).length === 1) {
-      if (inputId === 'm-inq-entry') acFillFromInq(value); else acFillFromProp(value);
+    if ((base === 'm-prop' || base === 'm-inq') && Separadores.personas(document.getElementById(base).value).length === 1) {
+      if (idCampo === 'm-inq-entry') acCompletarDesdeInquilino(valor); else acCompletarDesdePropietario(valor);
     }
-    acHide();
+    acOcultar();
     return;
   }
-  if (_acInput) { _acInput.value = value; _acInput.dispatchEvent(new Event('change')); }
-  if (inputId === 'm-edificio') acPickAddress(value);
-  acHide();
+  if (_acCampo) { _acCampo.value = valor; _acCampo.dispatchEvent(new Event('change')); }
+  if (idCampo === 'm-edificio') acElegirDireccion(valor);
+  acOcultar();
 }
 
 // En el campo Edificio se puede elegir un apto existente (completa todo) o solo un edificio
 // (completa la calle).
-export function acPickAddress(value) {
+function acElegirDireccion(valor) {
   const set = (id, val) => { document.getElementById(id).value = val || ''; };
-  const apt = estado.entries.filter(e => e.direccion === value).sort((a, b) => b.id - a.id)[0];
-  if (apt) {
-    set('m-edificio', apt.edificio); set('m-calle', apt.calle); set('m-unidad', apt.unidad);
-    acFillFromDir(value);
-    acFlash(['m-edificio', 'm-calle', 'm-unidad']);
+  const apto = estado.entries.filter(e => e.direccion === valor).sort((a, b) => b.id - a.id)[0];
+  if (apto) {
+    set('m-edificio', apto.edificio); set('m-calle', apto.calle); set('m-unidad', apto.unidad);
+    acCompletarDesdeDireccion(valor);
+    acResaltar(['m-edificio', 'm-calle', 'm-unidad']);
   } else {
-    const b = estado.entries.find(e => e.edificio === value && e.calle);
-    if (b) { set('m-calle', b.calle); acFlash(['m-calle']); }
+    const b = estado.entries.find(e => e.edificio === valor && e.calle);
+    if (b) { set('m-calle', b.calle); acResaltar(['m-calle']); }
     setTimeout(() => document.getElementById('m-unidad').focus(), 0);
   }
-  updateAddrPreview();
+  actualizarVistaDireccion();
 }
 
-export function updateAddrPreview() {
+export function actualizarVistaDireccion() {
   const N = D;
   const u = document.getElementById('m-unidad').value.trim();
-  const txt = N.formatAddress({
-    edificio: N.titleCase(document.getElementById('m-edificio').value),
-    calle:    N.titleCase(document.getElementById('m-calle').value),
-    unidad:   /^\d/.test(u) ? u.toUpperCase() : N.titleCase(u),
+  const txt = N.formatearDireccion({
+    edificio: N.mayusculasIniciales(document.getElementById('m-edificio').value),
+    calle:    N.mayusculasIniciales(document.getElementById('m-calle').value),
+    unidad:   /^\d/.test(u) ? u.toUpperCase() : N.mayusculasIniciales(u),
   });
   document.getElementById('m-dir-preview').textContent = txt || '—';
 }
 
-export function acFillFromDir(dir) {
+function acCompletarDesdeDireccion(dir) {
   if (!estado.entries) return;
   // si hay varios (misma dirección alquilada varias veces), tomar el más reciente
-  const matches = estado.entries.filter(e => e.direccion === dir);
-  if (!matches.length) return;
-  const e = matches.reduce((a, b) => (b.id > a.id ? b : a));
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const coincidencias = estado.entries.filter(e => e.direccion === dir);
+  if (!coincidencias.length) return;
+  const e = coincidencias.reduce((a, b) => (b.id > a.id ? b : a));
+  const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
   set('m-prop',      e.propietario);
   set('m-tel-prop',  e.telProp);
   set('m-mail-prop', e.mailProp);
   set('m-importe',   e.importe || '');
-  setMoneda(e.moneda);
+  ponerMoneda(e.moneda);
   // fecha/duracion/notas no se tocan: son datos del nuevo contrato
-  acFlash(['m-prop','m-tel-prop','m-mail-prop','m-importe']);
+  acResaltar(['m-prop','m-tel-prop','m-mail-prop','m-importe']);
 }
 
-export function acFillFromProp(prop) {
+function acCompletarDesdePropietario(prop) {
   const o = estado.owners.find(x => x.nombre === prop);
   if (!o) return;
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
   set('m-tel-prop',  o.telefono);
   set('m-mail-prop', o.mail);
-  acFlash(['m-tel-prop','m-mail-prop']);
+  acResaltar(['m-tel-prop','m-mail-prop']);
 }
 
-export function acFillFromInq(inq) {
+function acCompletarDesdeInquilino(inq) {
   if (!estado.entries) return;
-  const matches = estado.entries.filter(e => e.inquilino === inq || Splitters.personas(e.inquilino).includes(inq));
-  if (!matches.length) return;
-  const e = matches.reduce((a, b) => (b.id > a.id ? b : a));
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  const coincidencias = estado.entries.filter(e => e.inquilino === inq || Separadores.personas(e.inquilino).includes(inq));
+  if (!coincidencias.length) return;
+  const e = coincidencias.reduce((a, b) => (b.id > a.id ? b : a));
+  const set = (id, valor) => { const el = document.getElementById(id); if (el) el.value = valor || ''; };
   set('m-tel-inq',  e.telInq);
   set('m-mail-inq', e.mailInq);
-  acFlash(['m-tel-inq','m-mail-inq']);
+  acResaltar(['m-tel-inq','m-mail-inq']);
 }
 
-export function acFlash(ids) {
+function acResaltar(ids) {
   ids.forEach(id => {
     const el = document.getElementById(id + '-chips') || document.getElementById(id);
     if (el && document.getElementById(id).value) {
@@ -155,59 +154,59 @@ export function acFlash(ids) {
   });
 }
 
-export function bindAutocomplete() {
-  const dropEl = document.createElement('div');
-  dropEl.id = 'ac-dropdown';
-  document.body.appendChild(dropEl);
+export function conectarAutocompletado() {
+  const elQuitar = document.createElement('div');
+  elQuitar.id = 'ac-dropdown';
+  document.body.appendChild(elQuitar);
 
-  dropEl.addEventListener('mousedown', e => {
-    const item = e.target.closest('.ac-item');
-    if (!item) return;
+  elQuitar.addEventListener('mousedown', e => {
+    const elemento = e.target.closest('.ac-item');
+    if (!elemento) return;
     e.preventDefault();
-    acSelect(_acItems[+item.dataset.acI]);
+    acSeleccionar(_acOpciones[+elemento.dataset.acI]);
   });
 
-  Object.entries(AC_FIELD_MAP).forEach(([id, getter]) => {
+  Object.entries(AC_CAMPOS).forEach(([id, lector]) => {
     const inp = document.getElementById(id);
     if (!inp) return;
 
     inp.addEventListener('input', () => {
-      if (!estado.entries) { acHide(); return; }
-      const q = norm(inp.value.trim());
-      if (!q) { acHide(); return; }
-      const source = id === 'm-prop-entry' ? estado.owners.map(o => o.nombre)
-        : id === 'm-inq-entry' ? estado.entries.flatMap(e => Splitters.personas(e.inquilino))
-        : /^m-tel-/.test(id) ? estado.entries.flatMap(e => Splitters.telefonos(getter(e) || ''))
-        : /^m-mail-/.test(id) ? estado.entries.flatMap(e => Splitters.mails(getter(e) || ''))
-        : id === 'm-edificio' ? [...estado.entries.map(e => e.direccion), ...estado.entries.map(getter)]
-        : estado.entries.map(getter);
-      const unique = [...new Set(source.filter(v => v && v.trim()))];
-      const matches = unique.filter(v => norm(v).includes(q)).slice(0, 12);
-      acShow(inp, matches);
+      if (!estado.entries) { acOcultar(); return; }
+      const q = normalizar(inp.value.trim());
+      if (!q) { acOcultar(); return; }
+      const origen = id === 'm-prop-entry' ? estado.owners.map(o => o.nombre)
+        : id === 'm-inq-entry' ? estado.entries.flatMap(e => Separadores.personas(e.inquilino))
+        : /^m-tel-/.test(id) ? estado.entries.flatMap(e => Separadores.telefonos(lector(e) || ''))
+        : /^m-mail-/.test(id) ? estado.entries.flatMap(e => Separadores.mails(lector(e) || ''))
+        : id === 'm-edificio' ? [...estado.entries.map(e => e.direccion), ...estado.entries.map(lector)]
+        : estado.entries.map(lector);
+      const unicos = [...new Set(origen.filter(v => v && v.trim()))];
+      const coincidencias = unicos.filter(v => normalizar(v).includes(q)).slice(0, 12);
+      acMostrar(inp, coincidencias);
     });
 
     inp.addEventListener('keydown', e => {
-      if (!_acItems.length || _acEl().style.display === 'none') return;
+      if (!_acOpciones.length || _acElemento().style.display === 'none') return;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        acSetActive(Math.min(_acIdx + 1, _acItems.length - 1));
+        acMarcarActiva(Math.min(_acIndice + 1, _acOpciones.length - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        acSetActive(Math.max(_acIdx - 1, 0));
-      } else if (e.key === 'Enter' && _acIdx >= 0) {
+        acMarcarActiva(Math.max(_acIndice - 1, 0));
+      } else if (e.key === 'Enter' && _acIndice >= 0) {
         e.preventDefault();
-        acSelect(_acItems[_acIdx]);
+        acSeleccionar(_acOpciones[_acIndice]);
       } else if (e.key === 'Escape') {
-        acHide();
+        acOcultar();
       }
     });
 
     inp.addEventListener('blur', () => {
-      _acHideTimer = setTimeout(acHide, 160);
+      _acTemporizador = setTimeout(acOcultar, 160);
     });
 
     inp.addEventListener('focus', () => {
-      clearTimeout(_acHideTimer);
+      clearTimeout(_acTemporizador);
     });
   });
 }

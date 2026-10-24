@@ -1,12 +1,12 @@
 // Marca de la inmobiliaria en pantalla: colores, tema, tipografia, nombre/logo de la barra,
 // titulo e icono de la ventana.
 import { FUENTES, leerMarca, paleta } from '../../../dominios/index.js';
-import { dibujarIcono } from './iconos.js';
+import { claveIcono, dibujarIcono } from './iconos.js';
 
 const CACHE = 'alq-marca';   // tema.js la aplica antes del primer pintado (evita el destello de otro color)
 
 // Variables CSS (--m-*) que usa estilos.css a partir de la paleta.
-export function variablesCss(p, fuente) {
+function variablesCss(p, fuente) {
   return {
     '--m-header': p.header, '--m-header-ink': p.headerInk, '--m-header-fg': p.headerFg,
     '--m-accent': p.accent, '--m-accent-rgb': p.accentRgb, '--m-ink': p.accentInk,
@@ -25,7 +25,7 @@ export function pintarApariencia(el, marca) {
 }
 
 // Barra superior (y la de las pantallas de inicio): logo si hay, si no el nombre.
-export function pintarNombreYLogo({ nombre, logo }) {
+function pintarNombreYLogo({ nombre, logo }) {
   document.querySelectorAll('[data-marca-nombre]').forEach(el => { el.textContent = nombre; el.hidden = !!logo; });
   document.querySelectorAll('[data-marca-logo]').forEach(el => {
     if (logo) el.src = logo; else el.removeAttribute('src');
@@ -37,8 +37,8 @@ export function pintarNombreYLogo({ nombre, logo }) {
 
 let ultimoColor = null, ultimoIcono = null;
 
-export function aplicarMarca(settings) {
-  const marca = leerMarca(settings);
+export function aplicarMarca(ajustes) {
+  const marca = leerMarca(ajustes);
   pintarApariencia(document.documentElement, marca);
   pintarNombreYLogo(marca);
   document.title = `${marca.nombre} · Alquileres${document.body.classList.contains('viewer') ? ' · Visor' : ''}`;
@@ -46,13 +46,13 @@ export function aplicarMarca(settings) {
   const p = paleta(marca.color, marca.color2);
   if (marca.color !== ultimoColor) {
     ultimoColor = marca.color;
-    window.api.setTitleBarColor(p.header, p.headerInk).catch(() => {});
+    window.api.ponerColorBarraTitulo(p.header, p.headerInk).catch(() => {});
   }
   // Icono: se vuelve a dibujar solo si cambio algo que lo afecta.
-  const clave = JSON.stringify([marca.icono, marca.icono.tipo === 'logo' ? marca.logo : '', marca.color, marca.nombre[0], marca.fuente]);
+  const clave = claveIcono(marca);
   if (clave !== ultimoIcono) {
     ultimoIcono = clave;
-    dibujarIcono(marca).then(png => window.api.setAppIcon(png)).catch(() => {});
+    dibujarIcono(marca).then(png => window.api.ponerIconoApp(png)).catch(() => {});
   }
   try {
     localStorage.setItem(CACHE, JSON.stringify({ vars: variablesCss(p, marca.fuente), tema: marca.tema, nombre: marca.nombre, logo: marca.logo }));

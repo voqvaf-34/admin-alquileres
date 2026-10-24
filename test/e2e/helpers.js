@@ -7,29 +7,31 @@ const { _electron } = require('playwright-core');
 const ROOT  = path.join(__dirname, '..', '..');
 const SHOTS = process.env.E2E_SCREENSHOTS || path.join(os.tmpdir(), 'alq-e2e-shots');
 
-async function launch(dataDir, extraEnv = {}) {
-  const app = await _electron.launch({
-    executablePath: require('electron'),
-    args: [ROOT],
-    cwd: ROOT,
-    env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ADMIN_ALQ_DATA_DIR: dataDir, ADMIN_ALQ_SHARED_DIR: path.join(dataDir, 'compartida'), ...extraEnv },
-  });
+// Abre la app (o un .exe empaquetado) fuera de la pantalla, sin abrir links externos ni el
+// asistente, con los datos en dataDir. extraEnv suma o pisa variables (undefined = quitarla).
+async function lanzar(carpetaDatos, entornoExtra = {}, { ejecutable = null, tamano = { width: 1400, height: 900 } } = {}) {
+  const env = { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ADMIN_ALQ_FUERA_DE_PANTALLA: '1',
+    ADMIN_ALQ_DATA_DIR: carpetaDatos, ADMIN_ALQ_SHARED_DIR: path.join(carpetaDatos, 'compartida'), ...entornoExtra };
+  for (const k of Object.keys(env)) if (env[k] === undefined) delete env[k];
+  const app = await _electron.launch(ejecutable
+    ? { executablePath: ejecutable, env }
+    : { executablePath: require('electron'), args: [ROOT], cwd: ROOT, env });
   const page = await app.firstWindow();
   page.setDefaultTimeout(20000);
-  const errors = [];
-  page.on('pageerror', e => errors.push(String(e)));
-  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.setViewportSize({ width: 1400, height: 900 }).catch(() => {});
+  const errores = [];
+  page.on('pageerror', e => errores.push(String(e)));
+  page.on('console', m => { if (m.type() === 'error') errores.push(m.text()); });
+  await page.setViewportSize(tamano).catch(() => {});
   // El modo de color sigue al de Windows: las pruebas lo fijan en claro para no depender de la PC.
   await page.emulateMedia({ colorScheme: 'light' });
-  return { app, page, errors };
+  return { app, page, errors: errores };
 }
 
-const tmpDir = (prefix = 'alq-e2e-') => fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+const carpetaTemporal = (prefijo = 'alq-e2e-') => fs.mkdtempSync(path.join(os.tmpdir(), prefijo));
 
-function shot(page, name) {
+function captura(page, nombre) {
   fs.mkdirSync(SHOTS, { recursive: true });
-  return page.screenshot({ path: path.join(SHOTS, name + '.png') });
+  return page.screenshot({ path: path.join(SHOTS, nombre + '.png') });
 }
 
 // Primer arranque: "Empezar con una base vacia".
@@ -54,4 +56,4 @@ async function elegirColor(page, color, campo = 'color') {
   await page.click(`[data-color-picker="${campo}"] .cfg-swatch[data-color="${color}"]`);
 }
 
-module.exports = { ROOT, SHOTS, launch, tmpDir, shot, empezarVacia, abrirConfiguracion, elegirColor };
+module.exports = { ROOT, SHOTS, lanzar, carpetaTemporal, captura, empezarVacia, abrirConfiguracion, elegirColor };

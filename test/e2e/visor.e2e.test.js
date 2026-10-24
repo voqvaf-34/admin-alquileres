@@ -5,29 +5,21 @@ const assert = require('node:assert/strict');
 const fs     = require('fs');
 const os     = require('os');
 const path   = require('path');
-const { _electron } = require('playwright-core');
-const { abrirConfiguracion, elegirColor } = require('./helpers');
+const { SHOTS, abrirConfiguracion, elegirColor, lanzar: abrirApp, carpetaTemporal } = require('./helpers');
 
-const ROOT      = path.join(__dirname, '..', '..');
-const SHOTS     = process.env.E2E_SCREENSHOTS || path.join(os.tmpdir(), 'alq-e2e-shots');
-
-async function launch(env) {
-  const app = await _electron.launch({ executablePath: require('electron'), args: [ROOT], cwd: ROOT, env: { ...process.env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_SIN_ASISTENTE: '1', ...env } });
-  const page = await app.firstWindow();
-  page.setDefaultTimeout(20000);
-  await page.emulateMedia({ colorScheme: 'light' });
-  const errors = [];
-  page.on('pageerror', e => errors.push(String(e)));
-  await page.evaluate(() => { window.confirm = () => true; });
-  return { app, page, errors };
+// Editor o Visor, cada uno con su carpeta de datos (env.ADMIN_ALQ_DATA_DIR); los confirm() se aceptan.
+async function lanzar(env) {
+  const r = await abrirApp(env.ADMIN_ALQ_DATA_DIR, env);
+  await r.page.evaluate(() => { window.confirm = () => true; });
+  return r;
 }
 
 test('editor publica y el visor muestra en solo lectura, actualizandose solo', { timeout: 120000 }, async () => {
   fs.mkdirSync(SHOTS, { recursive: true });
-  const shared = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'alq-shared-')), 'Base Admin Alquileres');
-  const editor = await launch({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-ed-')),
-    ADMIN_ALQ_SHARED_DIR: shared });
-  let viewer;
+  const compartida = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'alq-shared-')), 'Base Admin Alquileres');
+  const editor = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-ed-')),
+    ADMIN_ALQ_SHARED_DIR: compartida });
+  let visor;
   try {
     // El editor arranca con los datos de ejemplo y una marca propia.
     await editor.page.click('#btn-start-demo');
@@ -38,12 +30,12 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     await editor.page.click('#cfg-guardar');
     await editor.page.waitForSelector('#modal-config', { state: 'hidden' });
     await editor.page.waitForFunction(() => document.getElementById('share-dot').classList.contains('ok'));
-    assert.ok(fs.existsSync(path.join(shared, 'alquileres.sqlite')), 'la base se publico');
+    assert.ok(fs.existsSync(path.join(compartida, 'alquileres.sqlite')), 'la base se publico');
     const total = await editor.page.evaluate(() => app.estado.entries.length);
 
-    viewer = await launch({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
-      ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: shared, ADMIN_ALQ_POLL_MS: '500' });
-    const vp = viewer.page;
+    visor = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
+      ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: compartida, ADMIN_ALQ_POLL_MS: '500' });
+    const vp = visor.page;
     await vp.waitForSelector('#app-screen', { state: 'visible' });
     assert.equal(await vp.evaluate(() => app.estado.entries.length), total, 'el visor ve los mismos datos');
     assert.ok(await vp.isVisible('.viewer-badge'));
@@ -98,18 +90,18 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     assert.equal(await novedad('basedatos'), 0, 'lo visto se recuerda al volver a abrir');
 
     // El visor no puede escribir: no hay canales de modificacion.
-    const r = await vp.evaluate(() => window.api.addContract({ direccion: 'X', importeBase: 1 }).catch(e => 'rechazado'));
+    const r = await vp.evaluate(() => window.api.agregarContrato({ direccion: 'X', importeBase: 1 }).catch(() => 'rechazado'));
     assert.ok(r === 'rechazado' || (r && r.ok === false), 'escritura rechazada');
-    assert.deepEqual(viewer.errors, []);
+    assert.deepEqual(visor.errors, []);
     assert.deepEqual(editor.errors, []);
   } finally {
-    if (viewer) await viewer.app.close();
+    if (visor) await visor.app.close();
     await editor.app.close();
   }
 });
 
 test('visor sin carpeta compartida pide elegirla', { timeout: 60000 }, async () => {
-  const v = await launch({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
+  const v = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
     ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: path.join(os.tmpdir(), 'no-existe-' + Date.now()) });
   try {
     await v.page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
@@ -119,12 +111,8 @@ test('visor sin carpeta compartida pide elegirla', { timeout: 60000 }, async () 
 });
 
 test('visor recien instalado (sin carpeta elegida) pide elegirla', { timeout: 60000 }, async () => {
-  const env = { ...process.env };
-  delete env.ADMIN_ALQ_SHARED_DIR;
-  const app = await _electron.launch({ executablePath: require('electron'), args: [ROOT], cwd: ROOT,
-    env: { ...env, ADMIN_ALQ_NO_EXTERNAL: '1', ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')) } });
+  const { app, page } = await abrirApp(carpetaTemporal('alq-vi-'), { ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: undefined });
   try {
-    const page = await app.firstWindow();
     await page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
     assert.match(await page.textContent('#viewer-setup-error'), /Todavía no se eligió la carpeta compartida/);
   } finally { await app.close(); }

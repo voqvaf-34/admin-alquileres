@@ -1,81 +1,79 @@
 // Estado que se manda a la pantalla; abrir la base e importar datos.
-const fs = require('fs');
 const D = require('../dominios/index.js');
-const { Store } = require('./base-datos');
-const { readWorkbookFile } = require('./importador-excel');
-const share = require('./compartir');
+const { BaseDatos } = require('./base-datos');
+const { leerArchivoLibro } = require('./importador-excel');
 const { ctx } = require('./contexto');
-const { IS_VIEWER, MODE } = require('./config');
-const { ensureData, prepararImportado } = require('./migraciones');
+const { REGLAS_DIRECCIONES, ES_VISOR, MODO } = require('./config');
+const { asegurarDatos } = require('./migraciones');
 const publicacion = require('./publicacion');
-const { dbPath } = require('./rutas');
+const { rutaBase } = require('./rutas');
 const visor = require('./visor');
 
 function state() {
-  if (IS_VIEWER && !ctx.store) return { mode: MODE, needsShared: true, viewer: visor.viewerStatus() };
+  if (ES_VISOR && !ctx.store) return { mode: MODO, needsShared: true, viewer: visor.estadoVisor() };
   return {
-    mode:      MODE,
-    share:     IS_VIEWER ? null : publicacion.shareStatus(),
-    save:      IS_VIEWER ? null : ctx.store.saveStatus,
-    viewer:    IS_VIEWER ? visor.viewerStatus() : null,
-    contracts: ctx.store.listContracts(),
-    admins:    ctx.store.listAdmins(),
-    owners:    ctx.store.listOwners(),
-    contacts:  ctx.store.listContacts(),
-    contractOwners: ctx.store.listContractOwners(),
-    ownerDocs: ctx.store.listOwnerDocs(),
-    ownerAccounts: ctx.store.listOwnerAccounts(),
-    marks:     ctx.store.getMarks(),
-    settings:  ctx.store.getSettings(),
-    undo:      ctx.store.undoStatus(),
-    needsImport: !IS_VIEWER && ctx.store.isEmpty() && ctx.store.getSettings().initialized !== '1',
+    mode:      MODO,
+    share:     ES_VISOR ? null : publicacion.estadoCompartir(),
+    save:      ES_VISOR ? null : ctx.store.saveStatus,
+    viewer:    ES_VISOR ? visor.estadoVisor() : null,
+    contracts: ctx.store.listarContratos(),
+    admins:    ctx.store.listarAdmins(),
+    owners:    ctx.store.listarPropietarios(),
+    contacts:  ctx.store.listarContactos(),
+    contractOwners: ctx.store.listarPropietariosDeContratos(),
+    ownerDocs: ctx.store.listarDocsPropietarios(),
+    ownerAccounts: ctx.store.listarCuentasPropietarios(),
+    marks:     ctx.store.obtenerMarcas(),
+    settings:  ctx.store.obtenerAjustes(),
+    estadoDeshacer:      ctx.store.estadoDeshacer(),
+    needsImport: !ES_VISOR && ctx.store.estaVacia() && ctx.store.obtenerAjustes().initialized !== '1',
     // Asistente de primer uso (marca y apariencia). ADMIN_ALQ_SIN_ASISTENTE lo saltea (pruebas).
-    asistente: !IS_VIEWER && ctx.store.isEmpty() && !ctx.store.getSettings().asistenteVisto && !process.env.ADMIN_ALQ_SIN_ASISTENTE,
-    dbPath:    dbPath(),
+    asistente: !ES_VISOR && ctx.store.estaVacia() && !ctx.store.obtenerAjustes().asistenteVisto && !process.env.ADMIN_ALQ_SIN_ASISTENTE,
+    rutaBase:    rutaBase(),
   };
 }
 
-function importFrom(filePath) {
-  const data = readWorkbookFile(filePath);
-  if (!data.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
-  ctx.store.backup('pre-import');
-  const counts = ctx.store.importData(data);
-  ensureData(true, { heuristicas: data.formato === 'clasico' });
-  ctx.store.setSetting('initialized', '1');
-  ctx.store.setSetting('importedFrom', filePath);
-  ctx.store.setSetting('importedAt', new Date().toISOString());
-  return counts;
+function importarDesde(rutaArchivo) {
+  const datos = leerArchivoLibro(rutaArchivo);
+  if (!datos.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
+  ctx.store.respaldar('pre-import');
+  const cantidades = ctx.store.importarDatos(datos);
+  asegurarDatos(true, { heuristicas: datos.formato === 'clasico' });
+  ctx.store.guardarAjuste('initialized', '1');
+  ctx.store.guardarAjuste('importedFrom', rutaArchivo);
+  ctx.store.guardarAjuste('importedAt', new Date().toISOString());
+  return cantidades;
 }
 
 // Suma una planilla a lo que ya hay (con la app en uso): no toca lo cargado y saltea repetidos.
-function addFrom(filePath) {
-  const data = readWorkbookFile(filePath);
-  if (!data.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
-  const clasico = data.formato === 'clasico';
-  ctx.store.backup('pre-agregar');
-  const res = ctx.store.addImported({ contracts: data.contracts.map(c => prepararImportado(c, { clasico })), admins: data.admins }, D.nameKey);
-  ctx.store.setSetting('initialized', '1');
+function agregarDesde(rutaArchivo) {
+  const datos = leerArchivoLibro(rutaArchivo);
+  if (!datos.contracts.length) throw new Error('No se encontraron alquileres. Usá la planilla modelo: hacen falta al menos las columnas "Dirección" y "Alquiler actual".');
+  const clasico = datos.formato === 'clasico';
+  ctx.store.respaldar('pre-agregar');
+  const res = ctx.store.agregarImportados({ contracts: datos.contracts.map(c => D.prepararImportado(c, { reglasDirecciones: REGLAS_DIRECCIONES, clasico })), admins: datos.admins }, D.claveNombre);
+  ctx.store.guardarAjuste('initialized', '1');
   return res;
 }
 
 // Datos de ejemplo inventados (ver dominios/demo.js): pasan por las mismas normalizaciones que
 // una importacion.
-function loadDemo() {
-  const { contracts, admins, marks } = D.datosDemo(new Date());
-  ctx.store.backup('pre-ejemplo');
-  const counts = ctx.store.importData({ contracts, admins });
-  ensureData(true, { heuristicas: false });
-  ctx.store.replaceMarks(marks);
-  ctx.store.setSetting('initialized', '1');
-  ctx.store.setSetting('importedFrom', 'datos de ejemplo');
-  ctx.store.setSetting('importedAt', new Date().toISOString());
-  return { counts, state: state() };
+function cargarDemo() {
+  const { contracts: contratos, admins, marks } = D.datosDemo(new Date());
+  ctx.store.respaldar('pre-ejemplo');
+  const cantidades = ctx.store.importarDatos({ contracts: contratos, admins });
+  asegurarDatos(true, { heuristicas: false });
+  ctx.store.reemplazarMarcas(marks);
+  ctx.store.guardarAjuste('initialized', '1');
+  ctx.store.guardarAjuste('importedFrom', 'datos de ejemplo');
+  ctx.store.guardarAjuste('importedAt', new Date().toISOString());
+  return { counts: cantidades, state: state() };
 }
 
-async function openStore() {
-  ctx.store = await Store.open(dbPath());
-  ensureData(false);
-  publicacion.attachSharing();
+async function abrirBase() {
+  ctx.store = await BaseDatos.open(rutaBase());
+  asegurarDatos(false);
+  publicacion.conectarCompartir();
 }
 
-Object.assign(module.exports, { state, importFrom, addFrom, loadDemo, openStore });
+Object.assign(module.exports, { state, importarDesde, agregarDesde, cargarDemo, abrirBase });

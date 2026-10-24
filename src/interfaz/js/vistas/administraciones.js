@@ -1,48 +1,48 @@
 // Pestaña Administraciones: tabla y formulario.
 import { nuevosPrimero, puntoNuevo } from '../componentes/novedades.js';
-import { norm } from '../../../dominios/index.js';
-import { render } from '../app.js';
+import { normalizar } from '../../../dominios/index.js';
+import { dibujar } from '../app.js';
 import { call } from '../nucleo/api.js';
-import { esc, showToast } from '../nucleo/dom.js';
+import { esc, mostrarAviso } from '../nucleo/dom.js';
 import { estado } from '../nucleo/estado.js';
-import { fmtEdificios, linkMailsInText, linkPhonesInText } from '../nucleo/formato.js';
+import { formatearEdificios, enlazarMailsEnTexto, enlazarTelefonosEnTexto } from '../nucleo/formato.js';
 
-export let adminSearchText  = "";
+let textoBusquedaAdmins  = '';
 
-export let adminEditRow     = null;  // id de la administracion en edicion (null = alta nueva)
+let filaAdminEditando     = null;  // id de la administracion en edicion (null = alta nueva)
 
-export function getAdminFiltered() {
+function adminsFiltradas() {
   if (!estado.admins) return [];
-  if (!adminSearchText.trim()) return estado.admins;
-  const q = norm(adminSearchText);
+  if (!textoBusquedaAdmins.trim()) return estado.admins;
+  const q = normalizar(textoBusquedaAdmins);
   return estado.admins.filter(a =>
-    norm(a.nombre).includes(q) ||
-    norm(a.edificios).includes(q) ||
-    norm(a.telefono).includes(q) ||
-    norm(a.mail).includes(q)
+    normalizar(a.nombre).includes(q) ||
+    normalizar(a.edificios).includes(q) ||
+    normalizar(a.telefono).includes(q) ||
+    normalizar(a.mail).includes(q)
   );
 }
 
-export function renderAdminTable() {
+export function dibujarTablaAdmins() {
   if (!estado.admins) return;
-  const filtered = getAdminFiltered();
-  const countEl = document.getElementById('admin-count');
-  if (countEl) countEl.textContent = `${filtered.length} / ${estado.admins.length} administraciones`;
+  const filtrados = adminsFiltradas();
+  const elCantidad = document.getElementById('admin-count');
+  if (elCantidad) elCantidad.textContent = `${filtrados.length} / ${estado.admins.length} administraciones`;
 
   const tbody = document.getElementById('admin-tbody');
   if (!tbody) return;
 
-  if (filtered.length === 0) {
+  if (filtrados.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty">Sin resultados.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = nuevosPrimero('administraciones', filtered).map(a => `
+  tbody.innerHTML = nuevosPrimero('administraciones', filtrados).map(a => `
     <tr data-admin-row="${a.id}">
       <td style="font-weight:600">${esc(a.nombre)}</td>
-      <td>${fmtEdificios(a.edificios)}</td>
-      <td>${linkPhonesInText(a.telefono)}</td>
-      <td>${linkMailsInText(a.mail)}</td>
+      <td>${formatearEdificios(a.edificios)}</td>
+      <td>${enlazarTelefonosEnTexto(a.telefono)}</td>
+      <td>${enlazarMailsEnTexto(a.mail)}</td>
       <td style="white-space:nowrap;text-align:right">${puntoNuevo('administraciones', a.id)}
         <button class="unmark-btn" data-admin-edit="${a.id}" title="Editar">&#9998;</button>
         <button class="unmark-btn" data-admin-del="${a.id}" title="Eliminar">&times;</button>
@@ -50,13 +50,13 @@ export function renderAdminTable() {
     </tr>`).join('');
 }
 
-export function showAdminModal(entry) {
-  adminEditRow = entry ? entry.id : null;
-  document.getElementById('modal-admin-title').textContent = entry ? 'Editar Administracion' : 'Nueva Administracion';
-  document.getElementById('m-adm-nombre').value    = entry ? entry.nombre    : '';
-  document.getElementById('m-adm-edificios').value = entry ? entry.edificios : '';
-  document.getElementById('m-adm-telefono').value  = entry ? entry.telefono  : '';
-  document.getElementById('m-adm-mail').value      = entry ? entry.mail      : '';
+function mostrarModalAdmin(entrada) {
+  filaAdminEditando = entrada ? entrada.id : null;
+  document.getElementById('modal-admin-title').textContent = entrada ? 'Editar Administracion' : 'Nueva Administracion';
+  document.getElementById('m-adm-nombre').value    = entrada ? entrada.nombre    : '';
+  document.getElementById('m-adm-edificios').value = entrada ? entrada.edificios : '';
+  document.getElementById('m-adm-telefono').value  = entrada ? entrada.telefono  : '';
+  document.getElementById('m-adm-mail').value      = entrada ? entrada.mail      : '';
   const btn = document.getElementById('modal-admin-submit');
   btn.disabled = false;
   btn.textContent = 'Guardar';
@@ -64,16 +64,16 @@ export function showAdminModal(entry) {
   setTimeout(() => document.getElementById('m-adm-nombre').focus(), 80);
 }
 
-export function hideAdminModal() {
+function ocultarModalAdmin() {
   document.getElementById('modal-admin').classList.remove('open');
 }
 
-export async function submitAdminEntry() {
+async function enviarAdmin() {
   const nombre = (document.getElementById('m-adm-nombre').value || '').trim();
-  if (!nombre) { showToast('El nombre de la administracion es obligatorio.', 'err'); return; }
+  if (!nombre) { mostrarAviso('El nombre de la administracion es obligatorio.', 'err'); return; }
 
-  const payload = {
-    id:        adminEditRow,
+  const carga = {
+    id:        filaAdminEditando,
     nombre,
     edificios: (document.getElementById('m-adm-edificios').value || '').trim(),
     telefono:  (document.getElementById('m-adm-telefono').value  || '').trim(),
@@ -84,65 +84,65 @@ export async function submitAdminEntry() {
   btn.disabled    = true;
   btn.textContent = 'Guardando...';
   try {
-    estado.admins = await call('saveAdmin', payload);
-    showToast('&#10003; Administracion guardada', 'ok');
-    hideAdminModal();
-    render();
+    estado.admins = await call('guardarAdmin', carga);
+    mostrarAviso('&#10003; Administracion guardada', 'ok');
+    ocultarModalAdmin();
+    dibujar();
   } catch (err) {
-    showToast('Error: ' + esc(err.message), 'err');
+    mostrarAviso('Error: ' + esc(err.message), 'err');
     btn.disabled    = false;
     btn.textContent = 'Guardar';
   }
 }
 
-export async function deleteAdminEntry(id, nombre) {
+async function borrarEntradaAdmin(id, nombre) {
   if (!confirm(`Eliminar "${nombre}"?`)) return;
   try {
-    estado.admins = await call('deleteAdmin', id);
-    showToast('&#10003; Administracion eliminada', 'ok');
-    render();
+    estado.admins = await call('borrarAdmin', id);
+    mostrarAviso('&#10003; Administracion eliminada', 'ok');
+    dibujar();
   } catch (err) {
-    showToast('Error: ' + esc(err.message), 'err');
+    mostrarAviso('Error: ' + esc(err.message), 'err');
   }
 }
 
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
   // Buscador Administraciones
-  document.getElementById("admin-search").addEventListener("input", e => {
-    adminSearchText = e.target.value;
+  document.getElementById('admin-search').addEventListener('input', e => {
+    textoBusquedaAdmins = e.target.value;
     e.target.closest('.search-wrap').classList.toggle('has-text', !!e.target.value);
-    renderAdminTable();
+    dibujarTablaAdmins();
   });
 
-  document.getElementById("admin-search-clear").addEventListener("click", () => {
-    const inp = document.getElementById("admin-search");
-    inp.value = ""; adminSearchText = "";
+  document.getElementById('admin-search-clear').addEventListener('click', () => {
+    const inp = document.getElementById('admin-search');
+    inp.value = ''; textoBusquedaAdmins = '';
     inp.closest('.search-wrap').classList.remove('has-text');
-    inp.focus(); renderAdminTable();
+    inp.focus(); dibujarTablaAdmins();
   });
 
   // Modal agregar/editar administracion
-  document.getElementById('btn-add-admin').addEventListener('click', () => showAdminModal(null));
-  document.getElementById('modal-admin-close').addEventListener('click', hideAdminModal);
-  document.getElementById('modal-admin-cancel').addEventListener('click', hideAdminModal);
-  document.getElementById('modal-admin-submit').addEventListener('click', submitAdminEntry);
+  document.getElementById('btn-add-admin').addEventListener('click', () => mostrarModalAdmin(null));
+  document.getElementById('modal-admin-close').addEventListener('click', ocultarModalAdmin);
+  document.getElementById('modal-admin-cancel').addEventListener('click', ocultarModalAdmin);
+  document.getElementById('modal-admin-submit').addEventListener('click', enviarAdmin);
   // Los formularios (alta/edicion) solo se cierran con Cancelar o Guardar: un clic afuera
   // o Escape no hacen perder lo cargado.
 
   // Acciones de fila en tabla Administraciones (editar / eliminar)
   document.getElementById('admin-tbody').addEventListener('click', e => {
-    const editBtn = e.target.closest('[data-admin-edit]');
-    if (editBtn) {
-      const entry = estado.admins && estado.admins.find(a => a.id === +editBtn.dataset.adminEdit);
-      if (entry) showAdminModal(entry);
+    const btnEditar = e.target.closest('[data-admin-edit]');
+    if (btnEditar) {
+      const entrada = estado.admins && estado.admins.find(a => a.id === +btnEditar.dataset.adminEdit);
+      if (entrada) mostrarModalAdmin(entrada);
       return;
     }
-    const delBtn = e.target.closest('[data-admin-del]');
-    if (delBtn) {
-      const id    = +delBtn.dataset.adminDel;
-      const entry = estado.admins && estado.admins.find(a => a.id === id);
-      deleteAdminEntry(id, entry ? entry.nombre : '');
+    const btnBorrar = e.target.closest('[data-admin-del]');
+    if (btnBorrar) {
+      const id    = +btnBorrar.dataset.adminDel;
+      const entrada = estado.admins && estado.admins.find(a => a.id === id);
+      borrarEntradaAdmin(id, entrada ? entrada.nombre : '');
       return;
     }
   });

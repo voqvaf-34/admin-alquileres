@@ -18,3 +18,4 @@ export * from './propietarios.js';
 export * from './marca.js';
 export * from './demo.js';
 export * from './planilla.js';
+export * from './telefonos.js';

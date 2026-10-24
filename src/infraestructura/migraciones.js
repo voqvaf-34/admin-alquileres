@@ -1,93 +1,70 @@
 // Normalizacion de datos (direcciones, propietarios, limpieza, garantias, moneda), una vez por version.
 const D = require('../dominios/index.js');
-const { normalizeAddress, unifyOwners } = require('../dominios/index.js');
+const { normalizarDireccion, planUnificarPropietarios } = require('../dominios/index.js');
 const { ctx } = require('./contexto');
-const { ADDRESS_RULES, ADDRESS_VERSION, CLEANUP_VERSION, GARANTIA_VERSION, MONEDA_VERSION, OWNERS_VERSION, OWNER_RULES } = require('./config');
-
-const unidadFmt = u => /^\d/.test(String(u || '').trim()) ? String(u).trim().toUpperCase() : D.titleCase(u);
+const { REGLAS_DIRECCIONES, VERSION_DIRECCIONES, VERSION_LIMPIEZA, VERSION_GARANTIAS, VERSION_MONEDA, VERSION_PROPIETARIOS, REGLAS_PROPIETARIOS } = require('./config');
 
 // Direcciones con formato "Edificio - Calle 1234 U601" y mismo nombre para el mismo apto.
-function ensureAddresses(force) {
-  if (!force && ctx.store.getSettings().addressVersion === ADDRESS_VERSION) return 0;
-  const list = ctx.store.listContracts().map(c => {
-    const a = normalizeAddress(c.direccionOriginal || c.direccion, ADDRESS_RULES);
+function asegurarDirecciones(force) {
+  if (!force && ctx.store.obtenerAjustes().addressVersion === VERSION_DIRECCIONES) return 0;
+  const lista = ctx.store.listarContratos().map(c => {
+    const a = normalizarDireccion(c.direccionOriginal || c.direccion, REGLAS_DIRECCIONES);
     return { id: c.id, edificio: a.edificio, calle: a.calle, unidad: a.unidad, direccion: a.direccion };
   });
-  if (list.length) {
-    ctx.store.backup('pre-direcciones');
-    ctx.store.applyAddresses(list);
-    ctx.store.setTenantNames(ctx.store.listContracts().map(c => ({ id: c.id, inquilino: D.titleCase(c.inquilino) })));
+  if (lista.length) {
+    ctx.store.respaldar('pre-direcciones');
+    ctx.store.aplicarDirecciones(lista);
+    ctx.store.ponerNombresInquilinos(ctx.store.listarContratos().map(c => ({ id: c.id, inquilino: D.mayusculasIniciales(c.inquilino) })));
   }
-  ctx.store.setSetting('addressVersion', ADDRESS_VERSION);
-  return list.length;
+  ctx.store.guardarAjuste('addressVersion', VERSION_DIRECCIONES);
+  return lista.length;
 }
 
 // Propietarios/contactos a partir del texto de los contratos (una vez por version de reglas).
-function ensureOwners(force) {
-  if (!force && ctx.store.getSettings().ownersVersion === OWNERS_VERSION) return null;
-  ctx.store.backup('pre-propietarios');
-  const plan = unifyOwners(ctx.store.listContracts(), OWNER_RULES);
-  plan.owners.forEach(o => { o.nombre = D.titleCase(o.nombre); });
-  plan.contacts.forEach(c => { c.nombre = D.titleCase(c.nombre); });
-  const res = ctx.store.applyOwnersPlan(plan);
-  ctx.store.setSetting('ownersVersion', OWNERS_VERSION);
-  ctx.store.setSetting('ownersReview', JSON.stringify(plan.review));
+function asegurarPropietarios(force) {
+  if (!force && ctx.store.obtenerAjustes().ownersVersion === VERSION_PROPIETARIOS) return null;
+  ctx.store.respaldar('pre-propietarios');
+  const plan = planUnificarPropietarios(ctx.store.listarContratos(), REGLAS_PROPIETARIOS);
+  plan.owners.forEach(o => { o.nombre = D.mayusculasIniciales(o.nombre); });
+  plan.contacts.forEach(c => { c.nombre = D.mayusculasIniciales(c.nombre); });
+  const res = ctx.store.aplicarPlanPropietarios(plan);
+  ctx.store.guardarAjuste('ownersVersion', VERSION_PROPIETARIOS);
+  ctx.store.guardarAjuste('ownersReview', JSON.stringify(plan.review));
   return res;
 }
 
 // Inactivos sin ningun contacto del propietario: se eliminan (pedido del usuario).
-function ensureCleanup(force) {
-  if (!force && ctx.store.getSettings().cleanupVersion === CLEANUP_VERSION) return [];
-  ctx.store.backup('pre-limpieza');
-  const borrados = ctx.store.purgeInactiveWithoutContact();
-  ctx.store.setSetting('cleanupVersion', CLEANUP_VERSION);
-  ctx.store.setSetting('cleanupBorrados', JSON.stringify(borrados));
+function asegurarLimpieza(force) {
+  if (!force && ctx.store.obtenerAjustes().cleanupVersion === VERSION_LIMPIEZA) return [];
+  ctx.store.respaldar('pre-limpieza');
+  const borrados = ctx.store.purgarInactivosSinContacto();
+  ctx.store.guardarAjuste('cleanupVersion', VERSION_LIMPIEZA);
+  ctx.store.guardarAjuste('cleanupBorrados', JSON.stringify(borrados));
   return borrados;
 }
 
-function ensureGarantias(force) {
-  if (!force && ctx.store.getSettings().garantiaVersion === GARANTIA_VERSION) return;
-  ctx.store.backup('pre-garantias');
-  ctx.store.migrateGarantias(D.titleCase);
-  ctx.store.setSetting('garantiaVersion', GARANTIA_VERSION);
+function asegurarGarantias(force) {
+  if (!force && ctx.store.obtenerAjustes().garantiaVersion === VERSION_GARANTIAS) return;
+  ctx.store.respaldar('pre-garantias');
+  ctx.store.migrarGarantias(D.mayusculasIniciales);
+  ctx.store.guardarAjuste('garantiaVersion', VERSION_GARANTIAS);
 }
 
-function ensureMoneda(force) {
-  if (!force && ctx.store.getSettings().monedaVersion === MONEDA_VERSION) return;
-  ctx.store.backup('pre-moneda');
-  ctx.store.migrateMoneda();
-  ctx.store.setSetting('monedaVersion', MONEDA_VERSION);
+function asegurarMoneda(force) {
+  if (!force && ctx.store.obtenerAjustes().monedaVersion === VERSION_MONEDA) return;
+  ctx.store.respaldar('pre-moneda');
+  ctx.store.migrarMoneda();
+  ctx.store.guardarAjuste('monedaVersion', VERSION_MONEDA);
 }
 
 // heuristicas: ajustes pensados para la planilla clasica (sin columna de moneda, con contratos
 // viejos sin datos). Con la planilla modelo o los datos de ejemplo no hacen falta.
-function ensureData(force, { heuristicas = true } = {}) {
-  ensureAddresses(force);
-  ensureOwners(force);
-  if (heuristicas) ensureCleanup(force); else ctx.store.setSetting('cleanupVersion', CLEANUP_VERSION);
-  ensureGarantias(force);
-  if (heuristicas) ensureMoneda(force); else ctx.store.setSetting('monedaVersion', MONEDA_VERSION);
+function asegurarDatos(force, { heuristicas = true } = {}) {
+  asegurarDirecciones(force);
+  asegurarPropietarios(force);
+  if (heuristicas) asegurarLimpieza(force); else ctx.store.guardarAjuste('cleanupVersion', VERSION_LIMPIEZA);
+  asegurarGarantias(force);
+  if (heuristicas) asegurarMoneda(force); else ctx.store.guardarAjuste('monedaVersion', VERSION_MONEDA);
 }
 
-// Normaliza lo que llega del modal de alquiler.
-function cleanContract(c) {
-  const edificio = D.titleCase(c.edificio), calle = D.titleCase(c.calle), unidad = unidadFmt(c.unidad);
-  const direccion = D.formatAddress({ edificio, calle, unidad }) || D.titleCase(c.direccion);
-  const propietario = c.propietario == null ? null
-    : String(c.propietario).split(/\s*\/{1,}\s*/).filter(Boolean).map(D.titleCase).join(' / ');
-  return { ...c, edificio, calle, unidad, direccion, inquilino: D.titleCase(c.inquilino), propietario };
-}
-
-// Una fila importada para sumar a lo que ya hay: mismo formato que un alquiler cargado a mano
-// (direccion normalizada, nombres en mayusculas iniciales) y garantias CGN/ANDA en su campo.
-// En la planilla clasica (sin moneda) los importes de hasta 4 cifras son dolares.
-function prepararImportado(c, { clasico = false } = {}) {
-  const a = normalizeAddress(c.direccion, ADDRESS_RULES);
-  const x = cleanContract({ ...c, edificio: a.edificio, calle: a.calle, unidad: a.unidad, direccionOriginal: c.direccion });
-  let garantia = String(c.garantia || '').trim(), remitente = String(c.remitente || '').trim();
-  if (!garantia && D.GARANTIAS_GESTIONAN.includes(remitente.toUpperCase())) { garantia = remitente.toUpperCase(); remitente = ''; }
-  const moneda = c.moneda || (clasico && c.importe > 0 && c.importe < 10000 ? 'USD' : 'UYU');
-  return { ...x, garantia, remitente: D.titleCase(remitente), moneda };
-}
-
-Object.assign(module.exports, { prepararImportado, unidadFmt, ensureAddresses, ensureOwners, ensureCleanup, ensureGarantias, ensureMoneda, ensureData, cleanContract });
+Object.assign(module.exports, { asegurarDatos });

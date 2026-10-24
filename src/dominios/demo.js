@@ -1,7 +1,7 @@
 // Datos de ejemplo (todos inventados) para probar la app o mostrarla sin datos reales.
 // Las fechas se calculan desde "hoy", asi siempre hay aumentos del mes, renovaciones
 // proximas, un vencido sin resolver, delegados, inactivos y un apto ya renovado.
-import { fmtDate, toISODate } from './fechas.js';
+import { formatearFecha, aFechaISO } from './fechas.js';
 
 // Fecha a partir de hoy: anios atras y dias de corrimiento.
 const desde = (hoy, anios, dias = 0) => new Date(hoy.getFullYear() - anios, hoy.getMonth(), hoy.getDate() + dias);
@@ -31,12 +31,12 @@ export function datosDemo(hoy = new Date()) {
     return {
       sourceRow: n, direccion, propietario: P[prop], telProp: telDe[prop], mailProp: mail(P[prop].split(' / ')[0]),
       importeBase: importe, importe, moneda: importe < 10000 ? 'USD' : 'UYU', ultimoAumento: null, remitente: '', contratoStr,
-      fechaInicio: toISODate(fechaInicio), inquilino, telInq: tel(200 + n), mailInq: mail(inquilino), notas: '', inactive: false,
+      fechaInicio: aFechaISO(fechaInicio), inquilino, telInq: tel(200 + n), mailInq: mail(inquilino), notas: '', inactive: false,
       ...extra,
     };
   };
 
-  const contracts = [
+  const contratos = [
     // Aumentan este mes (aniversario del inicio).
     C('Torre Ceibo - Av. Italia 2875 U403',        'ana',   28500, enMes(hoy, 1, 5),  '2 AÑOS', { notas: 'Paga por transferencia | Mascota permitida' }),
     C('Torre Ceibo - Av. Italia 2875 U702',        'ana',   31000, enMes(hoy, 2, 12), '3 AÑOS'),
@@ -59,7 +59,7 @@ export function datosDemo(hoy = new Date()) {
     C('Canelones 1234 U801',                       'nora',  26700, enMes(hoy, 1, 10), '2 AÑOS', { remitente: 'ANDA' }),
     C('Mirador del Parque - Av. Rivera 3300 U902', 'gabi',  35200, enMes(hoy, 2, 25), '2 AÑOS', { remitente: 'CGN' }),
     // Aumentos que maneja otra persona.
-    C('Maldonado 1580 U9',                         'elena', 21000, enMes(hoy, 1, 14), '2 AÑOS', { remitente: 'MANDA Gestora Norte' }),
+    C('Maldonado 1580 U9',                         'elena', 21000, enMes(hoy, 1, 14), '2 AÑOS', { remitente: 'Gestora Norte' }),
     // Resto de la cartera.
     C('Torre Ceibo - Av. Italia 2875 U201',        'bruno', 29900, enMes(hoy, 1, 9, 4),  '2 AÑOS'),
     C('Residencial Guayabo - Guayabo 1850 U12',    'fede',  23800, enMes(hoy, 0, 2, -3), '2 AÑOS'),
@@ -77,11 +77,11 @@ export function datosDemo(hoy = new Date()) {
   ];
 
   // Marca de renovacion del apto ya renovado: nuevo contrato desde el vencimiento, por 2 anios.
-  const renovado = contracts.find(c => c.direccion === 'Edificio Araza - Bv. Artigas 1610 U1002');
+  const renovado = contratos.find(c => c.direccion === 'Edificio Araza - Bv. Artigas 1610 U1002');
   const vencio = desde(hoy, 0, -120);
   const marks = {
-    [`v|${renovado.direccion}`]: { date: fmtDate(desde(hoy, 0, -125)), nuevaInicio: fmtDate(vencio), renewYears: 2 },
+    [`v|${renovado.direccion}`]: { date: formatearFecha(desde(hoy, 0, -125)), nuevaInicio: formatearFecha(vencio), renewYears: 2 },
   };
 
-  return { contracts, admins, marks };
+  return { contracts: contratos, admins, marks };
 }

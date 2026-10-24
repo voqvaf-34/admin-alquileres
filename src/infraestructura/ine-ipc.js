@@ -2,29 +2,29 @@ const D = require('../dominios/index.js');
 
 // Busca el IPC interanual publicado por el INE. Si la pagina del mes esperado
 // todavia no existe, prueba con el mes anterior.
-async function fetchLatestIPC({ now = new Date(), fetchImpl = fetch, timeoutMs = 15000 } = {}) {
-  let period = D.latestPublishedIPC(now);
-  const errors = [];
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const url = D.ipcPageURL(period.month, period.year);
+async function consultarUltimoIPC({ now: ahora = new Date(), fetchImpl = fetch, timeoutMs: esperaMs = 15000 } = {}) {
+  let periodo = D.ultimoIPCPublicado(ahora);
+  const errores = [];
+  for (let intento = 0; intento < 2; intento++) {
+    const url = D.urlPaginaIPC(periodo.month, periodo.year);
     try {
       const res = await fetchImpl(url, {
-        signal: AbortSignal.timeout(timeoutMs),
+        signal: AbortSignal.timeout(esperaMs),
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AdminAlquileres' },
       });
       if (res.ok) {
-        const value = D.parseIPCFromHtml(await res.text());
-        if (value != null) return { ok: true, ipc: value, month: period.month, year: period.year, url };
-        errors.push(`${url}: valor no encontrado en la pagina`);
+        const valor = D.interpretarIPCDesdeHtml(await res.text());
+        if (valor != null) return { ok: true, ipc: valor, month: periodo.month, year: periodo.year, url };
+        errores.push(`${url}: valor no encontrado en la pagina`);
       } else {
-        errors.push(`${url}: HTTP ${res.status}`);
+        errores.push(`${url}: HTTP ${res.status}`);
       }
     } catch (e) {
-      errors.push(`${url}: ${e.message}`);
+      errores.push(`${url}: ${e.message}`);
     }
-    period = D.prevMonth(period);
+    periodo = D.mesAnterior(periodo);
   }
-  return { ok: false, error: errors.join(' | ') };
+  return { ok: false, error: errores.join(' | ') };
 }
 
-module.exports = { fetchLatestIPC };
+module.exports = { consultarUltimoIPC };

@@ -1,6 +1,6 @@
 // Textos que se copian para mandar a inquilinos y propietarios. Cada uno es una plantilla
 // editable en Configuracion, con variables entre llaves: {inmobiliaria}, {vencimiento}...
-import { fmtDate } from './fechas.js';
+import { formatearFecha } from './fechas.js';
 import { leerMarca } from './marca.js';
 
 export const PLANTILLAS = {
@@ -37,37 +37,37 @@ export function variablesDesconocidas(id, texto) {
   return [...new Set([...String(texto).matchAll(/\{([a-z_]+)\}/g)].map(m => m[1]))].filter(v => !ok.has(v));
 }
 
-export const textoPlantilla = (settings, id) => (settings && settings[PLANTILLAS[id].clave]) || PLANTILLAS[id].texto;
+export const textoPlantilla = (ajustes, id) => (ajustes && ajustes[PLANTILLAS[id].clave]) || PLANTILLAS[id].texto;
 
 // Valida lo que llega de Configuracion: vacio o igual al original se guarda vacio (= usar el
 // original, asi una mejora futura del texto por defecto le llega a quien no lo cambio).
 export function mensajesASettings(textos = {}) {
-  const out = {};
+  const salida = {};
   for (const [id, p] of Object.entries(PLANTILLAS)) {
     if (!(id in textos)) continue;
     const t = String(textos[id] || '').trim();
     if (t.length > PLANTILLA_MAX) throw new Error(`"${p.titulo}" puede tener hasta ${PLANTILLA_MAX} caracteres.`);
-    out[p.clave] = t === p.texto ? '' : t;
+    salida[p.clave] = t === p.texto ? '' : t;
   }
-  return out;
+  return salida;
 }
 
-const datosContrato = (settings, e = {}) => ({
-  inmobiliaria: leerMarca(settings).nombre,
+const datosContrato = (ajustes, e = {}) => ({
+  inmobiliaria: leerMarca(ajustes).nombre,
   direccion: e.direccion || '', inquilino: e.inquilino || '', propietario: e.propietario || '',
 });
 
-export function renewalMessage(vencDate, { settings = {}, contrato } = {}) {
-  return rellenar(textoPlantilla(settings, 'renovacion'), {
-    ...datosContrato(settings, contrato), vencimiento: vencDate ? fmtDate(vencDate) : '?',
+export function mensajeRenovacion(vencDate, { settings: ajustes = {}, contrato } = {}) {
+  return rellenar(textoPlantilla(ajustes, 'renovacion'), {
+    ...datosContrato(ajustes, contrato), vencimiento: vencDate ? formatearFecha(vencDate) : '?',
   });
 }
 
 // porcentaje y nuevoImporte llegan ya formateados para mostrar ("3,16%", "$ 25.790").
-export function increaseMessages({ settings = {}, contrato, porcentaje, nuevoImporte }) {
-  const datos = { ...datosContrato(settings, contrato), porcentaje, nuevo_importe: nuevoImporte };
+export function mensajesAumento({ settings: ajustes = {}, contrato, porcentaje, nuevoImporte }) {
+  const datos = { ...datosContrato(ajustes, contrato), porcentaje, nuevo_importe: nuevoImporte };
   return {
-    inquilino:   rellenar(textoPlantilla(settings, 'aumentoInquilino'), datos),
-    propietario: rellenar(textoPlantilla(settings, 'aumentoPropietario'), datos),
+    inquilino:   rellenar(textoPlantilla(ajustes, 'aumentoInquilino'), datos),
+    propietario: rellenar(textoPlantilla(ajustes, 'aumentoPropietario'), datos),
   };
 }
