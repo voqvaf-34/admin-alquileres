@@ -39,7 +39,7 @@ function iniciarSondeoVisor() {
     if (!m || m === ctx.visor.mtime) return;
     await new Promise(r => setTimeout(r, 400));            // que termine de escribirse
     await cargarVisor();
-    if (ctx.ventana && !ctx.ventana.isDestroyed()) ctx.ventana.webContents.send('data:changed', estadoVisor());
+    if (ctx.ventana && !ctx.ventana.isDestroyed()) ctx.ventana.webContents.send('datos:cambiados', estadoVisor());
   }, INTERVALO_SONDEO_MS);
 }
 

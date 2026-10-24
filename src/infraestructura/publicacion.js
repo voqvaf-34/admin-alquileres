@@ -22,7 +22,7 @@ function estadoCompartir() {
 }
 
 function avisarCompartir() {
-  if (ctx.ventana && !ctx.ventana.isDestroyed()) ctx.ventana.webContents.send('share:changed', estadoCompartir());
+  if (ctx.ventana && !ctx.ventana.isDestroyed()) ctx.ventana.webContents.send('compartir:cambiado', estadoCompartir());
 }
 
 function publicarAhora() {
