@@ -4,12 +4,12 @@ class MetodosImportacion {
   // ── importacion desde Excel (reemplaza contratos y administraciones) ─────
   importarDatos({ contracts: contratos, admins }) {
     return this.transaccion(() => {
-      this.db.run('DELETE FROM contract_owners');
-      this.db.run('DELETE FROM contracts');
-      this.db.run('DELETE FROM admins');
-      this.db.run("DELETE FROM sqlite_sequence WHERE name IN ('contracts','admins')");
+      this.db.run('DELETE FROM contratos_propietarios');
+      this.db.run('DELETE FROM contratos');
+      this.db.run('DELETE FROM administraciones');
+      this.db.run("DELETE FROM sqlite_sequence WHERE name IN ('contratos','administraciones')");
       for (const c of contratos) this._insertarContrato(c);
-      const st = this.db.prepare('INSERT INTO admins (nombre, edificios, telefono, mail, source_row) VALUES (?,?,?,?,?)');
+      const st = this.db.prepare('INSERT INTO administraciones (nombre, edificios, telefono, mail, fila_origen) VALUES (?,?,?,?,?)');
       try { for (const a of admins) st.run([s(a.nombre), s(a.edificios), s(a.telefono), s(a.mail), a.sourceRow ?? null]); }
       finally { st.free(); }
       return { contracts: contratos.length, admins: admins.length };
@@ -36,7 +36,7 @@ class MetodosImportacion {
       for (const a of admins) {
         if (adminsYa.has(claveNombre(a.nombre))) continue;
         adminsYa.add(claveNombre(a.nombre));
-        this.db.run('INSERT INTO admins (nombre, edificios, telefono, mail) VALUES (?,?,?,?)', [s(a.nombre), s(a.edificios), s(a.telefono), s(a.mail)]);
+        this.db.run('INSERT INTO administraciones (nombre, edificios, telefono, mail) VALUES (?,?,?,?)', [s(a.nombre), s(a.edificios), s(a.telefono), s(a.mail)]);
         res.admins++;
       }
     });

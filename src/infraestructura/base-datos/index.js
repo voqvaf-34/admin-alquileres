@@ -3,7 +3,7 @@
 const fs   = require('fs');
 const path = require('path');
 const initSqlJs = require('sql.js');
-const { COLUMNAS_AGREGADAS, ESQUEMA } = require('./esquema');
+const { COLUMNAS_AGREGADAS, COLUMNAS_VIEJAS, ESQUEMA, TABLAS_VIEJAS } = require('./esquema');
 const { MetodosAdministraciones } = require('./administraciones');
 const { MetodosAjustes } = require('./ajustes');
 const { MetodosContratos } = require('./contratos');
@@ -23,10 +23,11 @@ class BaseDatos {
     const db = existe ? new SQL.Database(fs.readFileSync(rutaArchivo)) : new SQL.Database();
     const store = new BaseDatos(db, rutaArchivo, opciones);
     store.SQL = SQL;
+    const migrada = store.renombrarTablasViejas();
     db.run('PRAGMA foreign_keys = ON;');
     db.exec(ESQUEMA);
     store.agregarColumnasFaltantes();
-    if (!existe) store.persistir();
+    if (!existe || migrada) store.persistir();
     return store;
   }
 
@@ -41,6 +42,23 @@ class BaseDatos {
     this.readOnly = !!opciones.readOnly;
     this.onPersist = null;
     this.saveStatus = { ok: true, at: null, error: null };
+  }
+
+  // Bases de hasta la 0.8.1 (tablas y columnas en ingles): se renombran una sola vez.
+  renombrarTablasViejas() {
+    const tablas = new Set(this.consultar("SELECT name FROM sqlite_master WHERE type='table'").map(r => r.name));
+    if (!tablas.has('contracts')) return false;
+    this.db.run('PRAGMA foreign_keys = OFF;');
+    this.db.run('BEGIN');
+    try {
+      for (const [vieja, nueva] of TABLAS_VIEJAS) if (tablas.has(vieja)) this.db.run(`ALTER TABLE ${vieja} RENAME TO ${nueva}`);
+      for (const [tabla, vieja, nueva] of COLUMNAS_VIEJAS) {
+        const cols = this.consultar(`PRAGMA table_info(${tabla})`).map(r => r.name);
+        if (cols.includes(vieja)) this.db.run(`ALTER TABLE ${tabla} RENAME COLUMN ${vieja} TO ${nueva}`);
+      }
+      this.db.run('COMMIT');
+    } catch (e) { this.db.run('ROLLBACK'); throw e; }
+    return true;
   }
 
   agregarColumnasFaltantes() {

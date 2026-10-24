@@ -3,16 +3,16 @@ class MetodosMarcas {
   // ── marks ────────────────────────────────────────────────────────────────
   obtenerMarcas() {
     const salida = {};
-    for (const r of this.consultar('SELECT key, data FROM marks')) {
-      try { salida[r.key] = JSON.parse(r.data); } catch (_) {}
+    for (const r of this.consultar('SELECT clave, datos FROM marcas')) {
+      try { salida[r.clave] = JSON.parse(r.datos); } catch (_) {}
     }
     return salida;
   }
 
   reemplazarMarcas(marks) {
     this.transaccion(() => {
-      this.db.run('DELETE FROM marks');
-      const st = this.db.prepare('INSERT INTO marks (key, data) VALUES (?, ?)');
+      this.db.run('DELETE FROM marcas');
+      const st = this.db.prepare('INSERT INTO marcas (clave, datos) VALUES (?, ?)');
       try { for (const [k, v] of Object.entries(marks || {})) st.run([k, JSON.stringify(v)]); }
       finally { st.free(); }
     });
