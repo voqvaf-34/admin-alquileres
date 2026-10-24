@@ -18,14 +18,14 @@ export const camposConChips = {};
 export function ponerMoneda(v) {
   v = v === 'USD' ? 'USD' : 'UYU';
   document.getElementById('m-moneda').value = v;
-  document.querySelectorAll('#m-moneda-seg [data-moneda]').forEach(b => b.classList.toggle('active', b.dataset.moneda === v));
+  document.querySelectorAll('#m-moneda-seg [data-moneda]').forEach(b => b.classList.toggle('activo', b.dataset.moneda === v));
 }
 
 // "Quien hace los aumentos" y "Comentarios" van plegados (linea que se despliega); se abren
 // solos si ya tienen datos.
 function ponerCamposOpcionales(rem, notas) {
-  document.getElementById('m-opt-rem').open = rem;
-  document.getElementById('m-opt-notas').open = notas;
+  document.getElementById('m-opc-rem').open = rem;
+  document.getElementById('m-opc-notas').open = notas;
 }
 
 function mostrarModalAlta() {
@@ -40,11 +40,11 @@ function mostrarModalAlta() {
   ponerOpcionesGarantia('');
   ponerMoneda('UYU');
   ponerCamposOpcionales(false, false);
-  document.getElementById('modal-add-title').textContent = 'Nuevo Alquiler';
-  const btn = document.getElementById('modal-submit');
+  document.getElementById('modal-agregar-titulo').textContent = 'Nuevo Alquiler';
+  const btn = document.getElementById('modal-enviar');
   btn.disabled = false; btn.textContent = 'Guardar alquiler';
   actualizarVistaDireccion();
-  document.getElementById('modal-add').classList.add('open');
+  document.getElementById('modal-agregar').classList.add('abierto');
   setTimeout(() => document.getElementById('m-edificio').focus(), 80);
 }
 
@@ -72,11 +72,11 @@ export function mostrarModalEdicion(entrada) {
       String(entrada.fechaInicio.getMonth()+1).padStart(2,'0') + '-' +
       String(entrada.fechaInicio.getDate()).padStart(2,'0')
     : '';
-  document.getElementById('modal-add-title').textContent = 'Editar Alquiler';
-  const btn = document.getElementById('modal-submit');
+  document.getElementById('modal-agregar-titulo').textContent = 'Editar Alquiler';
+  const btn = document.getElementById('modal-enviar');
   btn.disabled = false; btn.textContent = 'Guardar cambios';
   actualizarVistaDireccion();
-  document.getElementById('modal-add').classList.add('open');
+  document.getElementById('modal-agregar').classList.add('abierto');
   setTimeout(() => document.getElementById('m-importe').focus(), 80);
 }
 
@@ -84,12 +84,12 @@ export function mostrarModalEdicion(entrada) {
 // queda como viñeta extra solo para ese contrato.
 function ponerOpcionDuracion(valor) {
   const sel = document.getElementById('m-duracion');
-  sel.querySelectorAll('option[data-custom]').forEach(o => o.remove());
+  sel.querySelectorAll('option[data-propio]').forEach(o => o.remove());
   const igual = [...sel.options].find(o => o.value && o.value.toLowerCase() === String(valor || '').trim().toLowerCase());
   if (igual) valor = igual.value;
   if (valor && !igual) {
     const o = document.createElement('option');
-    o.value = valor; o.textContent = valor; o.dataset.custom = '1';
+    o.value = valor; o.textContent = valor; o.dataset.propio = '1';
     sel.appendChild(o);
   }
   sel.value = valor;
@@ -120,7 +120,7 @@ function ponerOpcionesGarantia(valor) {
 function actualizarAyudaGestion() {
   const g = document.getElementById('m-garantia').value;
   const quien = D.gestionadoPor({ garantia: g, remitente: document.getElementById('m-remitente').value.trim() });
-  document.getElementById('m-gestion-hint').textContent = quien
+  document.getElementById('m-gestion-ayuda').textContent = quien
     ? `Los aumentos y renovaciones los gestiona ${quien}: no aparece en Aumentos ni Renovaciones.`
     : 'Los aumentos los hace la inmobiliaria.';
 }
@@ -139,7 +139,7 @@ function agregarOpcionGarantia(nombre) {
 }
 
 function ocultarModalAlta() {
-  document.getElementById('modal-add').classList.remove('open');
+  document.getElementById('modal-agregar').classList.remove('abierto');
   entradaEditando = null;
 }
 
@@ -151,7 +151,7 @@ export async function borrarEntrada(id, dir) {
     estado.filasAbiertas.delete(id);
     dibujar();
   } catch (err) {
-    mostrarAviso('Error: ' + esc(err.message), 'err');
+    mostrarAviso('Error: ' + esc(err.message), 'error');
   }
 }
 
@@ -160,8 +160,8 @@ async function enviarAlta() {
   const calle    = document.getElementById('m-calle').value.trim();
   const unidad   = document.getElementById('m-unidad').value.trim();
   const importe  = parseFloat(document.getElementById('m-importe').value);
-  if (!edificio && !calle)      { mostrarAviso('Completá el edificio o la calle.', 'err'); return; }
-  if (!importe || importe <= 0) { mostrarAviso('El importe es obligatorio.', 'err'); return; }
+  if (!edificio && !calle)      { mostrarAviso('Completá el edificio o la calle.', 'error'); return; }
+  if (!importe || importe <= 0) { mostrarAviso('El importe es obligatorio.', 'error'); return; }
 
   const carga = {
     edificio, calle, unidad,
@@ -182,7 +182,7 @@ async function enviarAlta() {
   };
 
   const esEditar = entradaEditando !== null;
-  const btn = document.getElementById('modal-submit');
+  const btn = document.getElementById('modal-enviar');
   btn.disabled    = true;
   btn.textContent = 'Guardando...';
   try {
@@ -196,7 +196,7 @@ async function enviarAlta() {
     llenarAniosBase();
     dibujar();
   } catch (err) {
-    mostrarAviso('Error: ' + esc(err.message), 'err');
+    mostrarAviso('Error: ' + esc(err.message), 'error');
     btn.disabled    = false;
     btn.textContent = esEditar ? 'Guardar cambios' : 'Guardar alquiler';
   }
@@ -208,17 +208,17 @@ export function iniciar() {
   ['m-edificio', 'm-calle', 'm-unidad'].forEach(id => document.getElementById(id).addEventListener('input', actualizarVistaDireccion));
 
   // Modal agregar alquiler
-  document.getElementById('btn-add-entry').addEventListener('click', mostrarModalAlta);
-  document.getElementById('modal-close').addEventListener('click', ocultarModalAlta);
-  document.getElementById('modal-cancel').addEventListener('click', ocultarModalAlta);
-  document.getElementById('modal-submit').addEventListener('click', enviarAlta);
+  document.getElementById('btn-agregar-entrada').addEventListener('click', mostrarModalAlta);
+  document.getElementById('modal-cerrar').addEventListener('click', ocultarModalAlta);
+  document.getElementById('modal-cancelar').addEventListener('click', ocultarModalAlta);
+  document.getElementById('modal-enviar').addEventListener('click', enviarAlta);
   document.getElementById('m-garantia').addEventListener('change', actualizarAyudaGestion);
   document.getElementById('m-moneda-seg').addEventListener('click', e => {
     const b = e.target.closest('[data-moneda]'); if (b) ponerMoneda(b.dataset.moneda);
   });
   // al desplegar, el cursor va al campo
-  ['m-opt-rem', 'm-opt-notas'].forEach(id => document.getElementById(id).addEventListener('toggle', e => {
-    if (e.target.open && document.getElementById('modal-add').classList.contains('open')) {
+  ['m-opc-rem', 'm-opc-notas'].forEach(id => document.getElementById(id).addEventListener('toggle', e => {
+    if (e.target.open && document.getElementById('modal-agregar').classList.contains('abierto')) {
       const f = e.target.querySelector('input:not([type=hidden])'); if (f && !f.hidden) f.focus();
     }
   }));

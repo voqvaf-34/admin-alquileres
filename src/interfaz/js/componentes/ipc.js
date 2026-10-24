@@ -6,12 +6,12 @@ import { estado } from '../nucleo/estado.js';
 
 function ponerIPC(valor) {
   estado.ipc = valor;
-  document.getElementById('inp-ipc').value = estado.ipc;
+  document.getElementById('campo-ipc').value = estado.ipc;
   call('guardarAjuste', 'ipc', estado.ipc).catch(() => {});
 }
 
 export async function consultarIPC() {
-  const btn = document.getElementById('btn-ipc-fetch'), periodo = document.getElementById('ipc-period');
+  const btn = document.getElementById('btn-ipc-consultar'), periodo = document.getElementById('ipc-periodo');
   btn.textContent = '...'; btn.disabled = true; periodo.textContent = '';
   try {
     const r = await call('consultarIPC');

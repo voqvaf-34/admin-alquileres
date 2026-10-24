@@ -15,16 +15,16 @@ export function armarChips(id, opciones) {
   caja.className = 'chips';
   caja.id = id + '-chips';
   const lista = document.createElement('span');
-  lista.className = 'chips-list';
+  lista.className = 'chips-lista';
   const entrada = document.createElement('input');
   entrada.type = 'text';
   entrada.id = id + '-entry';
-  entrada.className = 'chips-entry';
+  entrada.className = 'chips-entrada';
   entrada.placeholder = marcador;
   entrada.autocomplete = 'off';
   const agregar = document.createElement('button');
   agregar.type = 'button';
-  agregar.className = 'chip chip-add';
+  agregar.className = 'chip chip-agregar';
   agregar.innerHTML = '&#65291; ' + esc(etiquetaAgregar);
   caja.append(lista, entrada, agregar);
   store.type = 'hidden';
@@ -87,16 +87,16 @@ const selectorModelo = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototy
 export function armarSelector(id, { onAdd: alAgregar, etiquetaAgregar = 'Otra', placeholder: marcador = 'Escribí y Enter' }) {
   const sel = document.getElementById(id);
   const caja = document.createElement('div');
-  caja.className = 'chips picker';
-  caja.id = id + '-picker';
+  caja.className = 'chips selector';
+  caja.id = id + '-selector';
   sel.hidden = true;
   sel.after(caja);
   const pintar = () => {
     const v = selectorModelo.get.call(sel);
     caja.innerHTML = [...sel.options].filter(o => o.value).map(o =>
-      `<button type="button" class="chip pick${o.value === v ? ' on' : ''}" data-v="${esc(o.value)}">${esc(o.textContent)}</button>`).join('')
-      + `<button type="button" class="chip chip-add" data-add>&#65291; ${esc(etiquetaAgregar)}</button>`
-      + `<input type="text" class="chips-entry" id="${id}-entry" placeholder="${esc(marcador)}" hidden autocomplete="off">`;
+      `<button type="button" class="chip elegir${o.value === v ? ' prendido' : ''}" data-v="${esc(o.value)}">${esc(o.textContent)}</button>`).join('')
+      + `<button type="button" class="chip chip-agregar" data-agregar>&#65291; ${esc(etiquetaAgregar)}</button>`
+      + `<input type="text" class="chips-entrada" id="${id}-entry" placeholder="${esc(marcador)}" hidden autocomplete="off">`;
   };
   Object.defineProperty(sel, 'value', {
     configurable: true,
@@ -105,16 +105,16 @@ export function armarSelector(id, { onAdd: alAgregar, etiquetaAgregar = 'Otra', 
   });
   const elegir = v => { selectorModelo.set.call(sel, v); pintar(); sel.dispatchEvent(new Event('change')); };
   caja.addEventListener('click', e => {
-    const b = e.target.closest('.pick');
+    const b = e.target.closest('.elegir');
     if (b) { elegir(b.dataset.v === selectorModelo.get.call(sel) ? '' : b.dataset.v); return; }
-    const agregar = e.target.closest('[data-add]');
+    const agregar = e.target.closest('[data-agregar]');
     if (agregar) {
-      const inp = caja.querySelector('.chips-entry');
+      const inp = caja.querySelector('.chips-entrada');
       agregar.hidden = true; inp.hidden = false; inp.focus();
     }
   });
   caja.addEventListener('keydown', e => {
-    if (!e.target.classList.contains('chips-entry')) return;
+    if (!e.target.classList.contains('chips-entrada')) return;
     if (e.key === 'Enter') {
       e.preventDefault();
       const t = e.target.value.trim();
@@ -125,7 +125,7 @@ export function armarSelector(id, { onAdd: alAgregar, etiquetaAgregar = 'Otra', 
   });
   // Si sale del campo sin Enter, lo escrito igual queda elegido (no se pierde).
   caja.addEventListener('focusout', e => {
-    if (!e.target.classList.contains('chips-entry') || e.target.hidden || !caja.contains(e.target)) return;
+    if (!e.target.classList.contains('chips-entrada') || e.target.hidden || !caja.contains(e.target)) return;
     const t = e.target.value.trim();
     e.target.value = '';
     if (t) { alAgregar(t); pintar(); sel.dispatchEvent(new Event('change')); } else setTimeout(pintar, 150);

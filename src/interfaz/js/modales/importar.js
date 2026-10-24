@@ -12,7 +12,7 @@ const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 // Guarda la planilla modelo donde elija el usuario.
 async function descargarPlanilla() {
   try { if (await call('descargarModelo')) mostrarAviso('&#10003; Planilla modelo guardada', 'ok'); }
-  catch (err) { mostrarAviso('Error al guardar la planilla: ' + esc(err.message), 'err'); }
+  catch (err) { mostrarAviso('Error al guardar la planilla: ' + esc(err.message), 'error'); }
 }
 
 async function importar() {
@@ -34,7 +34,7 @@ async function importar() {
     } else {
       mostrarAviso(`&#10003; Importados ${plural(res.cantidades.contratos, 'alquiler', 'alquileres')} y ${plural(res.cantidades.administraciones, 'administración', 'administraciones')}`, 'ok');
     }
-  } catch (err) { mostrarAviso('Error al importar: ' + esc(err.message), 'err'); }
+  } catch (err) { mostrarAviso('Error al importar: ' + esc(err.message), 'error'); }
 }
 
 // Conecta los eventos de esta parte de la pantalla.
@@ -45,5 +45,5 @@ export function iniciar() {
   });
   $('imp-elegir').addEventListener('click', importar);
   // Planilla modelo: desde la pantalla de inicio, el menu ☰ y esta ventana.
-  for (const id of ['btn-template', 'btn-menu-template', 'imp-modelo']) $(id).addEventListener('click', descargarPlanilla);
+  for (const id of ['btn-modelo', 'btn-menu-modelo', 'imp-modelo']) $(id).addEventListener('click', descargarPlanilla);
 }

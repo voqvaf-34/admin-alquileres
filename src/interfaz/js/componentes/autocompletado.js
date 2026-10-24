@@ -57,7 +57,7 @@ function acOcultar() {
 
 function acMarcarActiva(idx) {
   const elementos = _acElemento().querySelectorAll('.ac-item');
-  elementos.forEach((el, i) => el.classList.toggle('ac-active', i === idx));
+  elementos.forEach((el, i) => el.classList.toggle('ac-activo', i === idx));
   if (idx >= 0 && elementos[idx]) elementos[idx].scrollIntoView({ block: 'nearest' });
   _acIndice = idx;
 }
@@ -104,7 +104,7 @@ export function actualizarVistaDireccion() {
     calle:    N.mayusculasIniciales(document.getElementById('m-calle').value),
     unidad:   /^\d/.test(u) ? u.toUpperCase() : N.mayusculasIniciales(u),
   });
-  document.getElementById('m-dir-preview').textContent = txt || '—';
+  document.getElementById('m-dir-vista').textContent = txt || '—';
 }
 
 function acCompletarDesdeDireccion(dir) {
@@ -148,7 +148,7 @@ function acResaltar(ids) {
     const el = document.getElementById(id + '-chips') || document.getElementById(id);
     if (el && document.getElementById(id).value) {
       el.style.transition = 'background 0s';
-      el.style.background = 'rgba(var(--accent-rgb),0.18)';
+      el.style.background = 'rgba(var(--acento-rgb),0.18)';
       setTimeout(() => { el.style.transition = 'background 0.6s'; el.style.background = ''; }, 80);
     }
   });

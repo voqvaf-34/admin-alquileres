@@ -21,7 +21,7 @@ const PAQUETE = require('../../package.json');
 
 const MODO = process.env.ADMIN_ALQ_MODE || PAQUETE.modoAdmin || 'editor';
 
-const ES_VISOR = MODO === 'viewer';
+const ES_VISOR = MODO === 'visor';
 
 // Sin carpeta compartida por defecto: se elige desde la app (Compartir con el Visor).
 const CARPETA_COMPARTIDA_PREDETERMINADA = '';

@@ -11,7 +11,7 @@ export function guardarMarcas() {
   const snapshot = JSON.parse(JSON.stringify(estado.marcas));
   _guardandoMarcas = _guardandoMarcas
     .then(() => call('guardarMarcas', snapshot))
-    .catch(err => mostrarAviso('No se pudieron guardar las marcas: ' + esc(err.message), 'err'));
+    .catch(err => mostrarAviso('No se pudieron guardar las marcas: ' + esc(err.message), 'error'));
   return _guardandoMarcas;
 }
 
@@ -23,7 +23,7 @@ export async function guardarAumento(entrada, nuevoMonto, fecha) {
     mostrarAviso('&#10003; Aumento guardado', 'ok');
     return true;
   } catch (err) {
-    mostrarAviso('Error al guardar el aumento: ' + esc(err.message), 'err');
+    mostrarAviso('Error al guardar el aumento: ' + esc(err.message), 'error');
     return false;
   }
 }
@@ -34,7 +34,7 @@ export async function guardarNotas(entrada, texto, okMsg) {
     if (okMsg) mostrarAviso(okMsg, 'ok');
     return true;
   } catch (err) {
-    mostrarAviso('Error al guardar el comentario: ' + esc(err.message), 'err');
+    mostrarAviso('Error al guardar el comentario: ' + esc(err.message), 'error');
     return false;
   }
 }

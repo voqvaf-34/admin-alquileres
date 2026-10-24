@@ -9,7 +9,7 @@ import { limpiarPendientes } from '../vistas/tarjetas.js';
 
 export function pintarDeshacer(st) {
   if (!st) return;
-  const u = document.getElementById('btn-undo'), r = document.getElementById('btn-redo');
+  const u = document.getElementById('btn-deshacer'), r = document.getElementById('btn-rehacer');
   u.disabled = !st.puedeDeshacer; r.disabled = !st.puedeRehacer;
   u.title = st.puedeDeshacer ? `Deshacer: ${st.etiquetaDeshacer} (Ctrl+Z)` : 'Nada para deshacer';
   r.title = st.puedeRehacer ? `Rehacer: ${st.etiquetaRehacer} (Ctrl+Y)` : 'Nada para rehacer';
@@ -33,10 +33,10 @@ async function ejecutarDeshacer(rehacer) {
 export function iniciar() {
   // Deshacer / rehacer: botones, Ctrl+Z y Ctrl+Y (o Ctrl+Shift+Z).
   window.api.alCambiarDeshacer(pintarDeshacer);
-  document.getElementById('btn-undo').addEventListener('click', () => ejecutarDeshacer(false));
-  document.getElementById('btn-redo').addEventListener('click', () => ejecutarDeshacer(true));
+  document.getElementById('btn-deshacer').addEventListener('click', () => ejecutarDeshacer(false));
+  document.getElementById('btn-rehacer').addEventListener('click', () => ejecutarDeshacer(true));
   document.addEventListener('keydown', e => {
-    if (!e.ctrlKey || e.altKey || !estado.entradas || document.body.classList.contains('viewer')) return;
+    if (!e.ctrlKey || e.altKey || !estado.entradas || document.body.classList.contains('visor')) return;
     if (e.target.matches('input, textarea, select, [contenteditable="true"]')) return;   // deshacer de texto nativo
     const k = e.key.toLowerCase();
     if (k === 'z' && !e.shiftKey) { e.preventDefault(); ejecutarDeshacer(false); }

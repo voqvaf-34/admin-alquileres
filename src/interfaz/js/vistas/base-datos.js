@@ -39,12 +39,12 @@ function baseFiltrada() {
 
 // Genera la fila separadora de grupo
 function filaSeparadoraBase(etiqueta, cantidad) {
-  return `<tr class="db-sep-row">
+  return `<tr class="base-sep-fila">
     <td colspan="5">
-      <div class="db-sep-inner">
-        <span class="db-sep-label">${etiqueta}</span>
-        <span class="db-sep-line"></span>
-        <span class="db-sep-count">${cantidad}</span>
+      <div class="base-sep-interior">
+        <span class="base-sep-etiqueta">${etiqueta}</span>
+        <span class="base-sep-linea"></span>
+        <span class="base-sep-cantidad">${cantidad}</span>
       </div>
     </td>
   </tr>`;
@@ -61,14 +61,14 @@ export function dibujarTablaBase() {
     return fa - fb;
   });
 
-  const elCantidad = document.getElementById('db-count');
+  const elCantidad = document.getElementById('base-cantidad');
   if (elCantidad) elCantidad.textContent = `${ordenados.length} / ${estado.entradas.length} registros`;
 
-  const tbody = document.getElementById('db-tbody');
+  const tbody = document.getElementById('base-tbody');
   if (!tbody) return;
 
   if (ordenados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="empty">Sin registros que coincidan.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="vacio">Sin registros que coincidan.</td></tr>`;
     return;
   }
 
@@ -112,12 +112,12 @@ export function dibujarTablaBase() {
   // Fila principal (+ detalle si esta abierta; si no, se arma al abrirla)
   const fila = e => {
     const estaAbierto = estado.filasAbiertas.has(e.id);
-    return `<tr class="db-row${estaAbierto ? ' expanded' : ''}${e.inactivo ? ' db-row-inactive' : ''}" data-id="${e.id}">
-      <td class="db-dir">${esc(e.direccion)}${e.inactivo ? `<span class="inactive-badge">INACTIVO</span>` : ''}${insigniaGarantia(e)}${e.remitente ? `<span class="delegado-badge" style="margin-left:8px;font-size:10px" title="Aumentos los hace ${esc(e.remitente)}">&#8618; ${esc(e.remitente)}</span>` : ''}</td>
+    return `<tr class="base-fila${estaAbierto ? ' expandida' : ''}${e.inactivo ? ' base-fila-inactivo' : ''}" data-id="${e.id}">
+      <td class="base-dir">${esc(e.direccion)}${e.inactivo ? `<span class="inactivo-insignia">INACTIVO</span>` : ''}${insigniaGarantia(e)}${e.remitente ? `<span class="delegado-insignia" style="margin-left:8px;font-size:10px" title="Aumentos los hace ${esc(e.remitente)}">&#8618; ${esc(e.remitente)}</span>` : ''}</td>
       <td>${formatearNombres(e.propietario)}</td>
       <td>${formatearNombres(e.inquilino)}</td>
-      <td style="white-space:nowrap;color:var(--dim)">${formatearFecha(e.fechaInicio)}</td>
-      <td class="db-chevron">${puntoNuevo('basedatos', e.id)}&#9658;</td>
+      <td style="white-space:nowrap;color:var(--tenue)">${formatearFecha(e.fechaInicio)}</td>
+      <td class="base-flecha">${puntoNuevo('basedatos', e.id)}&#9658;</td>
     </tr>` + (estaAbierto ? filaDetalle(e, porDireccion) : '');
   };
 
@@ -147,9 +147,9 @@ function insigniaRenovacion(e, dir) {
   const mkV  = estado.marcas[claveVenc(e)];
   const mkVR = estado.marcas[claveVencRenovado(e)];
   if (mkVR) {
-    return `<div class="renov-badge">
+    return `<div class="renov-insignia">
       <span>&#10003; 2a renovacion el ${mkVR.fecha}${mkVR.nuevaInicio ? ` &middot; Nuevo inicio: ${mkVR.nuevaInicio} &middot; ${mkVR.aniosRenovacion}a` : ''}</span>
-      <button class="unmark-btn" data-db-vunc-r="${dir}" title="Desmarcar 2a renovacion" style="margin-left:auto">&times;</button>
+      <button class="desmarcar-btn" data-base-vunc-r="${dir}" title="Desmarcar 2a renovacion" style="margin-left:auto">&times;</button>
     </div>`;
   }
   if (!mkV) return '';
@@ -158,25 +158,25 @@ function insigniaRenovacion(e, dir) {
   const ni = mkV.nuevaInicio && mkV.aniosRenovacion && interpretarDMA(mkV.nuevaInicio);
   if (ni) {
     const nvDate = new Date(ni.getFullYear() + mkV.aniosRenovacion, ni.getMonth(), Math.min(ni.getDate(), 28));
-    if (nvDate <= new Date()) vencNote = `<span style="color:var(--amber)"> &middot; &#9888; Venc. renovacion: ${formatearFecha(nvDate)}</span>`;
+    if (nvDate <= new Date()) vencNote = `<span style="color:var(--ambar)"> &middot; &#9888; Venc. renovacion: ${formatearFecha(nvDate)}</span>`;
   }
-  return `<div class="renov-badge">
+  return `<div class="renov-insignia">
     <span>&#10003; Renovado el ${mkV.fecha}${mkV.nuevaInicio ? ` &middot; Inicio: ${mkV.nuevaInicio} &middot; ${mkV.aniosRenovacion}a` : ''}${vencNote}</span>
-    <button class="unmark-btn" data-db-vunc="${dir}" title="Desmarcar renovacion" style="margin-left:auto">&times;</button>
+    <button class="desmarcar-btn" data-base-vunc="${dir}" title="Desmarcar renovacion" style="margin-left:auto">&times;</button>
   </div>`;
 }
 
 // Detalle de un alquiler (se muestra al abrir su fila).
 function filaDetalle(e, porDireccion) {
   const dir = esc(e.direccion);
-  return `<tr class="db-detail-row" data-detail-id="${e.id}">
+  return `<tr class="base-detalle-fila" data-detalle-id="${e.id}">
       <td colspan="5">
-        <div class="db-detail-inner">
-          <div class="db-detail-grid">
+        <div class="base-detalle-interior">
+          <div class="base-detalle-grilla">
             <div><span class="lbl">Alquiler: </span><strong>${formatearDinero(e.importe, e.moneda)}</strong></div>
-            <div><span class="lbl">Ult. aumento: </span>${e.ultimoAumento ? formatearFecha(e.ultimoAumento) : '<span style="color:var(--dim)">-</span>'}</div>
+            <div><span class="lbl">Ult. aumento: </span>${e.ultimoAumento ? formatearFecha(e.ultimoAumento) : '<span style="color:var(--tenue)">-</span>'}</div>
             <div><span class="lbl">Contrato: </span>${esc(e.contratoTexto||'-')}</div>
-            <div><span class="lbl">Garantía: </span>${e.garantia ? esc(e.garantia) : '<span class="missing">sin cargar</span>'}</div>
+            <div><span class="lbl">Garantía: </span>${e.garantia ? esc(e.garantia) : '<span class="faltante">sin cargar</span>'}</div>
             <div><span class="lbl">Aumentos: </span>${D.gestionadoPor(e) ? esc(D.gestionadoPor(e)) : 'La inmobiliaria'}</div>
             ${e.propietario ? `<div><span class="lbl">Propietario: </span>${formatearNombres(e.propietario)}</div>` : ''}
             <div><span class="lbl">Tel. Prop: </span>${enlaceTelefono(e.telProp)}</div>
@@ -187,27 +187,27 @@ function filaDetalle(e, porDireccion) {
             ${e.mailInq ? `<div><span class="lbl">Mail Inq: </span>${formatearMails(e.mailInq)}</div>` : ''}
           </div>
           ${insigniaRenovacion(e, dir)}
-          ${e.direccionOriginal && e.direccionOriginal !== e.direccion ? `<div style="margin-top:8px;font-size:11px;color:var(--dim)">Registrado originalmente como: ${esc(e.direccionOriginal)}</div>` : ''}
-          <div class="nota-edit-section">
-            <span class="nota-label">Comentarios</span>
-            <div class="notas-list">${D.separarNotas(e.notas).map((n, i) => D.interpretarNotaRenovacion(n) ? '' : `
-              <div class="nota-chip"><span class="nota-txt" data-nota-edit="${e.id}" data-i="${i}" title="Clic para corregir">${esc(n)}</span><button class="chip-x" data-nota-del="${e.id}" data-i="${i}" title="Borrar comentario">&times;</button></div>`).join('')}
+          ${e.direccionOriginal && e.direccionOriginal !== e.direccion ? `<div style="margin-top:8px;font-size:11px;color:var(--tenue)">Registrado originalmente como: ${esc(e.direccionOriginal)}</div>` : ''}
+          <div class="nota-editar-seccion">
+            <span class="nota-etiqueta">Comentarios</span>
+            <div class="notas-lista">${D.separarNotas(e.notas).map((n, i) => D.interpretarNotaRenovacion(n) ? '' : `
+              <div class="nota-chip"><span class="nota-txt" data-nota-editar="${e.id}" data-i="${i}" title="Clic para corregir">${esc(n)}</span><button class="chip-x" data-nota-borrar="${e.id}" data-i="${i}" title="Borrar comentario">&times;</button></div>`).join('')}
             </div>
-            <div class="nota-bar">
-              <button class="chip chip-add" data-nota-add="${e.id}">&#65291; Comentario</button>
-              ${D.renovaciones(e, estado.marcas, porDireccion).lista.length ? `<button class="mark-btn" data-timeline="${e.id}" title="Cuándo entró, cuándo venció y cada renovación">&#128339; Línea de tiempo</button>` : ''}
+            <div class="nota-barra">
+              <button class="chip chip-agregar" data-nota-agregar="${e.id}">&#65291; Comentario</button>
+              ${D.renovaciones(e, estado.marcas, porDireccion).lista.length ? `<button class="marcar-btn" data-linea-tiempo="${e.id}" title="Cuándo entró, cuándo venció y cada renovación">&#128339; Línea de tiempo</button>` : ''}
             </div>
-            <div class="nota-new" hidden>
+            <div class="nota-nueva" hidden>
               <textarea class="nota-textarea" rows="2" placeholder="Escribí el comentario (Enter guarda)"></textarea>
-              <div class="nota-actions">
-                <button class="mark-btn" data-nota-cancel>Cancelar</button>
-                <button class="nota-save-btn" data-nota-row="${e.id}">Guardar comentario</button>
+              <div class="nota-acciones">
+                <button class="marcar-btn" data-nota-cancelar>Cancelar</button>
+                <button class="nota-guardar-btn" data-nota-fila="${e.id}">Guardar comentario</button>
               </div>
             </div>
           </div>
-          <div class="db-detail-acciones">
-            <button class="mark-btn btn-editar-fila" data-edit-row="${e.id}">&#9998; Editar datos</button>
-            ${!e.inactivo ? `<button class="mark-btn btn-inactivar-fila" data-delete-row="${e.id}" data-delete-dir="${dir}">&#8855; Marcar como inactivo</button>` : ''}
+          <div class="base-detalle-acciones">
+            <button class="marcar-btn btn-editar-fila" data-editar-fila="${e.id}">&#9998; Editar datos</button>
+            ${!e.inactivo ? `<button class="marcar-btn btn-inactivar-fila" data-borrar-fila="${e.id}" data-borrar-dir="${dir}">&#8855; Marcar como inactivo</button>` : ''}
           </div>
         </div>
       </td>
@@ -216,7 +216,7 @@ function filaDetalle(e, porDireccion) {
 
 // Inicializa el dropdown de anos del panel DB con los anos en entries
 export function llenarAniosBase() {
-  const sel = document.getElementById('db-year');
+  const sel = document.getElementById('base-anio');
   if (!sel || !estado.entradas) return;
   const anios = [...new Set(
     estado.entradas.filter(e => e.fechaInicio).map(e => e.fechaInicio.getFullYear())
@@ -234,130 +234,130 @@ export function llenarAniosBase() {
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
   // Filtros Base de Datos
-  document.getElementById('db-search').addEventListener('input', e => {
+  document.getElementById('base-busqueda').addEventListener('input', e => {
     estado.baseTextoBusqueda = e.target.value;
-    e.target.closest('.search-wrap').classList.toggle('has-text', !!e.target.value);
+    e.target.closest('.busqueda-caja').classList.toggle('con-texto', !!e.target.value);
     dibujarTablaBase();
   });
-  document.getElementById('db-year').addEventListener('change', e => {
+  document.getElementById('base-anio').addEventListener('change', e => {
     estado.baseFiltroAnio = +e.target.value;
     dibujarTablaBase();
   });
-  document.getElementById('db-month').addEventListener('change', e => {
+  document.getElementById('base-mes').addEventListener('change', e => {
     estado.baseFiltroMes = +e.target.value;
     dibujarTablaBase();
   });
-  document.getElementById('db-show-active').addEventListener('change', e => {
+  document.getElementById('base-mostrar-activo').addEventListener('change', e => {
     estado.baseMostrarActivos = e.target.checked;
-    if (estado.baseMostrarActivos) { estado.baseMostrarInactivos = false; document.getElementById('db-show-inactive').checked = false; }
+    if (estado.baseMostrarActivos) { estado.baseMostrarInactivos = false; document.getElementById('base-mostrar-inactivo').checked = false; }
     dibujarTablaBase();
   });
-  document.getElementById('db-show-inactive').addEventListener('change', e => {
+  document.getElementById('base-mostrar-inactivo').addEventListener('change', e => {
     estado.baseMostrarInactivos = e.target.checked;
-    if (estado.baseMostrarInactivos) { estado.baseMostrarActivos = false; document.getElementById('db-show-active').checked = false; }
+    if (estado.baseMostrarInactivos) { estado.baseMostrarActivos = false; document.getElementById('base-mostrar-activo').checked = false; }
     dibujarTablaBase();
   });
 
   // Botones clear en buscadores
-  document.getElementById('db-search-clear').addEventListener('click', () => {
-    const inp = document.getElementById('db-search');
+  document.getElementById('base-busqueda-limpiar').addEventListener('click', () => {
+    const inp = document.getElementById('base-busqueda');
     inp.value = ''; estado.baseTextoBusqueda = '';
-    inp.closest('.search-wrap').classList.remove('has-text');
+    inp.closest('.busqueda-caja').classList.remove('con-texto');
     inp.focus(); dibujarTablaBase();
   });
 
   // Acordeon Base de Datos (event delegation sobre tbody -- persiste entre renders)
   // Enter guarda el comentario (Shift+Enter no hace falta: cada comentario es una viñeta).
-  document.getElementById('db-tbody').addEventListener('keydown', e => {
+  document.getElementById('base-tbody').addEventListener('keydown', e => {
     if (e.key === 'Enter' && e.target.classList.contains('nota-textarea')) {
       e.preventDefault();
-      e.target.closest('.nota-edit-section').querySelector('[data-nota-row]').click();
+      e.target.closest('.nota-editar-seccion').querySelector('[data-nota-fila]').click();
     } else if (e.key === 'Escape' && e.target.classList.contains('nota-textarea')) {
-      e.target.closest('.nota-edit-section').querySelector('[data-nota-cancel]').click();
+      e.target.closest('.nota-editar-seccion').querySelector('[data-nota-cancelar]').click();
     }
   });
-  document.getElementById('db-tbody').addEventListener('click', async e => {
+  document.getElementById('base-tbody').addEventListener('click', async e => {
     const porId = id => estado.entradas && estado.entradas.find(en => en.id === id);
 
     // ── Editar alquiler ──
-    const btnEditar = e.target.closest('[data-edit-row]');
+    const btnEditar = e.target.closest('[data-editar-fila]');
     if (btnEditar) {
       e.stopPropagation();
-      const entrada = porId(+btnEditar.dataset.editRow);
+      const entrada = porId(+btnEditar.dataset.editarFila);
       if (entrada) mostrarModalEdicion(entrada);
       return;
     }
 
     // ── Marcar inactivo ──
-    const btnBorrar = e.target.closest('[data-delete-row]');
+    const btnBorrar = e.target.closest('[data-borrar-fila]');
     if (btnBorrar) {
       e.stopPropagation();
-      await borrarEntrada(+btnBorrar.dataset.deleteRow, btnBorrar.dataset.deleteDir);
+      await borrarEntrada(+btnBorrar.dataset.borrarFila, btnBorrar.dataset.borrarDir);
       return;
     }
 
     // ── Desmarcar renovacion desde el panel DB ──
-    const dbVunc = e.target.closest('[data-db-vunc]');
+    const dbVunc = e.target.closest('[data-base-vunc]');
     if (dbVunc) {
       e.stopPropagation();
-      const dir = dbVunc.dataset.dbVunc;
+      const dir = dbVunc.dataset.baseVunc;
       delete estado.marcas[`v|${dir}`];
       delete estado.marcas[`vr|${dir}`];
       guardarMarcas();
       dibujarTablaBase();
       return;
     }
-    const dbVuncR = e.target.closest('[data-db-vunc-r]');
+    const dbVuncR = e.target.closest('[data-base-vunc-r]');
     if (dbVuncR) {
       e.stopPropagation();
-      delete estado.marcas[`vr|${dbVuncR.dataset.dbVuncR}`];
+      delete estado.marcas[`vr|${dbVuncR.dataset.baseVuncR}`];
       guardarMarcas();
       dibujarTablaBase();
       return;
     }
 
     // ── Linea de tiempo ──
-    const tlBtn = e.target.closest('[data-timeline]');
-    if (tlBtn) { e.stopPropagation(); mostrarLineaTiempo(porId(+tlBtn.dataset.timeline)); return; }
+    const tlBtn = e.target.closest('[data-linea-tiempo]');
+    if (tlBtn) { e.stopPropagation(); mostrarLineaTiempo(porId(+tlBtn.dataset.lineaTiempo)); return; }
 
     // ── Comentarios como viñetas: agregar, corregir, borrar ──
     // Los indices son sobre la lista completa (incluye las notas de renovacion, que no se muestran).
-    const notaSec = e.target.closest('.nota-edit-section');
+    const notaSec = e.target.closest('.nota-editar-seccion');
     const abrirNuevo = (seccion, texto, idx) => {
-      const caja = seccion.querySelector('.nota-new'), ta = caja.querySelector('textarea');
-      caja.hidden = false; seccion.querySelector('.nota-bar').hidden = true;
+      const caja = seccion.querySelector('.nota-nueva'), ta = caja.querySelector('textarea');
+      caja.hidden = false; seccion.querySelector('.nota-barra').hidden = true;
       ta.value = texto || ''; ta.dataset.i = idx == null ? '' : idx; ta.focus();
     };
-    if (e.target.closest('[data-nota-add]')) { e.stopPropagation(); abrirNuevo(notaSec); return; }
-    const notaEdit = e.target.closest('[data-nota-edit]');
+    if (e.target.closest('[data-nota-agregar]')) { e.stopPropagation(); abrirNuevo(notaSec); return; }
+    const notaEdit = e.target.closest('[data-nota-editar]');
     if (notaEdit) {
       e.stopPropagation();
-      if (document.body.classList.contains('viewer')) return;
-      const entrada = porId(+notaEdit.dataset.notaEdit);
+      if (document.body.classList.contains('visor')) return;
+      const entrada = porId(+notaEdit.dataset.notaEditar);
       abrirNuevo(notaSec, D.separarNotas(entrada.notas)[+notaEdit.dataset.i], +notaEdit.dataset.i);
       return;
     }
-    if (e.target.closest('[data-nota-cancel]')) {
+    if (e.target.closest('[data-nota-cancelar]')) {
       e.stopPropagation();
-      notaSec.querySelector('.nota-new').hidden = true; notaSec.querySelector('.nota-bar').hidden = false;
+      notaSec.querySelector('.nota-nueva').hidden = true; notaSec.querySelector('.nota-barra').hidden = false;
       return;
     }
-    const notaDel = e.target.closest('[data-nota-del]');
+    const notaDel = e.target.closest('[data-nota-borrar]');
     if (notaDel) {
       e.stopPropagation();
-      const entrada = porId(+notaDel.dataset.notaDel);
+      const entrada = porId(+notaDel.dataset.notaBorrar);
       const lista = D.separarNotas(entrada.notas);
       if (!confirm(`¿Borrar este comentario?\n\n${lista[+notaDel.dataset.i]}`)) return;
       lista.splice(+notaDel.dataset.i, 1);
       if (await guardarNotas(entrada, lista.join(' | '), '&#10003; Comentario borrado')) dibujarTablaBase();
       return;
     }
-    const btnNota = e.target.closest('[data-nota-row]');
+    const btnNota = e.target.closest('[data-nota-fila]');
     if (btnNota) {
       e.stopPropagation();
-      const entrada = porId(+btnNota.dataset.notaRow);
+      const entrada = porId(+btnNota.dataset.notaFila);
       if (!entrada) return;
-      const ta = btnNota.closest('.nota-edit-section').querySelector('.nota-textarea');
+      const ta = btnNota.closest('.nota-editar-seccion').querySelector('.nota-textarea');
       const txt = ta.value.replace(/\s*\n+\s*/g, ' ').replace(/\s*\|\s*/g, ' - ').trim();
       const lista = D.separarNotas(entrada.notas);
       if (ta.dataset.i !== '') { if (txt) lista[+ta.dataset.i] = txt; else lista.splice(+ta.dataset.i, 1); }
@@ -368,17 +368,17 @@ export function iniciar() {
 
     // ── Toggle acordeon (no si el click fue dentro de los comentarios) ──
     if (notaSec) return;
-    const fila = e.target.closest('.db-row');
+    const fila = e.target.closest('.base-fila');
     if (!fila) return;
     const id = +fila.dataset.id;
-    const filaDet = document.querySelector(`.db-detail-row[data-detail-id="${id}"]`);
+    const filaDet = document.querySelector(`.base-detalle-fila[data-detalle-id="${id}"]`);
     if (estado.filasAbiertas.has(id)) {
       estado.filasAbiertas.delete(id);
-      fila.classList.remove('expanded');
+      fila.classList.remove('expandida');
       if (filaDet) filaDet.remove();
     } else {
       estado.filasAbiertas.add(id);
-      fila.classList.add('expanded');
+      fila.classList.add('expandida');
       const entrada = porId(id);
       if (!filaDet && entrada) fila.insertAdjacentHTML('afterend', filaDetalle(entrada, D.indicePorDireccion(estado.entradas)));
     }

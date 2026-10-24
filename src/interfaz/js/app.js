@@ -45,7 +45,7 @@ export function aplicarEstado(st) {
   if (st.visor) pintarVisor(st.visor);
   if (st.ajustes && st.ajustes.ipc) {
     estado.ipc = parseFloat(st.ajustes.ipc) || estado.ipc;
-    const inp = document.getElementById('inp-ipc');
+    const inp = document.getElementById('campo-ipc');
     if (inp) inp.value = estado.ipc;
   }
 }
@@ -53,26 +53,26 @@ export function aplicarEstado(st) {
 export function dibujar() {
   if (!estado.entradas) return;
   const activos = estado.entradas.filter(e => !e.inactivo).length;
-  document.getElementById('file-info').textContent = `${document.body.classList.contains('viewer') ? 'Base compartida' : 'Base local'} -- ${activos} activos / ${estado.entradas.length} total`;
+  document.getElementById('archivo-info').textContent = `${document.body.classList.contains('visor') ? 'Base compartida' : 'Base local'} -- ${activos} activos / ${estado.entradas.length} total`;
 
   // Visibilidad de paneles segun tab
   const esBase     = estado.pestanaActiva === 'basedatos';
   const esAdmin  = estado.pestanaActiva === 'administraciones';
   const esPropietarios = estado.pestanaActiva === 'propietarios';
   const esPanel  = esBase || esAdmin || esPropietarios;
-  document.getElementById('content').style.display      = esPanel  ? 'none'  : 'block';
-  document.getElementById('db-panel').style.display     = esBase     ? 'block' : 'none';
+  document.getElementById('contenido').style.display      = esPanel  ? 'none'  : 'block';
+  document.getElementById('base-panel').style.display     = esBase     ? 'block' : 'none';
   document.getElementById('admin-panel').style.display  = esAdmin  ? 'block' : 'none';
-  document.getElementById('owners-panel').style.display = esPropietarios ? 'block' : 'none';
-  document.getElementById('op-controls').style.display  = esPanel  ? 'none'  : 'flex';
-  document.getElementById('ipc-group').hidden = estado.pestanaActiva !== 'aumentos';   // el IPC solo aplica a aumentos
+  document.getElementById('propietarios-panel').style.display = esPropietarios ? 'block' : 'none';
+  document.getElementById('op-controles').style.display  = esPanel  ? 'none'  : 'flex';
+  document.getElementById('ipc-grupo').hidden = estado.pestanaActiva !== 'aumentos';   // el IPC solo aplica a aumentos
 
   // Aumentos y Renovaciones muestran un circulito (como una notificacion) con lo que falta hacer;
   // los resueltos se ven igual en la lista pero no cuentan.
-  pintarAviso('tab-aumentos', contarPendientesAumentos());
-  pintarAviso('tab-vencimientos', contarPendientesRenovaciones());
+  pintarAviso('pestana-aumentos', contarPendientesAumentos());
+  pintarAviso('pestana-vencimientos', contarPendientesRenovaciones());
   pintarNovedades();   // Visor: lo nuevo desde la ultima vez que se entro a cada pestaña
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===estado.pestanaActiva));
+  document.querySelectorAll('.pestana-btn').forEach(b => b.classList.toggle('activo', b.dataset.pestana===estado.pestanaActiva));
 
   if (esBase) {
     dibujarTablaBase();
@@ -87,42 +87,42 @@ export function dibujar() {
     return;
   }
 
-  const contenido = document.getElementById('content');
+  const contenido = document.getElementById('contenido');
   if (estado.pestanaActiva === 'aumentos') dibujarAumentos(contenido);
   else dibujarRenovaciones(contenido);
 }
 
 export function mostrarApp() {
-  document.getElementById('autoload-screen').style.display = 'none';
-  document.getElementById('upload-screen').style.display   = 'none';
-  document.getElementById('app-screen').style.display      = 'block';
-  document.body.classList.add('in-app');        // la cabecera pasa a ser la barra de titulo
+  document.getElementById('autocarga-pantalla').style.display = 'none';
+  document.getElementById('carga-pantalla').style.display   = 'none';
+  document.getElementById('app-pantalla').style.display      = 'block';
+  document.body.classList.add('en-app');        // la cabecera pasa a ser la barra de titulo
   llenarAniosBase();
   dibujar();
 }
 
 function mostrarCargaAuto(msg) {
-  document.getElementById('autoload-status').textContent   = msg || 'Abriendo base de datos...';
-  document.getElementById('autoload-screen').style.display = 'flex';
-  document.getElementById('upload-screen').style.display   = 'none';
-  document.getElementById('app-screen').style.display      = 'none';
-  document.body.classList.remove('in-app');
+  document.getElementById('autocarga-estado').textContent   = msg || 'Abriendo base de datos...';
+  document.getElementById('autocarga-pantalla').style.display = 'flex';
+  document.getElementById('carga-pantalla').style.display   = 'none';
+  document.getElementById('app-pantalla').style.display      = 'none';
+  document.body.classList.remove('en-app');
 }
 
 function mostrarPantallaImportar() {
-  document.getElementById('drop-label').textContent        = 'o soltá la planilla acá';
-  document.getElementById('autoload-screen').style.display = 'none';
-  document.getElementById('upload-screen').style.display   = 'flex';
-  document.getElementById('app-screen').style.display      = 'none';
-  document.body.classList.remove('in-app');
+  document.getElementById('soltar-etiqueta').textContent        = 'o soltá la planilla acá';
+  document.getElementById('autocarga-pantalla').style.display = 'none';
+  document.getElementById('carga-pantalla').style.display   = 'flex';
+  document.getElementById('app-pantalla').style.display      = 'none';
+  document.body.classList.remove('en-app');
 }
 
 async function cargarEstado() {
   mostrarCargaAuto();
   try {
     const st = await call('obtenerEstado');
-    if (st.modo === 'viewer') {
-      document.body.classList.add('viewer');
+    if (st.modo === 'visor') {
+      document.body.classList.add('visor');
       await visorUsarEstado(st);
       if (!st.necesitaCompartida) consultarIPC();
       return;
@@ -151,8 +151,8 @@ async function ejecutarImportacion(promesa) {
     consultarIPC();
     return true;
   } catch (err) {
-    mostrarAviso('Error al importar: ' + esc(err.message), 'err');
-    document.getElementById('drop-label').textContent = 'Soltá la planilla acá';
+    mostrarAviso('Error al importar: ' + esc(err.message), 'error');
+    document.getElementById('soltar-etiqueta').textContent = 'Soltá la planilla acá';
     return false;
   }
 }
@@ -160,21 +160,21 @@ async function ejecutarImportacion(promesa) {
 export const elegirImportacion     = () => ejecutarImportacion(call('elegirImportacion'));
 
 export const importarDesdeArchivo = archivo => {
-  document.getElementById('drop-label').textContent = 'Importando...';
+  document.getElementById('soltar-etiqueta').textContent = 'Importando...';
   return ejecutarImportacion(call('importarDesdeArchivo', archivo));
 };
 
 // Conecta los eventos de esta parte de la pantalla.
 export function iniciar() {
   // Meses del selector operativo
-  const elMesElegido = document.getElementById('sel-month');
+  const elMesElegido = document.getElementById('sel-mes');
   NOMBRES_MESES.slice(1).forEach((nombre,i) => {
     const o=document.createElement('option'); o.value=i+1; o.textContent=nombre;
     if(i+1===estado.mesElegido) o.selected=true; elMesElegido.appendChild(o);
   });
   elMesElegido.addEventListener('change', e => { estado.mesElegido=+e.target.value; dibujar(); });
 
-  const elAnioElegido = document.getElementById('sel-year');
+  const elAnioElegido = document.getElementById('sel-anio');
   const anioActual = new Date().getFullYear();
   Array.from({ length: 7 }, (_, i) => anioActual - 2 + i).forEach(y => {
     const o=document.createElement('option'); o.value=y; o.textContent=y;
@@ -182,33 +182,33 @@ export function iniciar() {
   });
   elAnioElegido.addEventListener('change', e => { estado.anioElegido=+e.target.value; dibujar(); });
 
-  document.getElementById('inp-ipc').addEventListener('input', e => { estado.ipc=parseFloat(e.target.value)||0; dibujar(); });
-  document.getElementById('inp-ipc').addEventListener('change', () => { call('guardarAjuste', 'ipc', estado.ipc).catch(() => {}); });
-  document.getElementById('btn-ipc-fetch').addEventListener('click', consultarIPC);
-  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => { estado.pestanaActiva=b.dataset.tab; marcarVisto(b.dataset.tab); dibujar(); }));
+  document.getElementById('campo-ipc').addEventListener('input', e => { estado.ipc=parseFloat(e.target.value)||0; dibujar(); });
+  document.getElementById('campo-ipc').addEventListener('change', () => { call('guardarAjuste', 'ipc', estado.ipc).catch(() => {}); });
+  document.getElementById('btn-ipc-consultar').addEventListener('click', consultarIPC);
+  document.querySelectorAll('.pestana-btn').forEach(b => b.addEventListener('click', () => { estado.pestanaActiva=b.dataset.pestana; marcarVisto(b.dataset.pestana); dibujar(); }));
 
   // Filtros resuelto / sin resolver (tabs operativas)
-  document.getElementById('op-show-sinresolver').addEventListener('change', e => {
+  document.getElementById('op-mostrar-sinresolver').addEventListener('change', e => {
     estado.opMostrarSinResolver = e.target.checked;
-    if (estado.opMostrarSinResolver) { estado.opMostrarResuelto = false; document.getElementById('op-show-resuelto').checked = false; }
+    if (estado.opMostrarSinResolver) { estado.opMostrarResuelto = false; document.getElementById('op-mostrar-resuelto').checked = false; }
     dibujar();
   });
-  document.getElementById('op-show-resuelto').addEventListener('change', e => {
+  document.getElementById('op-mostrar-resuelto').addEventListener('change', e => {
     estado.opMostrarResuelto = e.target.checked;
-    if (estado.opMostrarResuelto) { estado.opMostrarSinResolver = false; document.getElementById('op-show-sinresolver').checked = false; }
+    if (estado.opMostrarResuelto) { estado.opMostrarSinResolver = false; document.getElementById('op-mostrar-sinresolver').checked = false; }
     dibujar();
   });
 
   // Importacion inicial / cabecera
-  document.getElementById('btn-autoload').addEventListener('click', elegirImportacion);
-  document.getElementById('btn-data-folder').addEventListener('click', () => call('abrirCarpetaDatos').catch(() => {}));
+  document.getElementById('btn-autocarga').addEventListener('click', elegirImportacion);
+  document.getElementById('btn-datos-carpeta').addEventListener('click', () => call('abrirCarpetaDatos').catch(() => {}));
 
   // Drag & drop (pantalla de importacion)
-  const dz = document.getElementById('dropzone');
-  dz.addEventListener('dragover',  e=>{e.preventDefault();dz.classList.add('drag-over');});
-  dz.addEventListener('dragleave', ()=>dz.classList.remove('drag-over'));
+  const dz = document.getElementById('zona-soltar');
+  dz.addEventListener('dragover',  e=>{e.preventDefault();dz.classList.add('arrastrando');});
+  dz.addEventListener('dragleave', ()=>dz.classList.remove('arrastrando'));
   dz.addEventListener('drop', e=>{
-    e.preventDefault(); dz.classList.remove('drag-over');
+    e.preventDefault(); dz.classList.remove('arrastrando');
     if (e.dataTransfer.files[0]) importarDesdeArchivo(e.dataTransfer.files[0]);
   });
   dz.addEventListener('click', elegirImportacion);
@@ -216,17 +216,17 @@ export function iniciar() {
   document.addEventListener('dragover', e => e.preventDefault());
   document.addEventListener('drop', e => e.preventDefault());
 
-  document.getElementById('btn-export-csv').addEventListener('click', async () => {
+  document.getElementById('btn-exportar-csv').addEventListener('click', async () => {
     try {
       const r = await call('exportarCsv');
       if (r) mostrarAviso(`&#10003; Exportados ${r.files} archivos CSV`, 'ok');
-    } catch (err) { mostrarAviso('Error al exportar: ' + esc(err.message), 'err'); }
+    } catch (err) { mostrarAviso('Error al exportar: ' + esc(err.message), 'error'); }
   });
 
-  document.getElementById('btn-start-demo').addEventListener('click', () => ejecutarImportacion(call('cargarDemo')));
+  document.getElementById('btn-inicio-demo').addEventListener('click', () => ejecutarImportacion(call('cargarDemo')));
 
-  document.getElementById('btn-start-empty').addEventListener('click', async () => {
-    try { aplicarEstado(await call('empezarVacio')); mostrarApp(); } catch (err) { mostrarAviso('Error: ' + esc(err.message), 'err'); }
+  document.getElementById('btn-inicio-vacio').addEventListener('click', async () => {
+    try { aplicarEstado(await call('empezarVacio')); mostrarApp(); } catch (err) { mostrarAviso('Error: ' + esc(err.message), 'error'); }
   });
 }
 

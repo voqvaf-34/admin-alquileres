@@ -12,7 +12,7 @@ async function revisar(page, pantalla, modo) {
   const res = await page.evaluate(async etiquetas => {
 
     // Con una ventana abierta se revisa solo esa (lo de atras queda tapado a proposito).
-    const abierta = document.querySelector('.modal.open, #modal-add.open, #modal-admin.open');
+    const abierta = document.querySelector('.modal.abierto, #modal-agregar.abierto, #modal-admin.abierto');
     const r = await axe.run(abierta || document, { runOnly: { type: 'tag', values: etiquetas }, resultTypes: ['violations'] });
     return r.violations.map(v => ({
       regla: v.id, impacto: v.impact, ayuda: v.help,
@@ -35,21 +35,21 @@ async function recorrer({ temas = ['clasico'], marca = null, a11y = null, soloAp
   try {
     await page.evaluate(src => { (0, eval)(src); }, AXE);
     // Sin animaciones: se mide el color final, no uno a mitad de la transicion entre temas.
-    await page.evaluate(() => A11y.set({ animaciones: 'no' }));
-    await page.waitForSelector('#upload-screen', { state: 'visible' });
+    await page.evaluate(() => A11y.poner({ animaciones: 'no' }));
+    await page.waitForSelector('#carga-pantalla', { state: 'visible' });
     if (!soloApp) for (const modo of ['light', 'dark']) {
       await page.emulateMedia({ colorScheme: modo });
       await paso('inicio', modo);
     }
-    await page.click('#btn-start-demo');
-    await page.waitForSelector('#app-screen', { state: 'visible' });
+    await page.click('#btn-inicio-demo');
+    await page.waitForSelector('#app-pantalla', { state: 'visible' });
     if (marca || a11y) {
       await page.evaluate(async ({ marca, a11y }) => {
-        if (a11y) A11y.set({ ...a11y, animaciones: 'no' });
+        if (a11y) A11y.poner({ ...a11y, animaciones: 'no' });
         if (marca) await window.api.guardarConfig({ marca: { nombre: '', color: marca.color, color2: marca.color2 || '' } });
       }, { marca, a11y });
       await page.reload();
-      await page.waitForSelector('#app-screen', { state: 'visible' });
+      await page.waitForSelector('#app-pantalla', { state: 'visible' });
       await page.evaluate(src => { (0, eval)(src); }, AXE);
     }
     for (const tema of temas) {
@@ -57,34 +57,34 @@ async function recorrer({ temas = ['clasico'], marca = null, a11y = null, soloAp
       for (const modo of ['light', 'dark']) {
         await page.emulateMedia({ colorScheme: modo });
         const m = `${tema}/${modo}`;
-        await page.click('#tab-basedatos');
-        if (!(await page.$('#db-tbody .db-row.expanded'))) await page.click('#db-tbody .db-row');
+        await page.click('#pestana-basedatos');
+        if (!(await page.$('#base-tbody .base-fila.expandida'))) await page.click('#base-tbody .base-fila');
         await paso('base de datos', m);
-        await page.click('#tab-propietarios');
+        await page.click('#pestana-propietarios');
         await paso('propietarios', m);
-        await page.click('#tab-aumentos');
-        await page.waitForSelector('#content .card');
+        await page.click('#pestana-aumentos');
+        await page.waitForSelector('#contenido .tarjeta');
         await paso('aumentos', m);
-        await page.click('#tab-vencimientos');
-        await page.waitForSelector('#content .card');
+        await page.click('#pestana-vencimientos');
+        await page.waitForSelector('#contenido .tarjeta');
         await paso('renovaciones', m);
-        await page.click('#tab-administraciones');
+        await page.click('#pestana-administraciones');
         await paso('administraciones', m);
-        await page.click('#tab-basedatos');
-        await page.click('#btn-add-entry');
-        await page.waitForSelector('#modal-add.open');
+        await page.click('#pestana-basedatos');
+        await page.click('#btn-agregar-entrada');
+        await page.waitForSelector('#modal-agregar.abierto');
         await paso('alquiler nuevo', m);
-        await page.click('#modal-cancel');
+        await page.click('#modal-cancelar');
         await page.click('#btn-menu');
         await page.click('#btn-menu-importar');
         await paso('importar', m);
-        await page.click('#modal-importar .btn-modal-cancel');
+        await page.click('#modal-importar .btn-modal-cancelar');
         await page.click('#btn-menu');
         await page.click('#btn-config');
-        await page.waitForSelector('#modal-config.open');
+        await page.waitForSelector('#modal-config.abierto');
         for (const tab of ['marca', 'apariencia', 'mensajes']) {
-          await page.click(`[data-cfg-tab="${tab}"]`);
-          if (tab === 'mensajes') await page.click('[data-msg="renovacion"] summary');
+          await page.click(`[data-cfg-pestana="${tab}"]`);
+          if (tab === 'mensajes') await page.click('[data-mensaje="renovacion"] summary');
           await paso(`configuración/${tab}`, m);
         }
         await page.click('#cfg-cancelar');

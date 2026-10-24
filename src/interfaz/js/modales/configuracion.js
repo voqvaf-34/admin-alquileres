@@ -36,12 +36,12 @@ const marcaBorrador = () => leerMarca({
 
 // ── Pestañas ──
 function mostrarPestana(id) {
-  document.querySelectorAll('[data-cfg-tab]').forEach(b => b.classList.toggle('on', b.dataset.cfgTab === id));
+  document.querySelectorAll('[data-cfg-pestana]').forEach(b => b.classList.toggle('prendido', b.dataset.cfgPestana === id));
   document.querySelectorAll('[data-cfg-panel]').forEach(p => { p.hidden = p.dataset.cfgPanel !== id; });
-  $('cfg-preview-wrap').hidden = id === 'mensajes' || id === 'accesibilidad';
+  $('cfg-vista-caja').hidden = id === 'mensajes' || id === 'accesibilidad';
   if (asistente) {
     asistente.paso = PASOS.indexOf(id);
-    document.querySelectorAll('[data-cfg-tab]').forEach(b => b.classList.toggle('hecho', PASOS.indexOf(b.dataset.cfgTab) < asistente.paso));
+    document.querySelectorAll('[data-cfg-pestana]').forEach(b => b.classList.toggle('hecho', PASOS.indexOf(b.dataset.cfgPestana) < asistente.paso));
     $('cfg-atras').hidden = asistente.paso === 0;
     const ultimo = asistente.paso === PASOS.length - 1;
     $('cfg-siguiente').hidden = ultimo;
@@ -51,24 +51,24 @@ function mostrarPestana(id) {
 
 // ── Vista previa y controles ──
 function pintarColor(selector, valor, mismo) {
-  const caja = document.querySelector(`[data-color-picker="${selector}"]`);
+  const caja = document.querySelector(`[data-color-selector="${selector}"]`);
   caja.querySelector('.cfg-color').value = valor.toLowerCase();
   const hex = caja.querySelector('.cfg-color-hex');
   if (document.activeElement !== hex) hex.value = mismo ? '' : valor;
   hex.placeholder = mismo ? valor : '';
   hex.classList.remove('invalido');
-  caja.querySelectorAll('.cfg-swatch').forEach(b => b.classList.toggle('on', !mismo && b.dataset.color === valor));
+  caja.querySelectorAll('.cfg-muestra').forEach(b => b.classList.toggle('prendido', !mismo && b.dataset.color === valor));
 }
 
 function pintarBorrador() {
   const marca = marcaBorrador();
   const p = paleta(marca.color, marca.color2);
-  pintarApariencia($('cfg-preview'), marca);
-  pintarApariencia($('cfg-logo-preview'), marca);
+  pintarApariencia($('cfg-vista'), marca);
+  pintarApariencia($('cfg-logo-vista'), marca);
   pintarApariencia($('cfg-temas'), marca);
-  $('cfg-prev-nombre').textContent = marca.nombre;
-  $('cfg-prev-nombre').hidden = !!marca.logo;
-  for (const img of [$('cfg-prev-logo'), $('cfg-logo-img')]) {
+  $('cfg-vista-nombre').textContent = marca.nombre;
+  $('cfg-vista-nombre').hidden = !!marca.logo;
+  for (const img of [$('cfg-vista-logo'), $('cfg-logo-img')]) {
     if (marca.logo) img.src = marca.logo; else img.removeAttribute('src');
     img.hidden = !marca.logo;
   }
@@ -80,9 +80,9 @@ function pintarBorrador() {
   $('cfg-color-aviso').textContent = flojos.length
     ? 'Con este color, ni el texto blanco ni el oscuro llegan al contraste recomendado: puede costar leer la barra y los botones. Probá uno un poco más claro o más oscuro.' : '';
   pintarColor('color2', p.sec, !marca.color2);
-  $('cfg-color2-mismo').classList.toggle('on', !marca.color2);
-  document.querySelectorAll('.cfg-tema').forEach(b => b.classList.toggle('on', b.dataset.tema === marca.tema));
-  document.querySelectorAll('.cfg-fuente').forEach(b => b.classList.toggle('on', b.dataset.fuente === marca.fuente));
+  $('cfg-color2-mismo').classList.toggle('prendido', !marca.color2);
+  document.querySelectorAll('.cfg-tema').forEach(b => b.classList.toggle('prendido', b.dataset.tema === marca.tema));
+  document.querySelectorAll('.cfg-fuente').forEach(b => b.classList.toggle('prendido', b.dataset.fuente === marca.fuente));
   for (const id of Object.keys(PLANTILLAS)) pintarEjemplo(id);
 }
 
@@ -92,12 +92,12 @@ let dibujoPendiente = 0, claveIconoDibujado = null, claveDisenosDibujados = null
 function pintarIcono(marca) {
   // Si el tipo elegido no se puede usar (p. ej. "Mi logo" sin logo) se muestra el que va a quedar.
   const tipo = marca.icono.tipo;
-  document.querySelectorAll('[data-icono-tipo]').forEach(b => b.classList.toggle('active', b.dataset.iconoTipo === tipo));
+  document.querySelectorAll('[data-icono-tipo]').forEach(b => b.classList.toggle('activo', b.dataset.iconoTipo === tipo));
   document.querySelector('[data-icono-tipo="logo"]').disabled = !marca.logo;
   document.querySelector('[data-icono-tipo="logo"]').title = marca.logo ? '' : 'Primero cargá un logo';
   document.querySelectorAll('[data-icono-panel]').forEach(p => { p.hidden = p.dataset.iconoPanel !== tipo; });
   pintarColor('iconoColor', marca.icono.color || marca.color, !marca.icono.color);
-  $('cfg-iconoColor-mismo').classList.toggle('on', !marca.icono.color);
+  $('cfg-iconoColor-mismo').classList.toggle('prendido', !marca.icono.color);
   if (claveIcono(marca) !== claveIconoDibujado) {
     claveIconoDibujado = claveIcono(marca);
     const n = ++dibujoPendiente;
@@ -107,7 +107,7 @@ function pintarIcono(marca) {
   const redibujarDisenos = claveDisenos(marca) !== claveDisenosDibujados;
   claveDisenosDibujados = claveDisenos(marca);
   for (const b of document.querySelectorAll('.cfg-diseno')) {
-    b.classList.toggle('on', b.dataset.diseno === marca.icono.diseno);
+    b.classList.toggle('prendido', b.dataset.diseno === marca.icono.diseno);
     if (redibujarDisenos) dibujarIcono({ ...marca, icono: { ...marca.icono, tipo: 'app', diseno: b.dataset.diseno } }, 76)
       .then(png => { b.querySelector('img').src = png; }).catch(() => {});
   }
@@ -124,41 +124,41 @@ function armarIcono() {
     const b = e.target.closest('[data-icono-tipo]'); if (!b || b.disabled) return;
     borrador.iconoTipo = b.dataset.iconoTipo;
     pintarBorrador();
-    if (borrador.iconoTipo === 'imagen' && !borrador.iconoImagen) $('cfg-icono-file').click();
+    if (borrador.iconoTipo === 'imagen' && !borrador.iconoImagen) $('cfg-icono-archivo').click();
   });
   $('cfg-iconoColor-mismo').addEventListener('click', () => { borrador.iconoColor = ''; pintarBorrador(); });
-  $('cfg-icono-elegir').addEventListener('click', () => $('cfg-icono-file').click());
-  $('cfg-icono-file').addEventListener('change', async e => {
+  $('cfg-icono-elegir').addEventListener('click', () => $('cfg-icono-archivo').click());
+  $('cfg-icono-archivo').addEventListener('change', async e => {
     const archivo = e.target.files[0]; e.target.value = '';
     if (!archivo) { if (!borrador.iconoImagen) { borrador.iconoTipo = 'app'; pintarBorrador(); } return; }
     try {
       borrador.iconoImagen = await imagenCuadrada(await leerComoDataURL(archivo));
       borrador.iconoTipo = 'imagen';
-    } catch (_) { mostrarAviso('No se pudo leer la imagen.', 'err'); }
+    } catch (_) { mostrarAviso('No se pudo leer la imagen.', 'error'); }
     pintarBorrador();
   });
 }
 
 function pintarModo() {
-  const modo = Theme.getModo();
-  document.querySelectorAll('[data-modo]').forEach(b => b.classList.toggle('active', b.dataset.modo === modo));
-  const oscuro = Theme.get() === 'dark';
-  $('cfg-preview').classList.toggle('oscuro', oscuro);
-  $('cfg-preview').classList.toggle('claro', !oscuro);
-  $('cfg-prev-modo').textContent = oscuro ? 'Ver en modo claro' : 'Ver en modo oscuro';
+  const modo = Tema.obtenerModo();
+  document.querySelectorAll('[data-modo]').forEach(b => b.classList.toggle('activo', b.dataset.modo === modo));
+  const oscuro = Tema.obtener() === 'oscuro';
+  $('cfg-vista').classList.toggle('oscuro', oscuro);
+  $('cfg-vista').classList.toggle('claro', !oscuro);
+  $('cfg-vista-modo').textContent = oscuro ? 'Ver en modo claro' : 'Ver en modo oscuro';
 }
 
 // ── Accesibilidad ──
 function pintarA11y() {
-  const p = A11y.get();
+  const p = A11y.obtener();
   document.querySelectorAll('.cfg-tamano').forEach(b => {
     const on = +b.dataset.tamano === +p.tamano;
-    b.classList.toggle('on', on); b.setAttribute('aria-checked', on);
+    b.classList.toggle('prendido', on); b.setAttribute('aria-checked', on);
   });
   document.querySelectorAll('[data-a11y]').forEach(i => { i.checked = !!p[i.dataset.a11y]; });
   document.querySelectorAll('[data-anim]').forEach(b => {
     const on = b.dataset.anim === p.animaciones;
-    b.classList.toggle('active', on); b.setAttribute('aria-checked', on);
+    b.classList.toggle('activo', on); b.setAttribute('aria-checked', on);
   });
 }
 
@@ -168,35 +168,35 @@ function armarAccesibilidad() {
   document.querySelectorAll('[data-anim]').forEach(b => b.setAttribute('role', 'radio'));
   $('cfg-tamanos').addEventListener('click', e => {
     const b = e.target.closest('.cfg-tamano'); if (!b) return;
-    A11y.set({ tamano: +b.dataset.tamano }); pintarA11y();
+    A11y.poner({ tamano: +b.dataset.tamano }); pintarA11y();
   });
-  document.querySelectorAll('[data-a11y]').forEach(i => i.addEventListener('change', () => { A11y.set({ [i.dataset.a11y]: i.checked }); pintarA11y(); }));
+  document.querySelectorAll('[data-a11y]').forEach(i => i.addEventListener('change', () => { A11y.poner({ [i.dataset.a11y]: i.checked }); pintarA11y(); }));
   $('cfg-anim').addEventListener('click', e => {
     const b = e.target.closest('[data-anim]'); if (!b) return;
-    A11y.set({ animaciones: b.dataset.anim }); pintarA11y();
+    A11y.poner({ animaciones: b.dataset.anim }); pintarA11y();
   });
-  $('cfg-a11y-normal').addEventListener('click', () => { A11y.set(A11y.DEFAULT); pintarA11y(); });
+  $('cfg-a11y-normal').addEventListener('click', () => { A11y.poner(A11y.PREDETERMINADO); pintarA11y(); });
 }
 
 function armarApariencia() {
   $('cfg-modos').addEventListener('click', e => {
     const b = e.target.closest('[data-modo]'); if (!b) return;
-    Theme.setModo(b.dataset.modo);
+    Tema.ponerModo(b.dataset.modo);
   });
-  document.addEventListener('modo-color', () => { if ($('modal-config').classList.contains('open')) pintarModo(); });
+  document.addEventListener('modo-color', () => { if ($('modal-config').classList.contains('abierto')) pintarModo(); });
   // Cancelar (o la X) deja el modo como estaba.
-  const deshacerPreferencias = () => { Theme.setModo(modoAlAbrir); if (a11yAlAbrir) A11y.set(a11yAlAbrir); };
+  const deshacerPreferencias = () => { Tema.ponerModo(modoAlAbrir); if (a11yAlAbrir) A11y.poner(a11yAlAbrir); };
   $('cfg-cancelar').addEventListener('click', deshacerPreferencias);
   document.querySelector('#modal-config .modal-x').addEventListener('click', deshacerPreferencias);
 
-  document.querySelectorAll('[data-color-picker] .cfg-sugeridos').forEach(caja => {
+  document.querySelectorAll('[data-color-selector] .cfg-sugeridos').forEach(caja => {
     caja.innerHTML = COLORES_SUGERIDOS.map(c =>
-      `<button type="button" class="cfg-swatch" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('');
+      `<button type="button" class="cfg-muestra" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('');
   });
-  document.querySelectorAll('[data-color-picker]').forEach(caja => {
-    const campo = caja.dataset.colorPicker;
+  document.querySelectorAll('[data-color-selector]').forEach(caja => {
+    const campo = caja.dataset.colorSelector;
     caja.addEventListener('click', e => {
-      const b = e.target.closest('.cfg-swatch'); if (!b) return;
+      const b = e.target.closest('.cfg-muestra'); if (!b) return;
       borrador[campo] = b.dataset.color; pintarBorrador();
     });
     caja.querySelector('.cfg-color').addEventListener('input', e => { borrador[campo] = e.target.value.toUpperCase(); pintarBorrador(); });
@@ -211,10 +211,10 @@ function armarApariencia() {
   $('cfg-color2-mismo').addEventListener('click', () => { borrador.color2 = ''; pintarBorrador(); });
 
   $('cfg-temas').innerHTML = Object.entries(TEMAS).map(([id, t]) => {
-    const [fondo, tarjeta] = t.muestra || ['var(--m-tinte-bg)', 'var(--m-tinte-surface)'];
-    const [fondoDk, tarjetaDk] = t.oscuro || ['var(--m-tinte-bg-dk)', 'var(--m-tinte-panel-dk)'];
+    const [fondo, tarjeta] = t.muestra || ['var(--m-tinte-fondo)', 'var(--m-tinte-superficie)'];
+    const [fondoDk, tarjetaDk] = t.oscuro || ['var(--m-tinte-fondo-osc)', 'var(--m-tinte-panel-osc)'];
     return `<button type="button" class="cfg-tema" data-tema="${id}">
-      <div class="cfg-tema-muestra" style="--muestra-bg:${fondo};--muestra-card:${tarjeta};--muestra-bg-dk:${fondoDk};--muestra-card-dk:${tarjetaDk}"></div>${esc(t.nombre)}</button>`;
+      <div class="cfg-tema-muestra" style="--muestra-fondo:${fondo};--muestra-tarjeta:${tarjeta};--muestra-fondo-osc:${fondoDk};--muestra-tarjeta-osc:${tarjetaDk}"></div>${esc(t.nombre)}</button>`;
   }).join('');
   $('cfg-temas').addEventListener('click', e => {
     const b = e.target.closest('.cfg-tema'); if (!b) return;
@@ -228,19 +228,19 @@ function armarApariencia() {
     borrador.fuente = b.dataset.fuente; pintarBorrador();
   });
 
-  $('cfg-prev-modo').addEventListener('click', () => {
-    const oscuro = !$('cfg-preview').classList.contains('oscuro');
-    $('cfg-preview').classList.toggle('oscuro', oscuro);
-    $('cfg-preview').classList.toggle('claro', !oscuro);
-    $('cfg-prev-modo').textContent = oscuro ? 'Ver en modo claro' : 'Ver en modo oscuro';
+  $('cfg-vista-modo').addEventListener('click', () => {
+    const oscuro = !$('cfg-vista').classList.contains('oscuro');
+    $('cfg-vista').classList.toggle('oscuro', oscuro);
+    $('cfg-vista').classList.toggle('claro', !oscuro);
+    $('cfg-vista-modo').textContent = oscuro ? 'Ver en modo claro' : 'Ver en modo oscuro';
   });
 }
 
 // ── Mensajes ──
-const areaMensaje = id => document.querySelector(`[data-msg="${id}"] textarea`);
+const areaMensaje = id => document.querySelector(`[data-mensaje="${id}"] textarea`);
 
 function pintarEjemplo(id) {
-  const caja = document.querySelector(`[data-msg="${id}"]`);
+  const caja = document.querySelector(`[data-mensaje="${id}"]`);
   const texto = areaMensaje(id).value;
   const nombre = leerMarca({ marcaNombre: borrador.nombre }).nombre;
   const datos = Object.fromEntries(Object.entries({ inmobiliaria: nombre, ...EJEMPLO }).map(([k, v]) => [k, `<b>${esc(v)}</b>`]));
@@ -252,7 +252,7 @@ function pintarEjemplo(id) {
 
 function armarMensajes() {
   $('cfg-mensajes').innerHTML = Object.entries(PLANTILLAS).map(([id, p]) => `
-    <details class="m-disclosure cfg-msg" data-msg="${id}">
+    <details class="m-desplegable cfg-mensaje" data-mensaje="${id}">
       <summary>${esc(p.titulo)}</summary>
       <textarea spellcheck="true" aria-label="${esc(p.titulo)}"></textarea>
       <div class="cfg-vars">
@@ -262,10 +262,10 @@ function armarMensajes() {
       <div class="cfg-aviso"></div>
       <div class="cfg-ejemplo"></div>
     </details>`).join('');
-  $('cfg-mensajes').addEventListener('input', e => { const b = e.target.closest('[data-msg]'); if (b) pintarEjemplo(b.dataset.msg); });
+  $('cfg-mensajes').addEventListener('input', e => { const b = e.target.closest('[data-mensaje]'); if (b) pintarEjemplo(b.dataset.mensaje); });
   $('cfg-mensajes').addEventListener('click', e => {
-    const caja = e.target.closest('[data-msg]'); if (!caja) return;
-    const ta = caja.querySelector('textarea'), id = caja.dataset.msg;
+    const caja = e.target.closest('[data-mensaje]'); if (!caja) return;
+    const ta = caja.querySelector('textarea'), id = caja.dataset.mensaje;
     const v = e.target.closest('.cfg-var');
     if (v) {
       const ins = `{${v.dataset.var}}`, a = ta.selectionStart, z = ta.selectionEnd;
@@ -288,10 +288,10 @@ function cargar() {
   $('cfg-nombre').value = borrador.nombre;
   for (const id of Object.keys(PLANTILLAS)) {
     areaMensaje(id).value = textoPlantilla(estado.ajustesApp, id);
-    document.querySelector(`[data-msg="${id}"]`).open = false;
+    document.querySelector(`[data-mensaje="${id}"]`).open = false;
   }
-  modoAlAbrir = Theme.getModo();
-  a11yAlAbrir = A11y.get();
+  modoAlAbrir = Tema.obtenerModo();
+  a11yAlAbrir = A11y.obtener();
   pintarModo();
   pintarA11y();
   pintarBorrador();
@@ -304,10 +304,10 @@ function modoAsistente(activo) {
   $('cfg-saltar').hidden = !activo;
   $('cfg-cancelar').hidden = activo;
   document.querySelector('#modal-config .modal-x').hidden = activo;
-  document.querySelector('[data-cfg-tab="mensajes"]').hidden = activo;
-  document.querySelectorAll('[data-cfg-tab]').forEach(b => {
-    const n = PASOS.indexOf(b.dataset.cfgTab) + 1;
-    b.innerHTML = (activo && n ? `<span class="cfg-paso">${n}</span>` : '') + b.dataset.cfgTab[0].toUpperCase() + b.dataset.cfgTab.slice(1);
+  document.querySelector('[data-cfg-pestana="mensajes"]').hidden = activo;
+  document.querySelectorAll('[data-cfg-pestana]').forEach(b => {
+    const n = PASOS.indexOf(b.dataset.cfgPestana) + 1;
+    b.innerHTML = (activo && n ? `<span class="cfg-paso">${n}</span>` : '') + b.dataset.cfgPestana[0].toUpperCase() + b.dataset.cfgPestana.slice(1);
   });
   $('cfg-guardar').textContent = activo ? 'Listo' : 'Guardar';
   if (!activo) { $('cfg-atras').hidden = $('cfg-siguiente').hidden = true; $('cfg-guardar').hidden = false; }
@@ -368,7 +368,7 @@ async function guardar() {
     if (asistente) return terminarAsistente();
     cerrarModal('modal-config');
     mostrarAviso('&#10003; Configuración guardada', 'ok');
-  } catch (err) { mostrarAviso('Error al guardar: ' + esc(err.message), 'err'); }
+  } catch (err) { mostrarAviso('Error al guardar: ' + esc(err.message), 'error'); }
 }
 
 // Conecta los eventos de esta parte de la pantalla.
@@ -377,15 +377,15 @@ export function iniciar() {
   armarApariencia();
   armarIcono();
   armarAccesibilidad();
-  document.querySelectorAll('[data-cfg-tab]').forEach(b => b.addEventListener('click', () => mostrarPestana(b.dataset.cfgTab)));
+  document.querySelectorAll('[data-cfg-pestana]').forEach(b => b.addEventListener('click', () => mostrarPestana(b.dataset.cfgPestana)));
   $('cfg-nombre').addEventListener('input', e => { borrador.nombre = e.target.value; pintarBorrador(); });
 
-  $('cfg-logo-elegir').addEventListener('click', () => $('cfg-logo-file').click());
-  $('cfg-logo-file').addEventListener('change', async e => {
+  $('cfg-logo-elegir').addEventListener('click', () => $('cfg-logo-archivo').click());
+  $('cfg-logo-archivo').addEventListener('change', async e => {
     const archivo = e.target.files[0]; e.target.value = '';
     if (!archivo) return;
     try { borrador.logo = await leerLogo(archivo); pintarBorrador(); }
-    catch (err) { mostrarAviso(esc(err.message), 'err'); }
+    catch (err) { mostrarAviso(esc(err.message), 'error'); }
   });
   $('cfg-logo-quitar').addEventListener('click', () => { borrador.logo = ''; if (borrador.iconoTipo === 'logo') borrador.iconoTipo = 'app'; pintarBorrador(); });
 

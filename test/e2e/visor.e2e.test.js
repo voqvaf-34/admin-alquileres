@@ -22,71 +22,71 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
   let visor;
   try {
     // El editor arranca con los datos de ejemplo y una marca propia.
-    await editor.page.click('#btn-start-demo');
-    await editor.page.waitForSelector('#app-screen', { state: 'visible' });
+    await editor.page.click('#btn-inicio-demo');
+    await editor.page.waitForSelector('#app-pantalla', { state: 'visible' });
     await abrirConfiguracion(editor.page);
     await editor.page.fill('#cfg-nombre', 'Inmobiliaria del Sur');
     await elegirColor(editor.page, '#7C3AED');
     await editor.page.click('#cfg-guardar');
     await editor.page.waitForSelector('#modal-config', { state: 'hidden' });
-    await editor.page.waitForFunction(() => document.getElementById('share-dot').classList.contains('ok'));
+    await editor.page.waitForFunction(() => document.getElementById('compartir-punto').classList.contains('ok'));
     assert.ok(fs.existsSync(path.join(compartida, 'alquileres.sqlite')), 'la base se publico');
     const total = await editor.page.evaluate(() => app.estado.entradas.length);
 
     visor = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
-      ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: compartida, ADMIN_ALQ_POLL_MS: '500' });
+      ADMIN_ALQ_MODE: 'visor', ADMIN_ALQ_SHARED_DIR: compartida, ADMIN_ALQ_POLL_MS: '500' });
     const vp = visor.page;
-    await vp.waitForSelector('#app-screen', { state: 'visible' });
+    await vp.waitForSelector('#app-pantalla', { state: 'visible' });
     assert.equal(await vp.evaluate(() => app.estado.entradas.length), total, 'el visor ve los mismos datos');
-    assert.ok(await vp.isVisible('.viewer-badge'));
+    assert.ok(await vp.isVisible('.visor-insignia'));
     // Misma marca que el editor (viaja dentro de la base publicada).
-    assert.equal(await vp.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--m-header').trim()), '#7C3AED');
-    assert.equal(await vp.textContent('#hdr-logo [data-marca-nombre]'), 'Inmobiliaria del Sur');
+    assert.equal(await vp.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--m-cabecera').trim()), '#7C3AED');
+    assert.equal(await vp.textContent('#cab-logo [data-marca-nombre]'), 'Inmobiliaria del Sur');
     assert.equal(await vp.title(), 'Inmobiliaria del Sur · Alquileres · Visor');
-    for (const sel of ['#btn-add-entry', '#btn-undo', '#btn-share', '#btn-config', '#tab-aumentos', '#tab-vencimientos']) {
+    for (const sel of ['#btn-agregar-entrada', '#btn-deshacer', '#btn-compartir', '#btn-config', '#pestana-aumentos', '#pestana-vencimientos']) {
       assert.equal(await vp.isVisible(sel), false, `${sel} oculto en el visor`);
     }
-    await vp.click('#db-tbody .db-row');
-    assert.equal(await vp.locator('#db-tbody [data-edit-row]:visible, #db-tbody [data-delete-row]:visible').count(), 0, 'sin editar ni inactivar');
+    await vp.click('#base-tbody .base-fila');
+    assert.equal(await vp.locator('#base-tbody [data-editar-fila]:visible, #base-tbody [data-borrar-fila]:visible').count(), 0, 'sin editar ni inactivar');
     await vp.screenshot({ path: path.join(SHOTS, '10-visor.png') });
-    await vp.click('#tab-propietarios');
+    await vp.click('#pestana-propietarios');
 
     // Un cambio en el editor aparece solo en el visor.
     const ep = editor.page;
     const agregar = async calle => {
-      await ep.click('#btn-add-entry');
+      await ep.click('#btn-agregar-entrada');
       await ep.waitForFunction(() => document.activeElement && document.activeElement.id === 'm-edificio');
       await ep.fill('#m-calle', calle);
       await ep.fill('#m-importe', '15000');
-      await ep.click('#modal-submit');
-      await ep.waitForSelector('#modal-add', { state: 'hidden' });
+      await ep.click('#modal-enviar');
+      await ep.waitForSelector('#modal-agregar', { state: 'hidden' });
       await vp.waitForFunction(c => app.estado.entradas.some(e => e.direccion === c), calle, { timeout: 15000 });
     };
     await agregar('Visor Prueba 123');
-    assert.match(await vp.textContent('#viewer-updated'), /Datos al \d{2}\/\d{2} \d{2}:\d{2}/);
+    assert.match(await vp.textContent('#visor-actualizado'), /Datos al \d{2}\/\d{2} \d{2}:\d{2}/);
 
     // Lo nuevo se marca con un aviso en la pestaña hasta que se entra a verla.
-    const novedad = tab => vp.evaluate(t => { const a = document.querySelector(`#tab-${t} .tab-aviso`); return a && !a.hidden ? +a.textContent : 0; }, tab);
+    const novedad = tab => vp.evaluate(t => { const a = document.querySelector(`#pestana-${t} .pestana-aviso`); return a && !a.hidden ? +a.textContent : 0; }, tab);
     assert.equal(await novedad('basedatos'), 1, 'un alquiler nuevo');
     assert.equal(await novedad('administraciones'), 0, 'nada nuevo en administraciones');
     await vp.screenshot({ path: path.join(SHOTS, '10b-visor-novedad.png') });
-    await vp.click('#tab-basedatos');
+    await vp.click('#pestana-basedatos');
     assert.equal(await novedad('basedatos'), 0, 'al entrar a la pestaña se da por visto');
     // ...y lo nuevo queda arriba de todo, con un punto naranja, mientras se este en la pestaña
-    assert.match(await vp.textContent('#db-tbody tr:first-child'), /Nuevos/);
-    assert.match(await vp.locator('#db-tbody .db-row').first().textContent(), /Visor Prueba 123/);
-    assert.equal(await vp.locator('#db-tbody .punto-nuevo').count(), 1);
+    assert.match(await vp.textContent('#base-tbody tr:first-child'), /Nuevos/);
+    assert.match(await vp.locator('#base-tbody .base-fila').first().textContent(), /Visor Prueba 123/);
+    assert.equal(await vp.locator('#base-tbody .punto-nuevo').count(), 1);
     await vp.screenshot({ path: path.join(SHOTS, '10c-visor-nuevos-arriba.png') });
-    await vp.click('#tab-propietarios');
-    await vp.click('#tab-basedatos');
-    assert.equal(await vp.locator('#db-tbody .punto-nuevo').count(), 0, 'al volver ya es un registro normal');
+    await vp.click('#pestana-propietarios');
+    await vp.click('#pestana-basedatos');
+    assert.equal(await vp.locator('#base-tbody .punto-nuevo').count(), 0, 'al volver ya es un registro normal');
     // Lo que llega estando en la pestaña (o al abrir el Visor en ella) se ve directo: sin circulito, con punto.
     await agregar('Visor Prueba 456');
     assert.equal(await novedad('basedatos'), 0, 'la pestaña en pantalla no acumula novedades');
-    assert.match(await vp.locator('#db-tbody .db-row').first().textContent(), /Visor Prueba 456/);
-    assert.equal(await vp.locator('#db-tbody .punto-nuevo').count(), 1);
+    assert.match(await vp.locator('#base-tbody .base-fila').first().textContent(), /Visor Prueba 456/);
+    assert.equal(await vp.locator('#base-tbody .punto-nuevo').count(), 1);
     await vp.reload();
-    await vp.waitForSelector('#app-screen', { state: 'visible' });
+    await vp.waitForSelector('#app-pantalla', { state: 'visible' });
     assert.equal(await novedad('basedatos'), 0, 'lo visto se recuerda al volver a abrir');
 
     // El visor no puede escribir: no hay canales de modificacion.
@@ -102,18 +102,18 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
 
 test('visor sin carpeta compartida pide elegirla', { timeout: 60000 }, async () => {
   const v = await lanzar({ ADMIN_ALQ_DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'alq-vi-')),
-    ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: path.join(os.tmpdir(), 'no-existe-' + Date.now()) });
+    ADMIN_ALQ_MODE: 'visor', ADMIN_ALQ_SHARED_DIR: path.join(os.tmpdir(), 'no-existe-' + Date.now()) });
   try {
-    await v.page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
-    assert.match(await v.page.textContent('#viewer-setup-error'), /No se encontro la base compartida/);
+    await v.page.waitForSelector('#visor-config-pantalla', { state: 'visible' });
+    assert.match(await v.page.textContent('#visor-config-error'), /No se encontro la base compartida/);
     assert.deepEqual(v.errores, []);
   } finally { await v.app.close(); }
 });
 
 test('visor recien instalado (sin carpeta elegida) pide elegirla', { timeout: 60000 }, async () => {
-  const { app, page } = await abrirApp(carpetaTemporal('alq-vi-'), { ADMIN_ALQ_MODE: 'viewer', ADMIN_ALQ_SHARED_DIR: undefined });
+  const { app, page } = await abrirApp(carpetaTemporal('alq-vi-'), { ADMIN_ALQ_MODE: 'visor', ADMIN_ALQ_SHARED_DIR: undefined });
   try {
-    await page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
-    assert.match(await page.textContent('#viewer-setup-error'), /Todavía no se eligió la carpeta compartida/);
+    await page.waitForSelector('#visor-config-pantalla', { state: 'visible' });
+    assert.match(await page.textContent('#visor-config-error'), /Todavía no se eligió la carpeta compartida/);
   } finally { await app.close(); }
 });

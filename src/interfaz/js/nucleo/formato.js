@@ -26,7 +26,7 @@ const enlaceWhatsApp = (numero, html) => `<a class="wa" href="https://wa.me/${nu
 // separados por un punto tenue, igual en todas las pantallas.
 const SEP  = ' <span class="msep">&middot;</span> ';
 
-const NADA = '<span style="color:var(--dim)">-</span>';
+const NADA = '<span style="color:var(--tenue)">-</span>';
 
 const esNada = t => !t || /^[-xX\s]*$/.test(t);
 
@@ -46,7 +46,7 @@ export function formatearNombres(textoOriginal) {
 
 export function formatearMails(textoOriginal) {
   const salida = Separadores.mails(textoOriginal || '').map(m => m.includes('@')
-    ? `<a class="mail-val" href="mailto:${esc(m)}">${esc(m)}</a>` : `<span class="mail-val">${esc(m)}</span>`);
+    ? `<a class="mail-valor" href="mailto:${esc(m)}">${esc(m)}</a>` : `<span class="mail-valor">${esc(m)}</span>`);
   return salida.length ? salida.join(SEP) : NADA;
 }
 
@@ -65,7 +65,7 @@ export function enlazarMailsEnTexto(textoOriginal) { return formatearMails(texto
 // Comentarios en las tarjetas: uno por renglon (sin las notas de renovacion).
 export function formatearNotas(e) {
   const lista = D.comentarios(e);
-  return lista.length ? `<div class="card-nota">${lista.map(n => `<div class="nota-item">${esc(n)}</div>`).join('')}</div>` : '';
+  return lista.length ? `<div class="tarjeta-nota">${lista.map(n => `<div class="nota-item">${esc(n)}</div>`).join('')}</div>` : '';
 }
 
 export function formatearEdificios(textoOriginal) {
@@ -75,7 +75,7 @@ export function formatearEdificios(textoOriginal) {
 
 // Rojo si el vencimiento es urgente, amarillo si no (la regla esta en dominios/vencimientos.js).
 export function colorPorDias(vd) {
-  return D.urgenciaVencimiento(vd) === 'urgente' ? 'var(--red)' : 'var(--amber)';
+  return D.urgenciaVencimiento(vd) === 'urgente' ? 'var(--rojo)' : 'var(--ambar)';
 }
 
 export function diasFaltan(vd) {
@@ -86,7 +86,7 @@ export function diasFaltan(vd) {
 export function insigniaGarantia(e) {
   if (!e.garantia) return '';
   const g = D.GARANTIAS_GESTIONAN.includes(e.garantia.toUpperCase());
-  return `<span class="garantia-badge${g ? ' gestiona' : ''}" title="Garantía ${esc(e.garantia)}${g ? ' (gestiona aumentos y renovaciones)' : ''}">${esc(e.garantia)}</span>`;
+  return `<span class="garantia-insignia${g ? ' gestiona' : ''}" title="Garantía ${esc(e.garantia)}${g ? ' (gestiona aumentos y renovaciones)' : ''}">${esc(e.garantia)}</span>`;
 }
 
 // Usa helpers de app.js (call, esc, mostrarAviso, aplicarEstado, dibujar, mostrarApp...).

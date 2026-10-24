@@ -15,7 +15,7 @@
     "test:all": "npm run lint && npm test && npm run test:e2e",
     "capturas": "node scripts/capturas.js",
     "dist": "electron-builder --win nsis",
-    "dist:visor": "electron-builder --win nsis -c.productName=\"Admin Alquileres Visor\" -c.appId=com.adminalquileres.visor -c.win.icon=build/icon-visor.ico -c.nsis.shortcutName=\"Admin Alquileres Visor\" -c.directories.output=dist-visor -c.extraMetadata.modoAdmin=viewer -c.extraMetadata.name=admin-alquileres-visor -c.extraMetadata.productName=\"Admin Alquileres Visor\"",
+    "dist:visor": "electron-builder --win nsis -c.productName=\"Admin Alquileres Visor\" -c.appId=com.adminalquileres.visor -c.win.icon=build/icon-visor.ico -c.nsis.shortcutName=\"Admin Alquileres Visor\" -c.directories.output=dist-visor -c.extraMetadata.modoAdmin=visor -c.extraMetadata.name=admin-alquileres-visor -c.extraMetadata.productName=\"Admin Alquileres Visor\"",
     "smoke": "node test/e2e/empaquetado.smoke.js editor && node test/e2e/empaquetado.smoke.js visor"
   },
   "build": {

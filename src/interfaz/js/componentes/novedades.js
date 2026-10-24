@@ -11,7 +11,7 @@ const PESTANAS = {
   administraciones: () => estado.administraciones,
 };
 
-const esVisor = () => document.body.classList.contains('viewer');
+const esVisor = () => document.body.classList.contains('visor');
 const idsDe = pestana => (PESTANAS[pestana]() || []).map(x => x.id);
 
 // Lo visto: se lee del equipo una sola vez y se guarda solo cuando cambia (no en cada repintado).
@@ -69,7 +69,7 @@ export function pintarNovedades() {
   for (const pestana of Object.keys(PESTANAS)) {
     const actuales = idsDe(pestana);
     if (!v[pestana]) { v[pestana] = new Set(actuales); primeraVez = true; }
-    pintarAviso('tab-' + pestana, actuales.filter(id => !v[pestana].has(id)).length, 'nuevo');
+    pintarAviso('pestana-' + pestana, actuales.filter(id => !v[pestana].has(id)).length, 'nuevo');
   }
   if (primeraVez) guardarVistos();
 }

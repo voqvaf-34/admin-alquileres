@@ -30,12 +30,12 @@ export function filtroResueltos() {
 
 // Inquilino y propietario con sus telefonos y contactos (y el mail del inquilino si se pide).
 export function datosPersonas(e, { conMail = false } = {}) {
-  return `<div class="card-grid">
+  return `<div class="tarjeta-grilla">
         <div><span class="lbl">Inq: </span>${formatearNombres(e.inquilino)}</div>
         <div><span class="lbl">Prop: </span>${formatearNombres(e.propietario)}</div>
         <div><span class="lbl">Tel: </span>${enlaceTelefono(e.telInq)}</div>
         <div><span class="lbl">Tel: </span>${enlaceTelefono(e.telProp)}</div>
-        ${filaContacto(e, 'full')}
-        ${conMail && e.mailInq ? `<div class="full"><span class="lbl">Mail: </span>${formatearMails(e.mailInq)}</div>` : ''}
+        ${filaContacto(e, 'completo')}
+        ${conMail && e.mailInq ? `<div class="completo"><span class="lbl">Mail: </span>${formatearMails(e.mailInq)}</div>` : ''}
       </div>`;
 }
