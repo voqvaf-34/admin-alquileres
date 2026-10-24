@@ -19,7 +19,7 @@ const reglas = {
 };
 
 module.exports = [
-  { ignores: ['node_modules/', 'dist/', 'dist-visor/', 'docs/'] },
+  { ignores: ['node_modules/', 'dist/', 'dist-visor/', 'docs/', 'historia/'] },   // historia/: codigo original, se guarda tal cual
   js.configs.recommended,
   { rules: reglas },
   {

@@ -111,6 +111,17 @@ npm run capturas     # regenera las capturas de este README
 
 Pensada para inmobiliarias de Uruguay: aumentos por IPC del INE, pesos y dólares, teléfonos uruguayos para WhatsApp.
 
+## Cómo empezó
+
+La app nació en mayo de 2026 para una inmobiliaria puntual, como una página HTML que leía y escribía una
+planilla de Excel compartida (está en [historia/v0-html](historia/v0-html/LEEME.md), sin los datos de la
+inmobiliaria). Después pasó a ser una app de escritorio con su propia base de datos, de uso interno.
+
+Ese desarrollo se hizo fuera de GitHub, por eso las primeras versiones de este repositorio llegaron de a
+bloques grandes. Desde la versión general (0.x) cada cambio se trabaja en una rama propia, con sus
+commits, pruebas automáticas y un pull request antes de entrar a `main`; las versiones se marcan con tags
+y se resumen en el [CHANGELOG](CHANGELOG.md).
+
 ## Licencia
 
 © 2026 Pablo Rodriguez. Este proyecto se distribuye bajo la licencia
