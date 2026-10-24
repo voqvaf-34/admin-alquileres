@@ -6,19 +6,19 @@ import { estado } from '../nucleo/estado.js';
 
 function ponerIPC(valor) {
   estado.ipc = valor;
-  document.getElementById('inp-ipc').value = estado.ipc;
+  document.getElementById('campo-ipc').value = estado.ipc;
   call('guardarAjuste', 'ipc', estado.ipc).catch(() => {});
 }
 
 export async function consultarIPC() {
-  const btn = document.getElementById('btn-ipc-fetch'), periodo = document.getElementById('ipc-period');
+  const btn = document.getElementById('btn-ipc-consultar'), periodo = document.getElementById('ipc-periodo');
   btn.textContent = '...'; btn.disabled = true; periodo.textContent = '';
   try {
     const r = await call('consultarIPC');
     if (r.ok) {
       ponerIPC(r.ipc);
-      const mes = D.MES_ES[r.month];
-      periodo.textContent = `${mes.charAt(0).toUpperCase() + mes.slice(1)} ${r.year}`;
+      const mes = D.MES_ES[r.mes];
+      periodo.textContent = `${mes.charAt(0).toUpperCase() + mes.slice(1)} ${r.anio}`;
       periodo.title = '';
       dibujar();
     } else {

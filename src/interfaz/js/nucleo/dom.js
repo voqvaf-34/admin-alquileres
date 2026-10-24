@@ -3,9 +3,9 @@
 let _temporizadorAviso = null;
 
 export function mostrarAviso(msg, tipo) {
-  const el = document.getElementById('toast');
+  const el = document.getElementById('aviso');
   el.innerHTML = msg;
-  el.className  = 'show ' + (tipo||'');
+  el.className  = 'mostrar ' + (tipo||'');
   if (_temporizadorAviso) clearTimeout(_temporizadorAviso);
   _temporizadorAviso = setTimeout(() => { el.className = ''; }, 3800);
 }

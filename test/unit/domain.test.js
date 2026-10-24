@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const D      = require('../../src/dominios/index.js');
 
 const mk = (o) => D.hidratarContrato({
-  id: 1, direccion: 'TEST 101', importeBase: 20000, importe: 20000, contratoStr: '2 AÑOS',
+  id: 1, direccion: 'TEST 101', importeBase: 20000, importe: 20000, contratoTexto: '2 AÑOS',
   fechaInicio: '2023-03-15', ...o,
 });
 
@@ -43,19 +43,19 @@ test('obtenerAumentos: usa ultimoAumento si existe', () => {
 test('obtenerAumentos mantiene visible un aumento ya enviado ese mes', () => {
   const enviado = mk({ ultimoAumento: '2024-03-01' });   // el envio actualizo ultimoAumento
   assert.equal(D.obtenerAumentos([enviado], 3, 2024).length, 0, 'sin mark desaparece');
-  assert.equal(D.obtenerAumentos([enviado], 3, 2024, { 'a|TEST 101|3|2024': { date: 'x' } }).length, 1);
+  assert.equal(D.obtenerAumentos([enviado], 3, 2024, { 'a|TEST 101|3|2024': { fecha: 'x' } }).length, 1);
 });
 
 test('obtenerAumentos excluye inactivos y delegados', () => {
-  assert.equal(D.obtenerAumentos([mk({ inactive: 1 })], 3, 2024).length, 0);
+  assert.equal(D.obtenerAumentos([mk({ inactivo: 1 })], 3, 2024).length, 0);
   assert.equal(D.obtenerAumentos([mk({ remitente: 'JUAN' })], 3, 2024).length, 0);
 });
 
 test('obtenerFechaVenc: original y post-renovacion', () => {
   const e = mk({});
   assert.equal(D.aFechaISO(D.obtenerFechaVenc(e, {})), '2026-03-15');
-  const marks = { 'v|TEST 101': { nuevaInicio: '01/03/2026', renewYears: 2 } };
-  assert.equal(D.aFechaISO(D.obtenerFechaVenc(e, marks)), '2028-03-01');
+  const marcas = { 'v|TEST 101': { nuevaInicio: '01/03/2026', aniosRenovacion: 2 } };
+  assert.equal(D.aFechaISO(D.obtenerFechaVenc(e, marcas)), '2028-03-01');
 });
 
 test('obtenerVencimientos: ventana de 45 dias desde el inicio del mes', () => {
@@ -69,30 +69,30 @@ test('obtenerVencimientos: ventana de 45 dias desde el inicio del mes', () => {
 test('obtenerVencidosAtrasados: excluye renovados y no-renueva', () => {
   const e = mk({});
   assert.equal(D.obtenerVencidosAtrasados([e], 8, 2026, {}).length, 1);
-  assert.equal(D.obtenerVencidosAtrasados([e], 8, 2026, { 'v|TEST 101': { date: 'x' } }).length, 0);
-  assert.equal(D.obtenerVencidosAtrasados([e], 8, 2026, { 'nr|TEST 101': { date: 'x' } }).length, 0);
+  assert.equal(D.obtenerVencidosAtrasados([e], 8, 2026, { 'v|TEST 101': { fecha: 'x' } }).length, 0);
+  assert.equal(D.obtenerVencidosAtrasados([e], 8, 2026, { 'nr|TEST 101': { fecha: 'x' } }).length, 0);
   assert.equal(D.obtenerVencidosAtrasados([e], 2, 2026, {}).length, 0, 'todavia no vencio');
 });
 
 test('no renueva pero sigue activo: vuelve a avisar al anio siguiente', () => {
   const e = mk({});                                          // vence 15/03/2026
-  const marks = { 'nr|TEST 101': { date: '01/03/2026', sigueActivo: true, hasta: '2026-03-15' } };
-  assert.equal(D.aFechaISO(D.obtenerFechaVenc(e, marks)), '2027-03-15');
-  assert.equal(D.esVencResuelto(e, marks), false, 'el ciclo nuevo queda pendiente');
-  assert.equal(D.obtenerVencimientos([e], 3, 2026, marks).length, 0, 'no aparece en el ciclo ya resuelto');
-  assert.equal(D.obtenerVencimientos([e], 2, 2027, marks).length, 1, 'aparece 45 dias antes del proximo');
-  assert.equal(D.obtenerVencidosAtrasados([e], 5, 2027, marks).length, 1, 'si pasa sin resolver queda atrasado');
-  const sinSeguir = { 'nr|TEST 101': { date: '01/03/2026' } };
+  const marcas = { 'nr|TEST 101': { fecha: '01/03/2026', sigueActivo: true, hasta: '2026-03-15' } };
+  assert.equal(D.aFechaISO(D.obtenerFechaVenc(e, marcas)), '2027-03-15');
+  assert.equal(D.esVencResuelto(e, marcas), false, 'el ciclo nuevo queda pendiente');
+  assert.equal(D.obtenerVencimientos([e], 3, 2026, marcas).length, 0, 'no aparece en el ciclo ya resuelto');
+  assert.equal(D.obtenerVencimientos([e], 2, 2027, marcas).length, 1, 'aparece 45 dias antes del proximo');
+  assert.equal(D.obtenerVencidosAtrasados([e], 5, 2027, marcas).length, 1, 'si pasa sin resolver queda atrasado');
+  const sinSeguir = { 'nr|TEST 101': { fecha: '01/03/2026' } };
   assert.equal(D.esVencResuelto(e, sinSeguir), true);
   assert.equal(D.obtenerVencidosAtrasados([e], 5, 2027, sinSeguir).length, 0);
 });
 
 test('esVencResuelto contempla el segundo ciclo', () => {
   const e = mk({});
-  const ren1 = { 'v|TEST 101': { date: 'x', nuevaInicio: '01/03/2026', renewYears: 2 } };
+  const ren1 = { 'v|TEST 101': { fecha: 'x', nuevaInicio: '01/03/2026', aniosRenovacion: 2 } };
   assert.equal(D.esVencResuelto(e, ren1), false, 'renovado 1 vez: el ciclo nuevo queda pendiente');
-  assert.equal(D.esVencResuelto(e, { ...ren1, 'vr|TEST 101': { date: 'y' } }), true);
-  assert.equal(D.esVencResuelto(e, { 'v|TEST 101': { date: 'x' } }), true, 'mark simple sin fechas');
+  assert.equal(D.esVencResuelto(e, { ...ren1, 'vr|TEST 101': { fecha: 'y' } }), true);
+  assert.equal(D.esVencResuelto(e, { 'v|TEST 101': { fecha: 'x' } }), true, 'mark simple sin fechas');
 });
 
 test('nuevoImporte redondea hacia abajo', () => {
@@ -100,10 +100,10 @@ test('nuevoImporte redondea hacia abajo', () => {
 });
 
 test('ultimoIPCPublicado segun el dia del mes', () => {
-  assert.deepEqual(D.ultimoIPCPublicado(new Date(2026, 9, 8)), { month: 9, year: 2026 });
-  assert.deepEqual(D.ultimoIPCPublicado(new Date(2026, 9, 3)), { month: 8, year: 2026 });
-  assert.deepEqual(D.ultimoIPCPublicado(new Date(2026, 0, 10)), { month: 12, year: 2025 });
-  assert.deepEqual(D.ultimoIPCPublicado(new Date(2026, 0, 2)), { month: 11, year: 2025 });
+  assert.deepEqual(D.ultimoIPCPublicado(new Date(2026, 9, 8)), { mes: 9, anio: 2026 });
+  assert.deepEqual(D.ultimoIPCPublicado(new Date(2026, 9, 3)), { mes: 8, anio: 2026 });
+  assert.deepEqual(D.ultimoIPCPublicado(new Date(2026, 0, 10)), { mes: 12, anio: 2025 });
+  assert.deepEqual(D.ultimoIPCPublicado(new Date(2026, 0, 2)), { mes: 11, anio: 2025 });
 });
 
 test('interpretarIPCDesdeHtml reconoce los formatos del INE', () => {
@@ -133,55 +133,55 @@ test('garantia CGN/ANDA o tercero: fuera de Aumentos y Vencimientos; otras garan
 });
 
 test('notas de renovacion: se reconocen y no cuentan como comentario', () => {
-  assert.deepEqual(D.interpretarNotaRenovacion('En fecha 06/08/2026 se renovo a 2 años'), { date: new Date(2026, 7, 6), years: 2 });
-  assert.deepEqual(D.interpretarNotaRenovacion('01/03/2024 Renovacion 2 años'), { date: new Date(2024, 2, 1), years: 2 });
-  assert.deepEqual(D.interpretarNotaRenovacion('10/05/2026 renovación 1 año'), { date: new Date(2026, 4, 10), years: 1 });
+  assert.deepEqual(D.interpretarNotaRenovacion('En fecha 06/08/2026 se renovo a 2 años'), { fecha: new Date(2026, 7, 6), anios: 2 });
+  assert.deepEqual(D.interpretarNotaRenovacion('01/03/2024 Renovacion 2 años'), { fecha: new Date(2024, 2, 1), anios: 2 });
+  assert.deepEqual(D.interpretarNotaRenovacion('10/05/2026 renovación 1 año'), { fecha: new Date(2026, 4, 10), anios: 1 });
   assert.equal(D.interpretarNotaRenovacion('01/05/2026 se le renovo pero en vez de $37.137 se cobra menos'), null, 'con info extra queda como comentario');
   const e = mk({ notas: '01/03/2024 Renovacion 2 años | Juan arregla precio | En fecha 06/08/2026 se renovo a 2 años' });
   assert.deepEqual(D.comentarios(e), ['Juan arregla precio']);
 });
 
 test('linea de tiempo del contrato: entro, vencio, renovo (con su nuevo vencimiento), renovo de nuevo', () => {
-  const e = mk({ fechaInicio: '2021-03-01', contratoStr: '2 años', importeBase: 18000, importe: 25000,
+  const e = mk({ fechaInicio: '2021-03-01', contratoTexto: '2 años', importeBase: 18000, importe: 25000,
     notas: '01/03/2024 Renovacion 2 años | comentario suelto' });
-  const marks = {
-    'a|TEST 101|3|2022': { date: '05/03/2022', importeNuevo: 22000, ipc: 9.5 },   // los aumentos no van
-    'v|TEST 101': { date: '06/02/2026', nuevaInicio: '01/03/2026', renewYears: 2 },
+  const marcas = {
+    'a|TEST 101|3|2022': { fecha: '05/03/2022', importeNuevo: 22000, ipc: 9.5 },   // los aumentos no van
+    'v|TEST 101': { fecha: '06/02/2026', nuevaInicio: '01/03/2026', aniosRenovacion: 2 },
   };
-  const otro = mk({ id: 2, fechaInicio: '2019-01-01', inactive: 1 });   // inquilino anterior del mismo apto
-  const t = D.lineaTiempo(e, marks, [e, otro]);
+  const otro = mk({ id: 2, fechaInicio: '2019-01-01', inactivo: 1 });   // inquilino anterior del mismo apto
+  const t = D.lineaTiempo(e, marcas, [e, otro]);
   assert.deepEqual(t.map(x => x.tipo), ['inicio', 'renov', 'renov', 'proximo', 'hoy']);
   assert.match(t[0].detalle, /contrato a \$18\.000 · 2 años firmado \(3 reales\) · vence 01\/03\/2024/);
   assert.deepEqual([t[1].titulo, t[1].detalle], ['Renovó', 'por 2 años · vence 01/03/2026']);
   assert.match(t[2].titulo, /Renovó de nuevo \(2ª/);
   assert.equal(t[2].detalle, 'por 2 años · vence 01/03/2028');
-  assert.deepEqual([t[3].titulo, D.aFechaISO(t[3].date)], ['Vence el contrato', '2028-03-01']);
+  assert.deepEqual([t[3].titulo, D.aFechaISO(t[3].fecha)], ['Vence el contrato', '2028-03-01']);
   assert.match(t[4].detalle, /25\.000/);
   // las renovaciones del apto no se le atribuyen al inquilino anterior
-  assert.equal(D.renovaciones(otro, marks, [e, otro]).lista.length, 0);
-  assert.equal(D.renovaciones(e, marks, [e, otro]).lista.length, 2);
+  assert.equal(D.renovaciones(otro, marcas, [e, otro]).lista.length, 0);
+  assert.equal(D.renovaciones(e, marcas, [e, otro]).lista.length, 2);
 });
 
 test('renovaciones: con el indice por direccion da lo mismo que con la lista completa', () => {
   const a = mk({ id: 1, fechaInicio: '2021-03-01', notas: '01/03/2024 Renovacion 2 años' });
-  const b = mk({ id: 2, fechaInicio: '2019-01-01', inactive: 1 });
+  const b = mk({ id: 2, fechaInicio: '2019-01-01', inactivo: 1 });
   const c = mk({ id: 3, direccion: 'OTRO 1', fechaInicio: '2022-01-01' });
-  const marks = { 'v|TEST 101': { date: '06/02/2026', nuevaInicio: '01/03/2026', renewYears: 2 } };
+  const marcas = { 'v|TEST 101': { fecha: '06/02/2026', nuevaInicio: '01/03/2026', aniosRenovacion: 2 } };
   const lista = [a, b, c], idx = D.indicePorDireccion(lista);
   assert.deepEqual([...idx.get('TEST 101')].map(x => x.id), [2, 1], 'ordenado por fecha de inicio');
-  for (const e of lista) assert.deepEqual(D.renovaciones(e, marks, idx), D.renovaciones(e, marks, lista));
+  for (const e of lista) assert.deepEqual(D.renovaciones(e, marcas, idx), D.renovaciones(e, marcas, lista));
 });
 
 test('linea de tiempo: la misma renovacion como marca y como nota vieja cuenta una sola vez', () => {
-  const e = mk({ fechaInicio: '2022-03-01', contratoStr: '2 años', notas: '01/03/2024 Renovacion 2 años' });
-  const marks = { 'v|TEST 101': { date: '06/08/2026', nuevaInicio: '01/03/2024', renewYears: 2 } };   // marcada tarde
-  const r = D.renovaciones(e, marks, [e]);
+  const e = mk({ fechaInicio: '2022-03-01', contratoTexto: '2 años', notas: '01/03/2024 Renovacion 2 años' });
+  const marcas = { 'v|TEST 101': { fecha: '06/08/2026', nuevaInicio: '01/03/2024', aniosRenovacion: 2 } };   // marcada tarde
+  const r = D.renovaciones(e, marcas, [e]);
   assert.equal(r.lista.length, 1, 'una sola renovacion');
-  const t = D.lineaTiempo(e, marks, [e]);
+  const t = D.lineaTiempo(e, marcas, [e]);
   const renov = t.filter(x => x.tipo === 'renov');
   assert.equal(renov.length, 1);
   assert.equal(renov[0].titulo, 'Renovó');
-  assert.equal(D.aFechaISO(renov[0].date), '2024-03-01', 'se muestra cuando empezo, no cuando se marco');
+  assert.equal(D.aFechaISO(renov[0].fecha), '2024-03-01', 'se muestra cuando empezo, no cuando se marco');
   assert.equal(renov[0].detalle, 'por 2 años · vence 01/03/2026');
 });
 
@@ -204,7 +204,7 @@ test('normalizarContrato: direccion armada, nombres con mayusculas iniciales y c
 });
 
 test('prepararImportado: CGN/ANDA pasan a garantia y la planilla clasica marca dolares por importe', () => {
-  const reglas = { buildings: [], overrides: {} };
+  const reglas = { edificios: [], correccionesManuales: {} };
   const a = D.prepararImportado({ direccion: 'CANELONES 1234 U502', remitente: 'anda', importe: 25000, importeBase: 25000 }, { reglasDirecciones: reglas });
   assert.deepEqual([a.direccion, a.garantia, a.remitente, a.moneda, a.direccionOriginal], ['Canelones 1234 U502', 'ANDA', '', 'UYU', 'CANELONES 1234 U502']);
   const b = D.prepararImportado({ direccion: 'Guayabo 1850 U3', remitente: 'gestora norte', importe: 850 }, { reglasDirecciones: reglas, clasico: true });

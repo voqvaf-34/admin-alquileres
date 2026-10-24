@@ -6,12 +6,12 @@ import { pintarAviso } from './avisos.js';
 
 const CLAVE = 'alq-visor-visto';
 const PESTANAS = {
-  basedatos:        () => estado.entries,
-  propietarios:     () => estado.owners,
-  administraciones: () => estado.admins,
+  basedatos:        () => estado.entradas,
+  propietarios:     () => estado.propietarios,
+  administraciones: () => estado.administraciones,
 };
 
-const esVisor = () => document.body.classList.contains('viewer');
+const esVisor = () => document.body.classList.contains('visor');
 const idsDe = pestana => (PESTANAS[pestana]() || []).map(x => x.id);
 
 // Lo visto: se lee del equipo una sola vez y se guarda solo cuando cambia (no en cada repintado).
@@ -63,13 +63,13 @@ export const puntoNuevo = (pestana, id) => esNuevo(pestana, id) ? '<span class="
 export function pintarNovedades() {
   if (!esVisor()) return;
   // La pestaña en pantalla ya se esta viendo: al abrir el Visor o al llegar datos nuevos estando en ella.
-  marcarVisto(estado.activeTab);
+  marcarVisto(estado.pestanaActiva);
   const v = leerVistos();
   let primeraVez = false;
   for (const pestana of Object.keys(PESTANAS)) {
     const actuales = idsDe(pestana);
     if (!v[pestana]) { v[pestana] = new Set(actuales); primeraVez = true; }
-    pintarAviso('tab-' + pestana, actuales.filter(id => !v[pestana].has(id)).length, 'nuevo');
+    pintarAviso('pestana-' + pestana, actuales.filter(id => !v[pestana].has(id)).length, 'nuevo');
   }
   if (primeraVez) guardarVistos();
 }

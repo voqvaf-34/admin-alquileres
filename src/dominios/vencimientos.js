@@ -5,11 +5,11 @@ import { claveVenc, claveVencRenovado, claveNoRenueva } from './marcas.js';
 
 const DIAS_AVISO_VENC = 45;
 
-export function fechaVencBase(e, marks) {
-  const mk = marks[claveVenc(e)];
-  if (mk && mk.nuevaInicio && mk.renewYears) {
+export function fechaVencBase(e, marcas) {
+  const mk = marcas[claveVenc(e)];
+  if (mk && mk.nuevaInicio && mk.aniosRenovacion) {
     const ni = interpretarDMA(mk.nuevaInicio);
-    if (ni) return new Date(ni.getFullYear() + mk.renewYears, ni.getMonth(), Math.min(ni.getDate(), 28));
+    if (ni) return new Date(ni.getFullYear() + mk.aniosRenovacion, ni.getMonth(), Math.min(ni.getDate(), 28));
   }
   if (!e.fechaInicio || !e.contratoDuracion) return null;
   const real = duracionReal(e.contratoDuracion);
@@ -18,9 +18,9 @@ export function fechaVencBase(e, marks) {
 
 // "No renueva pero sigue en el apto": el vencimiento se repite cada anio despues del
 // ciclo en que se marco, para volver a avisar la renovacion.
-export function obtenerFechaVenc(e, marks) {
-  const vd = fechaVencBase(e, marks);
-  const nr = marks[claveNoRenueva(e)];
+export function obtenerFechaVenc(e, marcas) {
+  const vd = fechaVencBase(e, marcas);
+  const nr = marcas[claveNoRenueva(e)];
   if (!vd || !nr || !nr.sigueActivo || !nr.hasta) return vd;
   const hasta = interpretarISO(nr.hasta);
   const d = new Date(vd);
@@ -29,45 +29,45 @@ export function obtenerFechaVenc(e, marks) {
 }
 
 // La mark "no renueva" resuelve el ciclo actual; si sigue activo, solo hasta su fecha.
-export function noRenuevaVigente(e, marks) {
-  const nr = marks[claveNoRenueva(e)];
+export function noRenuevaVigente(e, marcas) {
+  const nr = marcas[claveNoRenueva(e)];
   if (!nr) return false;
   if (!nr.sigueActivo) return true;
-  const vd = obtenerFechaVenc(e, marks), hasta = interpretarISO(nr.hasta);
+  const vd = obtenerFechaVenc(e, marcas), hasta = interpretarISO(nr.hasta);
   return !!(vd && hasta && vd <= hasta);
 }
 
-export function obtenerVencimientos(lista, m, y, marks) {
+export function obtenerVencimientos(lista, m, y, marcas) {
   const fechaElegida = new Date(y, m - 1, 1);
   const horizonte = new Date(+fechaElegida + DIAS_AVISO_VENC * 86400000);
   return lista.filter(e => {
-    if (e.inactive)  return false;
+    if (e.inactivo)  return false;
     if (gestionadoPor(e)) return false;
-    const vd = obtenerFechaVenc(e, marks);
+    const vd = obtenerFechaVenc(e, marcas);
     if (!vd) return false;
     return vd >= fechaElegida && vd <= horizonte;
   });
 }
 
-export function obtenerVencidosAtrasados(lista, m, y, marks) {
+export function obtenerVencidosAtrasados(lista, m, y, marcas) {
   const fechaElegida = new Date(y, m - 1, 1);
   return lista.filter(e => {
-    if (e.inactive)       return false;
+    if (e.inactivo)       return false;
     if (gestionadoPor(e)) return false;
-    const nr = marks[claveNoRenueva(e)];
+    const nr = marcas[claveNoRenueva(e)];
     if (nr && !nr.sigueActivo) return false;
-    if (marks[claveVenc(e)] && !nr) return false;
-    const vd = obtenerFechaVenc(e, marks);
+    if (marcas[claveVenc(e)] && !nr) return false;
+    const vd = obtenerFechaVenc(e, marcas);
     if (!vd) return false;
     return vd < fechaElegida;
   });
 }
 
-export function esVencResuelto(e, marks) {
-  const mk = marks[claveVenc(e)];
-  const esCicloRenovado = !!(mk && mk.nuevaInicio && mk.renewYears);
-  if (marks[claveNoRenueva(e)] && noRenuevaVigente(e, marks)) return true;
-  return !!(esCicloRenovado ? marks[claveVencRenovado(e)] : mk);
+export function esVencResuelto(e, marcas) {
+  const mk = marcas[claveVenc(e)];
+  const esCicloRenovado = !!(mk && mk.nuevaInicio && mk.aniosRenovacion);
+  if (marcas[claveNoRenueva(e)] && noRenuevaVigente(e, marcas)) return true;
+  return !!(esCicloRenovado ? marcas[claveVencRenovado(e)] : mk);
 }
 
 // Un vencimiento es urgente si faltan 10 dias o menos (o ya paso).

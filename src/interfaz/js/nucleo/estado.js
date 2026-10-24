@@ -2,34 +2,34 @@
 import * as D from '../../../dominios/index.js';
 
 export const estado = {
-  entries: null,            // alquileres cargados (hidratados)
-  admins: null,
-  owners: [], contacts: [], contractOwners: [], ownerDocs: [], ownerAccounts: [],
-  marks: {},                // aumento enviado, renovado, no renueva... (por direccion)
-  appSettings: {},
+  entradas: null,            // alquileres cargados (hidratados)
+  administraciones: null,
+  propietarios: [], contactos: [], contratosPropietarios: [], docsPropietarios: [], cuentasPropietarios: [],
+  marcas: {},                // aumento enviado, renovado, no renueva... (por direccion)
+  ajustesApp: {},
   ipc: 3.16,
-  selMonth: new Date().getMonth() + 1,
-  selYear: new Date().getFullYear(),
-  activeTab: 'basedatos',
-  opShowSinResolver: false, opShowResuelto: false,
-  dbSearchText: '', dbFilterYear: 0, dbFilterMonth: 0, dbShowActive: true, dbShowInactive: false,
-  expandedRows: new Set(),  // filas abiertas en la Base de Datos
+  mesElegido: new Date().getMonth() + 1,
+  anioElegido: new Date().getFullYear(),
+  pestanaActiva: 'basedatos',
+  opMostrarSinResolver: false, opMostrarResuelto: false,
+  baseTextoBusqueda: '', baseFiltroAnio: 0, baseFiltroMes: 0, baseMostrarActivos: true, baseMostrarInactivos: false,
+  filasAbiertas: new Set(),  // filas abiertas en la Base de Datos
 };
 
 // Recibe {owners, contacts, contractOwners} (completos o parciales) y re-vincula los contratos.
 export function aplicarPropietarios(st) {
-  if (st.owners)         estado.owners = st.owners;
-  if (st.contacts)       estado.contacts = st.contacts;
-  if (st.contractOwners) estado.contractOwners = st.contractOwners;
-  if (st.ownerDocs)      estado.ownerDocs = st.ownerDocs;
-  if (st.ownerAccounts)  estado.ownerAccounts = st.ownerAccounts;
-  if (estado.entries) D.adjuntarPropietarios(estado.entries, estado.owners, estado.contacts, estado.contractOwners);
+  if (st.propietarios)         estado.propietarios = st.propietarios;
+  if (st.contactos)       estado.contactos = st.contactos;
+  if (st.contratosPropietarios) estado.contratosPropietarios = st.contratosPropietarios;
+  if (st.docsPropietarios)      estado.docsPropietarios = st.docsPropietarios;
+  if (st.cuentasPropietarios)  estado.cuentasPropietarios = st.cuentasPropietarios;
+  if (estado.entradas) D.adjuntarPropietarios(estado.entradas, estado.propietarios, estado.contactos, estado.contratosPropietarios);
 }
 
-export function reemplazarEntrada(raw) {
-  const h = D.hidratarContrato(raw);
-  const i = estado.entries.findIndex(e => e.id === h.id);
-  if (i >= 0) estado.entries[i] = h; else estado.entries.push(h);
-  D.adjuntarPropietarios([h], estado.owners, estado.contacts, estado.contractOwners);
+export function reemplazarEntrada(textoOriginal) {
+  const h = D.hidratarContrato(textoOriginal);
+  const i = estado.entradas.findIndex(e => e.id === h.id);
+  if (i >= 0) estado.entradas[i] = h; else estado.entradas.push(h);
+  D.adjuntarPropietarios([h], estado.propietarios, estado.contactos, estado.contratosPropietarios);
   return h;
 }

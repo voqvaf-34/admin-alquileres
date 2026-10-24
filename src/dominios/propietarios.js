@@ -15,18 +15,18 @@ function limpiarMail(s) {
 }
 
 export function planUnificarPropietarios(contratos, reglas = {}) {
-  const contactosConfig = (reglas.contacts || []).map(c => ({ ...c, re: c.suffixPattern ? new RegExp(c.suffixPattern, 'i') : null }));
+  const contactosConfig = (reglas.contactos || []).map(c => ({ ...c, re: c.patronSufijo ? new RegExp(c.patronSufijo, 'i') : null }));
   const mapaAlias = new Map();
-  for (const [canon, variantes] of Object.entries(reglas.aliases || {})) {
+  for (const [canon, variantes] of Object.entries(reglas.alias || {})) {
     mapaAlias.set(claveNombre(canon), canon);
     for (const v of variantes) mapaAlias.set(claveNombre(v), canon);
   }
-  const correcciones = new Map((reglas.phoneFixes || []).map(f => [claveNombre(f.owner), new Set(f.removeDigits.map(digitosDe))]));
-  const reemplazos = new Map(Object.entries(reglas.overrides || {}).map(([k, v]) => [claveNombre(k), v]));
+  const correcciones = new Map((reglas.correccionesTelefono || []).map(f => [claveNombre(f.owner), new Set(f.quitarDigitos.map(digitosDe))]));
+  const reemplazos = new Map(Object.entries(reglas.correccionesManuales || {}).map(([k, v]) => [claveNombre(k), v]));
   const telefonoContacto = new Map();   // digitos -> contacto
   const mailContacto  = new Map();
   for (const c of contactosConfig) {
-    (c.phones || []).forEach(p => telefonoContacto.set(digitosDe(p), c));
+    (c.telefonos || []).forEach(p => telefonoContacto.set(digitosDe(p), c));
     (c.mails || []).forEach(m => mailContacto.set(m.toLowerCase(), c));
   }
 
@@ -38,11 +38,11 @@ export function planUnificarPropietarios(contratos, reglas = {}) {
     const canon = mapaAlias.get(claveNombre(nombreVisible));
     const nombre  = canon || nombreVisible.replace(/\s+/g, ' ').trim();
     const clave   = claveNombre(nombre);
-    if (!propietarios.has(clave)) propietarios.set(clave, { key: clave, nombre: nombre, fixedName: !!canon, variants: new Set(), phones: [], mails: [], notes: new Set(), contacts: new Map() });
+    if (!propietarios.has(clave)) propietarios.set(clave, { clave, nombre, nombreFijo: !!canon, variantes: new Set(), telefonos: [], mails: [], notas: new Set(), contactos: new Map() });
     const o = propietarios.get(clave);
-    o.variants.add(nombreVisible.trim());
+    o.variantes.add(nombreVisible.trim());
     // Sin alias: se queda con la grafia mas completa.
-    if (!o.fixedName && nombreVisible.trim().length > o.nombre.length) o.nombre = nombreVisible.replace(/\s+/g, ' ').trim();
+    if (!o.nombreFijo && nombreVisible.trim().length > o.nombre.length) o.nombre = nombreVisible.replace(/\s+/g, ' ').trim();
     return o;
   };
 
@@ -61,13 +61,13 @@ export function planUnificarPropietarios(contratos, reglas = {}) {
     // Definicion explicita para casos que no se pueden deducir del texto.
     const ov = reemplazos.get(claveNombre(prop));
     if (ov) {
-      const cc = ov.contact ? contactosConfig.find(x => x.key === ov.contact) : null;
-      (ov.owners || []).forEach((especificacion, i) => {
+      const cc = ov.contacto ? contactosConfig.find(x => x.clave === ov.contacto) : null;
+      (ov.propietarios || []).forEach((especificacion, i) => {
         const o = obtenerPropietario(especificacion.nombre);
-        if (especificacion.telefono) o.phones.push({ raw: especificacion.telefono, digits: digitosDe(especificacion.telefono), active: !c.inactive });
+        if (especificacion.telefono) o.telefonos.push({ original: especificacion.telefono, digitos: digitosDe(especificacion.telefono), activo: !c.inactivo });
         if (especificacion.mail) o.mails.push(especificacion.mail.toLowerCase());
-        if (cc) o.contacts.set(cc.key, (o.contacts.get(cc.key) || 0) + 1);
-        enlaces.push({ contractId: c.id, ownerKey: o.key, orden: i });
+        if (cc) o.contactos.set(cc.clave, (o.contactos.get(cc.clave) || 0) + 1);
+        enlaces.push({ idContrato: c.id, clavePropietario: o.clave, orden: i });
       });
       continue;
     }
@@ -101,7 +101,7 @@ export function planUnificarPropietarios(contratos, reglas = {}) {
     // Si el contacto es el propio dueno (ej. un contacto que tambien es dueno de aptos), no es contacto.
     if (contacto && nombres.some(n => claveNombre(n) === claveNombre(contacto.nombre))) contacto = null;
     if (contacto) {
-      const cd = new Set((contacto.phones || []).map(digitosDe)), cm = new Set((contacto.mails || []).map(m => m.toLowerCase()));
+      const cd = new Set((contacto.telefonos || []).map(digitosDe)), cm = new Set((contacto.mails || []).map(m => m.toLowerCase()));
       partesTelefono = partesTelefono.filter(p => !cd.has(digitosDe(p)));
       mails = mails.filter(m => !cm.has(m));
     }
@@ -122,39 +122,39 @@ export function planUnificarPropietarios(contratos, reglas = {}) {
       const o = obtenerPropietario(n);
       const ph = coincidenciaPorIndice ? [partesTelefono[i]] : (i === 0 ? partesTelefono : []);
       const ml = mailPorIndice ? [mails[i]] : mails.filter((_, k) => mailPropietario[k] === i);
-      const correccion = correcciones.get(o.key);
-      for (const p of ph) if (!(correccion && correccion.has(digitosDe(p)))) o.phones.push({ raw: p, digits: digitosDe(p), active: !c.inactive });
+      const correccion = correcciones.get(o.clave);
+      for (const p of ph) if (!(correccion && correccion.has(digitosDe(p)))) o.telefonos.push({ original: p, digitos: digitosDe(p), activo: !c.inactivo });
       for (const m of ml) o.mails.push(m);
-      if (notaHistorial) o.notes.add(notaHistorial);
-      if (contacto) o.contacts.set(contacto.key, (o.contacts.get(contacto.key) || 0) + 1);
-      enlaces.push({ contractId: c.id, ownerKey: o.key, orden: i });
+      if (notaHistorial) o.notas.add(notaHistorial);
+      if (contacto) o.contactos.set(contacto.clave, (o.contactos.get(contacto.clave) || 0) + 1);
+      enlaces.push({ idContrato: c.id, clavePropietario: o.clave, orden: i });
     });
   }
 
   const listaPropietarios = [...propietarios.values()].map(o => {
     // Telefono principal: el mas reciente (preferentemente de un contrato activo).
     const unicos = [];
-    for (const p of [...o.phones].reverse()) if (!unicos.some(u => u.digits === p.digits)) unicos.push(p);
-    unicos.sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0));
+    for (const p of [...o.telefonos].reverse()) if (!unicos.some(u => u.digitos === p.digitos)) unicos.push(p);
+    unicos.sort((a, b) => (b.activo ? 1 : 0) - (a.activo ? 1 : 0));
     const mailsU = [...new Set([...o.mails].reverse())];
-    const notas = [...o.notes];
-    if (reglas.ownerNotes && reglas.ownerNotes[o.nombre]) notas.unshift(reglas.ownerNotes[o.nombre]);
-    if (unicos.length > 1) notas.push(`Otros telefonos: ${unicos.slice(1).map(u => u.raw).join(' / ')}`);
+    const notas = [...o.notas];
+    if (reglas.notasPropietarios && reglas.notasPropietarios[o.nombre]) notas.unshift(reglas.notasPropietarios[o.nombre]);
+    if (unicos.length > 1) notas.push(`Otros telefonos: ${unicos.slice(1).map(u => u.original).join(' / ')}`);
     if (mailsU.length > 1) notas.push(`Otros mails: ${mailsU.slice(1).join(' / ')}`);
-    const variantes = [...o.variants].filter(v => claveNombre(v) !== claveNombre(o.nombre));
+    const variantes = [...o.variantes].filter(v => claveNombre(v) !== claveNombre(o.nombre));
     if (variantes.length) notas.push(`Tambien escrito como: ${variantes.join(' | ')}`);
-    const claveContacto = [...o.contacts.entries()].sort((a, b) => b[1] - a[1])[0];
+    const claveContacto = [...o.contactos.entries()].sort((a, b) => b[1] - a[1])[0];
     return {
-      key: o.key, nombre: o.nombre,
-      telefono: unicos[0] ? unicos[0].raw : '', mail: mailsU[0] || '',
-      notas: notas.join('\n'), contactKey: claveContacto ? claveContacto[0] : null,
+      clave: o.clave, nombre: o.nombre,
+      telefono: unicos[0] ? unicos[0].original : '', mail: mailsU[0] || '',
+      notas: notas.join('\n'), claveContacto: claveContacto ? claveContacto[0] : null,
     };
   });
 
-  const contactosUsados = new Set(listaPropietarios.map(o => o.contactKey).filter(Boolean));
-  const contactosSalida = contactosConfig.filter(c => contactosUsados.has(c.key))
-    .map(({ key: clave, nombre, rol, telefono, mail, notas }) => ({ key: clave, nombre, rol: rol || '', telefono: telefono || '', mail: mail || '', notas: notas || '' }));
+  const contactosUsados = new Set(listaPropietarios.map(o => o.claveContacto).filter(Boolean));
+  const contactosSalida = contactosConfig.filter(c => contactosUsados.has(c.clave))
+    .map(({ clave, nombre, rol, telefono, mail, notas }) => ({ clave, nombre, rol: rol || '', telefono: telefono || '', mail: mail || '', notas: notas || '' }));
 
-  return { owners: listaPropietarios.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')), contacts: contactosSalida, links: enlaces, review: revision };
+  return { propietarios: listaPropietarios.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')), contactos: contactosSalida, vinculos: enlaces, revision };
 }
 

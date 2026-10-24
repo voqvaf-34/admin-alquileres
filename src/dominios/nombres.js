@@ -30,8 +30,8 @@ export function formatearDireccion({ edificio, calle, unidad }) {
 }
 
 // Separa texto libre en edificio / calle / unidad / nota. Heuristica: se revisa con reglas.
-export function interpretarDireccion(raw) {
-  let s = String(raw || '').replace(/\s+/g, ' ').trim();
+export function interpretarDireccion(textoOriginal) {
+  let s = String(textoOriginal || '').replace(/\s+/g, ' ').trim();
   const notas = [];
   s = s.replace(/\(([^)]*)\)/g, (_, n) => { notas.push(n.trim()); return ' '; });
   s = s.replace(/\b\d\s*(?:D|DORM\w*|DROM\w*)\b\.?/gi, ' ');        // "1 D", "3 DORMITORIOS"

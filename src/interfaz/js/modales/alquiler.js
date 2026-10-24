@@ -18,14 +18,14 @@ export const camposConChips = {};
 export function ponerMoneda(v) {
   v = v === 'USD' ? 'USD' : 'UYU';
   document.getElementById('m-moneda').value = v;
-  document.querySelectorAll('#m-moneda-seg [data-moneda]').forEach(b => b.classList.toggle('active', b.dataset.moneda === v));
+  document.querySelectorAll('#m-moneda-seg [data-moneda]').forEach(b => b.classList.toggle('activo', b.dataset.moneda === v));
 }
 
 // "Quien hace los aumentos" y "Comentarios" van plegados (linea que se despliega); se abren
 // solos si ya tienen datos.
 function ponerCamposOpcionales(rem, notas) {
-  document.getElementById('m-opt-rem').open = rem;
-  document.getElementById('m-opt-notas').open = notas;
+  document.getElementById('m-opc-rem').open = rem;
+  document.getElementById('m-opc-notas').open = notas;
 }
 
 function mostrarModalAlta() {
@@ -40,11 +40,11 @@ function mostrarModalAlta() {
   ponerOpcionesGarantia('');
   ponerMoneda('UYU');
   ponerCamposOpcionales(false, false);
-  document.getElementById('modal-add-title').textContent = 'Nuevo Alquiler';
-  const btn = document.getElementById('modal-submit');
+  document.getElementById('modal-agregar-titulo').textContent = 'Nuevo Alquiler';
+  const btn = document.getElementById('modal-enviar');
   btn.disabled = false; btn.textContent = 'Guardar alquiler';
   actualizarVistaDireccion();
-  document.getElementById('modal-add').classList.add('open');
+  document.getElementById('modal-agregar').classList.add('abierto');
   setTimeout(() => document.getElementById('m-edificio').focus(), 80);
 }
 
@@ -62,7 +62,7 @@ export function mostrarModalEdicion(entrada) {
   set('m-mail-inq', entrada.mailInq);
   set('m-importe',  entrada.importe || '');
   set('m-notas',    entrada.notas);
-  ponerOpcionDuracion(entrada.contratoStr || '');
+  ponerOpcionDuracion(entrada.contratoTexto || '');
   set('m-remitente', entrada.remitente);
   ponerOpcionesGarantia(entrada.garantia);
   ponerMoneda(entrada.moneda);
@@ -72,11 +72,11 @@ export function mostrarModalEdicion(entrada) {
       String(entrada.fechaInicio.getMonth()+1).padStart(2,'0') + '-' +
       String(entrada.fechaInicio.getDate()).padStart(2,'0')
     : '';
-  document.getElementById('modal-add-title').textContent = 'Editar Alquiler';
-  const btn = document.getElementById('modal-submit');
+  document.getElementById('modal-agregar-titulo').textContent = 'Editar Alquiler';
+  const btn = document.getElementById('modal-enviar');
   btn.disabled = false; btn.textContent = 'Guardar cambios';
   actualizarVistaDireccion();
-  document.getElementById('modal-add').classList.add('open');
+  document.getElementById('modal-agregar').classList.add('abierto');
   setTimeout(() => document.getElementById('m-importe').focus(), 80);
 }
 
@@ -84,12 +84,12 @@ export function mostrarModalEdicion(entrada) {
 // queda como viñeta extra solo para ese contrato.
 function ponerOpcionDuracion(valor) {
   const sel = document.getElementById('m-duracion');
-  sel.querySelectorAll('option[data-custom]').forEach(o => o.remove());
+  sel.querySelectorAll('option[data-propio]').forEach(o => o.remove());
   const igual = [...sel.options].find(o => o.value && o.value.toLowerCase() === String(valor || '').trim().toLowerCase());
   if (igual) valor = igual.value;
   if (valor && !igual) {
     const o = document.createElement('option');
-    o.value = valor; o.textContent = valor; o.dataset.custom = '1';
+    o.value = valor; o.textContent = valor; o.dataset.propio = '1';
     sel.appendChild(o);
   }
   sel.value = valor;
@@ -98,8 +98,8 @@ function ponerOpcionDuracion(valor) {
 // Opciones = las de fabrica + las que se agregaron desde la app + las que ya usa algun contrato.
 function opcionesGarantia() {
   let extra = [];
-  try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
-  const todas = [...D.GARANTIAS_PREDETERMINADAS, ...extra, ...estado.entries.map(e => e.garantia)].filter(Boolean);
+  try { extra = JSON.parse((estado.ajustesApp && estado.ajustesApp.garantias) || '[]'); } catch (_) {}
+  const todas = [...D.GARANTIAS_PREDETERMINADAS, ...extra, ...estado.entradas.map(e => e.garantia)].filter(Boolean);
   const vistos = new Set();
   return todas.filter(g => { const k = g.toUpperCase(); if (vistos.has(k)) return false; vistos.add(k); return true; });
 }
@@ -112,7 +112,7 @@ function ponerOpcionesGarantia(valor) {
     + opciones.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
   sel.value = coincide || '';
   const dl = document.getElementById('dl-remitentes');
-  const rems = [...new Set(estado.entries.map(e => e.remitente).filter(Boolean))].sort();
+  const rems = [...new Set(estado.entradas.map(e => e.remitente).filter(Boolean))].sort();
   dl.innerHTML = rems.map(r => `<option value="${esc(r)}">`).join('');
   actualizarAyudaGestion();
 }
@@ -120,7 +120,7 @@ function ponerOpcionesGarantia(valor) {
 function actualizarAyudaGestion() {
   const g = document.getElementById('m-garantia').value;
   const quien = D.gestionadoPor({ garantia: g, remitente: document.getElementById('m-remitente').value.trim() });
-  document.getElementById('m-gestion-hint').textContent = quien
+  document.getElementById('m-gestion-ayuda').textContent = quien
     ? `Los aumentos y renovaciones los gestiona ${quien}: no aparece en Aumentos ni Renovaciones.`
     : 'Los aumentos los hace la inmobiliaria.';
 }
@@ -130,16 +130,16 @@ function agregarOpcionGarantia(nombre) {
   const existe = opcionesGarantia().find(g => g.toUpperCase() === nombre.toUpperCase());
   if (!existe) {
     let extra = [];
-    try { extra = JSON.parse((estado.appSettings && estado.appSettings.garantias) || '[]'); } catch (_) {}
+    try { extra = JSON.parse((estado.ajustesApp && estado.ajustesApp.garantias) || '[]'); } catch (_) {}
     extra.push(nombre);
-    estado.appSettings.garantias = JSON.stringify(extra);
-    call('guardarAjuste', 'garantias', estado.appSettings.garantias).catch(() => {});
+    estado.ajustesApp.garantias = JSON.stringify(extra);
+    call('guardarAjuste', 'garantias', estado.ajustesApp.garantias).catch(() => {});
   }
   ponerOpcionesGarantia(existe || nombre);
 }
 
 function ocultarModalAlta() {
-  document.getElementById('modal-add').classList.remove('open');
+  document.getElementById('modal-agregar').classList.remove('abierto');
   entradaEditando = null;
 }
 
@@ -148,10 +148,10 @@ export async function borrarEntrada(id, dir) {
   try {
     reemplazarEntrada(await call('inactivar', id));
     mostrarAviso('&#10003; Alquiler marcado como inactivo', 'ok');
-    estado.expandedRows.delete(id);
+    estado.filasAbiertas.delete(id);
     dibujar();
   } catch (err) {
-    mostrarAviso('Error: ' + esc(err.message), 'err');
+    mostrarAviso('Error: ' + esc(err.message), 'error');
   }
 }
 
@@ -160,8 +160,8 @@ async function enviarAlta() {
   const calle    = document.getElementById('m-calle').value.trim();
   const unidad   = document.getElementById('m-unidad').value.trim();
   const importe  = parseFloat(document.getElementById('m-importe').value);
-  if (!edificio && !calle)      { mostrarAviso('Completá el edificio o la calle.', 'err'); return; }
-  if (!importe || importe <= 0) { mostrarAviso('El importe es obligatorio.', 'err'); return; }
+  if (!edificio && !calle)      { mostrarAviso('Completá el edificio o la calle.', 'error'); return; }
+  if (!importe || importe <= 0) { mostrarAviso('El importe es obligatorio.', 'error'); return; }
 
   const carga = {
     edificio, calle, unidad,
@@ -172,7 +172,7 @@ async function enviarAlta() {
     telInq:      (document.getElementById('m-tel-inq').value  || '').trim(),
     mailInq:     (document.getElementById('m-mail-inq').value || '').trim(),
     importeBase: importe,
-    contratoStr: document.getElementById('m-duracion').value  || '',
+    contratoTexto: document.getElementById('m-duracion').value  || '',
     fechaInicio: document.getElementById('m-fecha').value     || null,  // "YYYY-MM-DD"
     notas:       [...(entradaEditando ? D.separarNotas(entradaEditando.notas).filter(D.interpretarNotaRenovacion) : []),
                   ...D.separarNotas(document.getElementById('m-notas').value)].join(' | '),
@@ -182,7 +182,7 @@ async function enviarAlta() {
   };
 
   const esEditar = entradaEditando !== null;
-  const btn = document.getElementById('modal-submit');
+  const btn = document.getElementById('modal-enviar');
   btn.disabled    = true;
   btn.textContent = 'Guardando...';
   try {
@@ -190,13 +190,13 @@ async function enviarAlta() {
       ? await call('editarContrato', entradaEditando.id, carga)
       : await call('agregarContrato', carga);
     aplicarPropietarios(res);
-    reemplazarEntrada(res.contract);
+    reemplazarEntrada(res.contrato);
     mostrarAviso(esEditar ? '&#10003; Alquiler actualizado' : '&#10003; Alquiler agregado correctamente', 'ok');
     ocultarModalAlta();
     llenarAniosBase();
     dibujar();
   } catch (err) {
-    mostrarAviso('Error: ' + esc(err.message), 'err');
+    mostrarAviso('Error: ' + esc(err.message), 'error');
     btn.disabled    = false;
     btn.textContent = esEditar ? 'Guardar cambios' : 'Guardar alquiler';
   }
@@ -208,17 +208,17 @@ export function iniciar() {
   ['m-edificio', 'm-calle', 'm-unidad'].forEach(id => document.getElementById(id).addEventListener('input', actualizarVistaDireccion));
 
   // Modal agregar alquiler
-  document.getElementById('btn-add-entry').addEventListener('click', mostrarModalAlta);
-  document.getElementById('modal-close').addEventListener('click', ocultarModalAlta);
-  document.getElementById('modal-cancel').addEventListener('click', ocultarModalAlta);
-  document.getElementById('modal-submit').addEventListener('click', enviarAlta);
+  document.getElementById('btn-agregar-entrada').addEventListener('click', mostrarModalAlta);
+  document.getElementById('modal-cerrar').addEventListener('click', ocultarModalAlta);
+  document.getElementById('modal-cancelar').addEventListener('click', ocultarModalAlta);
+  document.getElementById('modal-enviar').addEventListener('click', enviarAlta);
   document.getElementById('m-garantia').addEventListener('change', actualizarAyudaGestion);
   document.getElementById('m-moneda-seg').addEventListener('click', e => {
     const b = e.target.closest('[data-moneda]'); if (b) ponerMoneda(b.dataset.moneda);
   });
   // al desplegar, el cursor va al campo
-  ['m-opt-rem', 'm-opt-notas'].forEach(id => document.getElementById(id).addEventListener('toggle', e => {
-    if (e.target.open && document.getElementById('modal-add').classList.contains('open')) {
+  ['m-opc-rem', 'm-opc-notas'].forEach(id => document.getElementById(id).addEventListener('toggle', e => {
+    if (e.target.open && document.getElementById('modal-agregar').classList.contains('abierto')) {
       const f = e.target.querySelector('input:not([type=hidden])'); if (f && !f.hidden) f.focus();
     }
   }));
@@ -226,18 +226,18 @@ export function iniciar() {
 
   // Campos con viñetas (deben existir antes del autocompletado)
   const S = Separadores, ocupado = () => _acIndice >= 0 && _acOpciones.length > 0;
-  camposConChips['m-adm-edificios'] = armarChips('m-adm-edificios', { split: S.edificios, join: a => a.join('; '), placeholder: 'Nombre del edificio + Enter', addLabel: 'Edificio' });
-  camposConChips['m-adm-telefono']  = armarChips('m-adm-telefono',  { split: S.telefonos, join: a => a.join('; '), placeholder: 'Teléfono + Enter', addLabel: 'Teléfono' });
-  camposConChips['m-adm-mail']      = armarChips('m-adm-mail',      { split: S.mails,     join: a => a.join('; '), placeholder: 'Mail + Enter', addLabel: 'Mail' });
-  camposConChips['m-prop'] = armarChips('m-prop', { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', addLabel: 'Propietario', isBusy: ocupado });
-  camposConChips['m-inq']  = armarChips('m-inq',  { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', addLabel: 'Inquilino', isBusy: ocupado });
+  camposConChips['m-adm-edificios'] = armarChips('m-adm-edificios', { split: S.edificios, join: a => a.join('; '), placeholder: 'Nombre del edificio + Enter', etiquetaAgregar: 'Edificio' });
+  camposConChips['m-adm-telefono']  = armarChips('m-adm-telefono',  { split: S.telefonos, join: a => a.join('; '), placeholder: 'Teléfono + Enter', etiquetaAgregar: 'Teléfono' });
+  camposConChips['m-adm-mail']      = armarChips('m-adm-mail',      { split: S.mails,     join: a => a.join('; '), placeholder: 'Mail + Enter', etiquetaAgregar: 'Mail' });
+  camposConChips['m-prop'] = armarChips('m-prop', { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', etiquetaAgregar: 'Propietario', estaOcupado: ocupado });
+  camposConChips['m-inq']  = armarChips('m-inq',  { split: S.personas, join: a => a.join(' / '), placeholder: 'Nombre completo', etiquetaAgregar: 'Inquilino', estaOcupado: ocupado });
   // Comentarios: las notas de renovacion no se muestran (se conservan al guardar, ver enviarAlta).
   camposConChips['m-notas'] = armarChips('m-notas', { split: s => D.comentarios({ notas: s }), join: a => a.join(' | '),
-    placeholder: 'Observaciones, condiciones especiales... + Enter', addLabel: 'Comentario' });
+    placeholder: 'Observaciones, condiciones especiales... + Enter', etiquetaAgregar: 'Comentario' });
   for (const [id, sp, lbl, ph] of [['m-tel-prop', S.telefonos, 'Teléfono', '09X XXX XXX'], ['m-tel-inq', S.telefonos, 'Teléfono', '09X XXX XXX'],
                                    ['m-mail-prop', S.mails, 'Mail', 'mail@ejemplo.com'], ['m-mail-inq', S.mails, 'Mail', 'mail@ejemplo.com']]) {
-    camposConChips[id] = armarChips(id, { split: sp, join: a => a.join(' / '), placeholder: ph, addLabel: lbl, isBusy: ocupado });
+    camposConChips[id] = armarChips(id, { split: sp, join: a => a.join(' / '), placeholder: ph, etiquetaAgregar: lbl, estaOcupado: ocupado });
   }
-  armarSelector('m-garantia', { onAdd: agregarOpcionGarantia, addLabel: 'Otra garantía', placeholder: 'Nombre de la garantía' });
-  armarSelector('m-duracion', { onAdd: t => ponerOpcionDuracion(t), addLabel: 'Otra', placeholder: 'Ej: 18 meses' });
+  armarSelector('m-garantia', { onAdd: agregarOpcionGarantia, etiquetaAgregar: 'Otra garantía', placeholder: 'Nombre de la garantía' });
+  armarSelector('m-duracion', { onAdd: t => ponerOpcionDuracion(t), etiquetaAgregar: 'Otra', placeholder: 'Ej: 18 meses' });
 }

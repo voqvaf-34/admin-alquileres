@@ -16,12 +16,12 @@ const exe = visor
   const { app, page } = await lanzar(carpetaTemporal('alq-smoke-'), {}, { ejecutable: exe });
   try {
     if (visor) {
-      await page.waitForSelector('#viewer-setup-screen', { state: 'visible' });
-      assert.ok(await page.isVisible('#btn-viewer-pick'));
+      await page.waitForSelector('#visor-config-pantalla', { state: 'visible' });
+      assert.ok(await page.isVisible('#btn-visor-elegir'));
     } else {
-      await page.click('#btn-start-demo');
-      await page.waitForSelector('#app-screen', { state: 'visible' });
-      assert.equal(await page.evaluate(() => app.estado.entries.length), 21);
+      await page.click('#btn-inicio-demo');
+      await page.waitForSelector('#app-pantalla', { state: 'visible' });
+      assert.equal(await page.evaluate(() => app.estado.entradas.length), 21);
     }
     console.log(`OK: ${path.basename(exe)}`);
   } finally { await app.close(); }

@@ -73,8 +73,9 @@ src/
   interfaz/        La ventana: vistas (pestañas), ventanas secundarias y componentes.
 ```
 
-- Los nombres del código están en español. Quedan en inglés los nombres guardados (tablas y columnas
-  de la base, claves de configuración) para que las bases existentes sigan abriendo igual.
+- Todo el código está en español: funciones, variables, tablas y columnas de la base, claves de
+  configuración, canales internos, ids y clases de la interfaz. Las bases de versiones anteriores
+  (con nombres en inglés) se migran solas al abrirlas.
 
 - La ventana solo se comunica con el proceso principal por los canales definidos en `preload.js`. El
   Visor registra únicamente canales de lectura.

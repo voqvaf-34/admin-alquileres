@@ -8,10 +8,10 @@ import { colorPorDias } from './formato.js';
 export let _guardandoMarcas = Promise.resolve();
 
 export function guardarMarcas() {
-  const snapshot = JSON.parse(JSON.stringify(estado.marks));
+  const snapshot = JSON.parse(JSON.stringify(estado.marcas));
   _guardandoMarcas = _guardandoMarcas
     .then(() => call('guardarMarcas', snapshot))
-    .catch(err => mostrarAviso('No se pudieron guardar las marcas: ' + esc(err.message), 'err'));
+    .catch(err => mostrarAviso('No se pudieron guardar las marcas: ' + esc(err.message), 'error'));
   return _guardandoMarcas;
 }
 
@@ -23,7 +23,7 @@ export async function guardarAumento(entrada, nuevoMonto, fecha) {
     mostrarAviso('&#10003; Aumento guardado', 'ok');
     return true;
   } catch (err) {
-    mostrarAviso('Error al guardar el aumento: ' + esc(err.message), 'err');
+    mostrarAviso('Error al guardar el aumento: ' + esc(err.message), 'error');
     return false;
   }
 }
@@ -34,7 +34,7 @@ export async function guardarNotas(entrada, texto, okMsg) {
     if (okMsg) mostrarAviso(okMsg, 'ok');
     return true;
   } catch (err) {
-    mostrarAviso('Error al guardar el comentario: ' + esc(err.message), 'err');
+    mostrarAviso('Error al guardar el comentario: ' + esc(err.message), 'error');
     return false;
   }
 }
@@ -54,26 +54,26 @@ export async function guardarRenovacion(entrada, anios, comentario) {
 
 // Ante direcciones repetidas (re-alquileres) se prioriza el contrato activo mas reciente.
 export function entradaPorDireccion(dir) {
-  if (!estado.entries) return null;
-  const coincidencias = estado.entries.filter(e => e.direccion === dir);
+  if (!estado.entradas) return null;
+  const coincidencias = estado.entradas.filter(e => e.direccion === dir);
   if (!coincidencias.length) return null;
-  const candidatos = coincidencias.some(e => !e.inactive) ? coincidencias.filter(e => !e.inactive) : coincidencias;
+  const candidatos = coincidencias.some(e => !e.inactivo) ? coincidencias.filter(e => !e.inactivo) : coincidencias;
   return candidatos.reduce((a, b) => (b.id > a.id ? b : a));
 }
 
-export const obtenerAumentos          = (lista, m, y) => D.obtenerAumentos(lista, m, y, estado.marks);
+export const obtenerAumentos          = (lista, m, y) => D.obtenerAumentos(lista, m, y, estado.marcas);
 
-export const obtenerFechaVenc          = e => D.obtenerFechaVenc(e, estado.marks);
+export const obtenerFechaVenc          = e => D.obtenerFechaVenc(e, estado.marcas);
 
-export const obtenerVencimientos      = (lista, m, y) => D.obtenerVencimientos(lista, m, y, estado.marks);
+export const obtenerVencimientos      = (lista, m, y) => D.obtenerVencimientos(lista, m, y, estado.marcas);
 
-export const obtenerVencidosAtrasados = (lista, m, y) => D.obtenerVencidosAtrasados(lista, m, y, estado.marks);
+export const obtenerVencidosAtrasados = (lista, m, y) => D.obtenerVencidosAtrasados(lista, m, y, estado.marcas);
 
-export const esAumentoResuelto = (e, m, y) => D.esAumentoResuelto(e, m, y, estado.marks);
+export const esAumentoResuelto = (e, m, y) => D.esAumentoResuelto(e, m, y, estado.marcas);
 
-export const esVencResuelto    = e => D.esVencResuelto(e, estado.marks);
+export const esVencResuelto    = e => D.esVencResuelto(e, estado.marcas);
 
-export const mensajeRenovacionVenc = e => D.mensajeRenovacion(obtenerFechaVenc(e), { settings: estado.appSettings, contrato: e });
+export const mensajeRenovacionVenc = e => D.mensajeRenovacion(obtenerFechaVenc(e), { ajustes: estado.ajustesApp, contrato: e });
 
 // Amarillo si faltan mas de 10 dias para el vencimiento; rojo si faltan 10 o menos (o ya vencio).
 export function colorVenc(e) { return colorPorDias(obtenerFechaVenc(e)); }

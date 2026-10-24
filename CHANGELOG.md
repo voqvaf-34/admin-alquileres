@@ -2,6 +2,16 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
+## [Sin publicar]
+
+### Cambiado (código, sin cambios visibles)
+- Todo el modelo de datos en español: tablas y columnas de la base (`contratos`, `propietarios`, `ajustes`...),
+  claves de configuración, campos de los datos, canales entre la ventana y el proceso principal, e ids, clases,
+  atributos `data-*` y variables CSS de la interfaz.
+- Una base de la 0.8.1 o anterior se migra sola al abrirla (tablas, columnas, claves de configuración y el
+  contenido de las marcas). El Visor la lee sin escribirla.
+- Regla de lint `object-shorthand`.
+
 ## [0.8.1] - 2026-10-23
 
 ### Corregido

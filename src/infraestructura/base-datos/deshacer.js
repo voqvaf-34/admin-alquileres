@@ -10,15 +10,15 @@ class MetodosDeshacer {
   // se junta con ellos (t = 0).
   puntoDeControl(etiqueta, agrupar = true) {
     const ahora = Date.now();
-    const ultimo = this.undoStack[this.undoStack.length - 1];
+    const ultimo = this.pilaDeshacer[this.pilaDeshacer.length - 1];
     if (agrupar && ultimo && ultimo.t && ahora - ultimo.t < DESHACER_AGRUPAR_MS) { ultimo.t = ahora; return false; }
-    this.undoStack.push({ label: etiqueta, t: agrupar ? ahora : 0, data: this.db.export() });
+    this.pilaDeshacer.push({ etiqueta, t: agrupar ? ahora : 0, datos: this.db.export() });
     this.db.run('PRAGMA foreign_keys = ON;');
-    if (this.undoStack.length > LIMITE_DESHACER) this.undoStack.shift();
-    this.redoStack = [];
+    if (this.pilaDeshacer.length > LIMITE_DESHACER) this.pilaDeshacer.shift();
+    this.pilaRehacer = [];
     return true;
   }
-  descartarPuntoDeControl() { this.undoStack.pop(); }
+  descartarPuntoDeControl() { this.pilaDeshacer.pop(); }
 
   _cargarCopia(datos) {
     this.db.close();
@@ -27,22 +27,22 @@ class MetodosDeshacer {
     this.persistir();
   }
   deshacerCambio() {
-    const anterior = this.undoStack.pop();
+    const anterior = this.pilaDeshacer.pop();
     if (!anterior) throw new Error('No hay cambios para deshacer.');
-    this.redoStack.push({ label: anterior.label, data: this.db.export() });
-    this._cargarCopia(anterior.data);
-    return anterior.label;
+    this.pilaRehacer.push({ etiqueta: anterior.etiqueta, datos: this.db.export() });
+    this._cargarCopia(anterior.datos);
+    return anterior.etiqueta;
   }
   rehacerCambio() {
-    const siguiente = this.redoStack.pop();
+    const siguiente = this.pilaRehacer.pop();
     if (!siguiente) throw new Error('No hay cambios para rehacer.');
-    this.undoStack.push({ label: siguiente.label, t: 0, data: this.db.export() });
-    this._cargarCopia(siguiente.data);
-    return siguiente.label;
+    this.pilaDeshacer.push({ etiqueta: siguiente.etiqueta, t: 0, datos: this.db.export() });
+    this._cargarCopia(siguiente.datos);
+    return siguiente.etiqueta;
   }
   estadoDeshacer() {
-    const u = this.undoStack[this.undoStack.length - 1], r = this.redoStack[this.redoStack.length - 1];
-    return { canUndo: !!u, undoLabel: u ? u.label : '', canRedo: !!r, redoLabel: r ? r.label : '' };
+    const u = this.pilaDeshacer[this.pilaDeshacer.length - 1], r = this.pilaRehacer[this.pilaRehacer.length - 1];
+    return { puedeDeshacer: !!u, etiquetaDeshacer: u ? u.etiqueta : '', puedeRehacer: !!r, etiquetaRehacer: r ? r.etiqueta : '' };
   }
 }
 

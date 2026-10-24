@@ -1,31 +1,31 @@
 // Se carga en <head> para aplicar el modo de color y la marca guardados antes del primer pintado.
 (function () {
-  // Modo de color: 'auto' (como Windows, por defecto), 'light' o 'dark'. Es de cada PC, no de la base.
-  const KEY = 'alq-theme';
+  // Modo de color: 'auto' (como Windows, por defecto), 'claro' u 'oscuro'. Es de cada PC, no de la base.
+  const KEY = 'alq-tema';
   const sistema = window.matchMedia('(prefers-color-scheme: dark)');
-  const obtenerModo = () => { try { const m = localStorage.getItem(KEY); return m === 'dark' || m === 'light' ? m : 'auto'; } catch (_) { return 'auto'; } };
-  const get = () => { const m = obtenerModo(); return m === 'auto' ? (sistema.matches ? 'dark' : 'light') : m; };
+  const obtenerModo = () => { try { const m = localStorage.getItem(KEY); return m === 'oscuro' || m === 'claro' ? m : 'auto'; } catch (_) { return 'auto'; } };
+  const obtener = () => { const m = obtenerModo(); return m === 'auto' ? (sistema.matches ? 'oscuro' : 'claro') : m; };
   const aplicar = () => {
-    if (get() === 'dark') document.documentElement.dataset.theme = 'dark';
-    else delete document.documentElement.dataset.theme;
+    if (obtener() === 'oscuro') document.documentElement.dataset.esquema = 'oscuro';
+    else delete document.documentElement.dataset.esquema;
     document.dispatchEvent(new CustomEvent('modo-color'));
   };
   aplicar();
   sistema.addEventListener('change', () => { if (obtenerModo() === 'auto') aplicar(); });
-  window.Theme = {
-    get, getModo: obtenerModo,
-    setModo(m) {
+  window.Tema = {
+    obtener, obtenerModo,
+    ponerModo(m) {
       try { if (m === 'auto') localStorage.removeItem(KEY); else localStorage.setItem(KEY, m); } catch (_) {}
       aplicar();
     },
     // Boton de la cabecera: pasa al modo contrario al que se ve ahora.
-    toggle() { this.setModo(get() === 'dark' ? 'light' : 'dark'); return get(); },
+    alternar() { this.ponerModo(obtener() === 'oscuro' ? 'claro' : 'oscuro'); return obtener(); },
   };
 
   // Accesibilidad (de cada PC): tamaño (zoom de toda la ventana) y opciones que son clases en <html>.
   const A11Y_KEY = 'alq-accesibilidad';
-  const A11Y_DEFAULT = { tamano: 1, negrita: false, contraste: false, espaciado: false, subrayar: false, animaciones: 'auto' };
-  const leerA11y = () => { try { return { ...A11Y_DEFAULT, ...JSON.parse(localStorage.getItem(A11Y_KEY) || '{}') }; } catch (_) { return { ...A11Y_DEFAULT }; } };
+  const A11Y_PREDETERMINADO = { tamano: 1, negrita: false, contraste: false, espaciado: false, subrayar: false, animaciones: 'auto' };
+  const leerA11y = () => { try { return { ...A11Y_PREDETERMINADO, ...JSON.parse(localStorage.getItem(A11Y_KEY) || '{}') }; } catch (_) { return { ...A11Y_PREDETERMINADO }; } };
   const aplicarA11y = p => {
     const cl = document.documentElement.classList;
     cl.toggle('a11y-negrita', !!p.negrita);
@@ -38,9 +38,9 @@
   };
   aplicarA11y(leerA11y());
   window.A11y = {
-    DEFAULT: A11Y_DEFAULT,
-    get: leerA11y,
-    set(p) {
+    PREDETERMINADO: A11Y_PREDETERMINADO,
+    obtener: leerA11y,
+    poner(p) {
       const v = { ...leerA11y(), ...p };
       try { localStorage.setItem(A11Y_KEY, JSON.stringify(v)); } catch (_) {}
       aplicarA11y(v);
