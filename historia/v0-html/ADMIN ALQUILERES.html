@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!--AUTODATA-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Alquileres</title>
+<!--
+  OFFLINE: descarga xlsx.full.min.js de
+  https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js
+  ponelo en la misma carpeta y cambia la linea de abajo a:
+  <script src="./xlsx.full.min.js"></script>
+-->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="/admin-style.css">
+</head>
+<body>
+<div id="root">
+
+  <!-- Pantalla de carga automatica -->
+  <div id="autoload-screen">
+    <div class="autoload-inner">
+      <div class="logo-big">Admin Alquileres</div>
+      <div style="font-size:10px;opacity:0.35;letter-spacing:1px;margin-bottom:6px;">CARGANDO</div>
+      <div class="static-path-box">\\SERVIDOR\Compartida\Alquileres\planilla.xlsm</div>
+      <div class="autoload-spinner"></div>
+      <div id="autoload-status">Conectando...</div>
+    </div>
+  </div>
+
+  <!-- Interfaz de contingencia (fallback manual) -->
+  <div id="upload-screen">
+    <div class="upload-inner">
+      <div class="logo-big">Admin Alquileres</div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:10px;opacity:0.35;letter-spacing:1px;margin-bottom:6px;">RUTA ESPERADA</div>
+        <input type="text" class="inp-ruta" readonly
+          value="\\SERVIDOR\Compartida\Alquileres\planilla.xlsm"
+          title="Navega a esta ruta y arrastra el archivo a la zona de abajo">
+      </div>
+      <button class="btn-autoload" id="btn-autoload">Seleccionar archivo</button>
+      <div style="margin:16px 0;font-size:11px;opacity:0.22;">&#8212; o arrastra el archivo &#8212;</div>
+      <div id="dropzone">
+        <div class="drop-arrow">&#8593;</div>
+        <div class="drop-label" id="drop-label">Soltar planilla.xlsm aqui</div>
+      </div>
+      <div class="upload-note">
+        No se pudo acceder a la ruta de red automaticamente.<br>
+        Navega a la ruta indicada y arrastra el archivo, o usa el boton.<br>
+        Filtra filas ESTADO = INACTIVO automaticamente.
+      </div>
+    </div>
+  </div>
+
+  <!-- App principal -->
+  <div id="app-screen">
+    <div class="header">
+      <div class="header-left">
+        <span class="logo-small">ADMIN</span>
+        <span style="opacity:0.2">|</span>
+        <span class="file-info" id="file-info"></span>
+      </div>
+      <div class="header-right">
+        <button class="btn-write" id="btn-write" title="Abre el Excel para habilitar guardado directo de aumentos y renovaciones">&#9998; Conectar Excel</button>
+        <button class="btn-cambiar" id="btn-cambiar">Cambiar archivo</button>
+        <button class="btn-cambiar" id="btn-cerrar" title="Cierra el servidor y libera el Excel" style="border-color:rgba(239,83,80,0.25);color:rgba(239,83,80,0.6)">&#10005; Cerrar</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="basedatos"       id="tab-basedatos">Base de Datos (0)</button>
+      <button class="tab-btn"        data-tab="aumentos"        id="tab-aumentos">Aumentos (0)</button>
+      <button class="tab-btn"        data-tab="vencimientos"    id="tab-vencimientos">Vencimientos (0)</button>
+      <button class="tab-btn"        data-tab="administraciones" id="tab-administraciones">Administraciones (0)</button>
+    </div>
+
+    <div class="controls" id="op-controls">
+      <div class="ctrl-group">
+        <label class="ctrl-label">Mes</label>
+        <select class="ctrl-select" id="sel-month"></select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-label">Año</label>
+        <select class="ctrl-select" id="sel-year"></select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-label">IPC %</label>
+        <input type="number" step="0.01" class="ctrl-input" id="inp-ipc" value="3.16">
+        <button id="btn-ipc-fetch" title="Obtener IPC del INE" style="background:none;border:1px solid rgba(255,255,255,0.12);color:var(--accent);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit;line-height:1;">&#8635;</button>
+        <span id="ipc-period" style="font-size:10px;opacity:0.4;"></span>
+      </div>
+      <div class="ctrl-group" style="border-left:1px solid rgba(255,255,255,0.08);padding-left:12px;margin-left:4px;">
+        <label class="db-chk-label"><input type="checkbox" id="op-show-sinresolver"> Sin resolver</label>
+        <label class="db-chk-label"><input type="checkbox" id="op-show-resuelto"> Resueltos</label>
+      </div>
+    </div>
+
+    <!-- Panel operativo (aumentos / vencimientos) -->
+    <div class="content" id="content"></div>
+
+    <!-- Panel Base de Datos -->
+    <div id="db-panel">
+      <div class="db-controls">
+        <div class="search-wrap">
+          <input type="text" id="db-search" class="db-search" placeholder="Buscar direccion, propietario, inquilino, telefono...">
+          <button class="search-clear" id="db-search-clear" title="Limpiar busqueda">&times;</button>
+        </div>
+        <div class="ctrl-group">
+          <label class="ctrl-label">Año</label>
+          <select id="db-year" class="ctrl-select"><option value="0">Todos</option></select>
+        </div>
+        <div class="ctrl-group">
+          <label class="ctrl-label">Mes inicio</label>
+          <select id="db-month" class="ctrl-select">
+            <option value="0">Todos</option>
+            <option value="1">Enero</option><option value="2">Febrero</option>
+            <option value="3">Marzo</option><option value="4">Abril</option>
+            <option value="5">Mayo</option><option value="6">Junio</option>
+            <option value="7">Julio</option><option value="8">Agosto</option>
+            <option value="9">Septiembre</option><option value="10">Octubre</option>
+            <option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+        <label class="db-chk-label"><input type="checkbox" id="db-show-active" checked> Activos</label>
+        <label class="db-chk-label"><input type="checkbox" id="db-show-inactive"> Inactivos</label>
+        <span class="db-count" id="db-count"></span>
+        <button class="btn-add-entry" id="btn-add-entry">&#65291; Agregar</button>
+      </div>
+      <div class="db-wrap">
+        <table class="db-table">
+          <thead>
+            <tr>
+              <th style="min-width:190px">Direccion / Edificio</th>
+              <th style="min-width:140px">Propietario</th>
+              <th style="min-width:140px">Inquilino</th>
+              <th style="min-width:90px">F. Inicio</th>
+              <th style="width:32px"></th>
+            </tr>
+          </thead>
+          <tbody id="db-tbody">
+            <tr><td colspan="5" class="empty">Carga un archivo para ver la base de datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Panel Administraciones -->
+    <div id="admin-panel">
+      <div class="db-controls">
+        <div class="search-wrap">
+          <input type="text" id="admin-search" class="db-search" placeholder="Buscar administracion, edificio, telefono, mail...">
+          <button class="search-clear" id="admin-search-clear" title="Limpiar busqueda">&times;</button>
+        </div>
+        <span class="db-count" id="admin-count"></span>
+        <button class="btn-add-entry" id="btn-add-admin">&#65291; Agregar</button>
+      </div>
+      <div class="db-wrap">
+        <table class="db-table">
+          <thead>
+            <tr>
+              <th style="min-width:200px">Administracion</th>
+              <th style="min-width:220px">Edificios</th>
+              <th style="min-width:170px">Telefono</th>
+              <th style="min-width:170px">Mail</th>
+              <th style="width:60px"></th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody">
+            <tr><td colspan="5" class="empty">Carga un archivo para ver las administraciones.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /app-screen -->
+
+  <!-- Modal: agregar alquiler -->
+  <div id="modal-add">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <span class="modal-title" id="modal-add-title">Nuevo Alquiler</span>
+        <button class="unmark-btn" id="modal-close" style="font-size:22px;padding:0 4px">&times;</button>
+      </div>
+      <div class="modal-grid">
+        <div class="mfield mfull">
+          <label>Direccion <span class="m-req">*</span></label>
+          <input type="text" id="m-dir" placeholder="Ej: CERRO LARGO 1234 AP 301" autocomplete="off">
+        </div>
+        <div class="mfield">
+          <label>Propietario</label>
+          <input type="text" id="m-prop" placeholder="Nombre completo">
+        </div>
+        <div class="mfield">
+          <label>Inquilino</label>
+          <input type="text" id="m-inq" placeholder="Nombre completo">
+        </div>
+        <div class="mfield">
+          <label>Tel. Propietario</label>
+          <input type="text" id="m-tel-prop" placeholder="09X XXX XXX">
+        </div>
+        <div class="mfield">
+          <label>Tel. Inquilino</label>
+          <input type="text" id="m-tel-inq" placeholder="09X XXX XXX">
+        </div>
+        <div class="mfield">
+          <label>Mail Propietario</label>
+          <input type="email" id="m-mail-prop" placeholder="prop@ejemplo.com">
+        </div>
+        <div class="mfield">
+          <label>Mail Inquilino</label>
+          <input type="email" id="m-mail-inq" placeholder="inq@ejemplo.com">
+        </div>
+        <div class="mfield">
+          <label>Importe base (UYU) <span class="m-req">*</span></label>
+          <input type="number" id="m-importe" placeholder="25000" min="1" step="1">
+        </div>
+        <div class="mfield">
+          <label>Duracion contrato</label>
+          <select id="m-duracion">
+            <option value="">&#8212; Sin especificar &#8212;</option>
+            <option value="1 AÑO">1 AÑO</option>
+            <option value="2 AÑOS">2 AÑOS</option>
+            <option value="3 AÑOS">3 AÑOS</option>
+          </select>
+        </div>
+        <div class="mfield">
+          <label>Fecha inicio</label>
+          <input type="date" id="m-fecha">
+        </div>
+        <div class="mfield mfull">
+          <label>Comentarios</label>
+          <textarea id="m-notas" placeholder="Observaciones, condiciones especiales..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" id="modal-cancel">Cancelar</button>
+        <button class="btn-modal-submit" id="modal-submit">Guardar alquiler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: agregar/editar administracion -->
+  <div id="modal-admin">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <span class="modal-title" id="modal-admin-title">Nueva Administracion</span>
+        <button class="unmark-btn" id="modal-admin-close" style="font-size:22px;padding:0 4px">&times;</button>
+      </div>
+      <div class="modal-grid">
+        <div class="mfield mfull">
+          <label>Administracion <span class="m-req">*</span></label>
+          <input type="text" id="m-adm-nombre" placeholder="Ej: BOGA ADMINISTRACION (Adrian Berges)" autocomplete="off">
+        </div>
+        <div class="mfield mfull">
+          <label>Edificios administrados</label>
+          <input type="text" id="m-adm-edificios" placeholder="Ej: Morumbi; Cuore; Cordon Design">
+        </div>
+        <div class="mfield mfull">
+          <label>Telefono</label>
+          <input type="text" id="m-adm-telefono" placeholder="Ej: 24012251; 099 123 456">
+        </div>
+        <div class="mfield mfull">
+          <label>Mail</label>
+          <input type="text" id="m-adm-mail" placeholder="Ej: contacto@ejemplo.com">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" id="modal-admin-cancel">Cancelar</button>
+        <button class="btn-modal-submit" id="modal-admin-submit">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /root -->
+
+<!-- Toast global -->
+<div id="toast"></div>
+
+<script src="/admin-app.js"></script>
+</body>
+</html>
