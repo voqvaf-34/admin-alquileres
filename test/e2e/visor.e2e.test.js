@@ -27,9 +27,19 @@ test('editor publica y el visor muestra en solo lectura, actualizandose solo', {
     await abrirConfiguracion(editor.page);
     await editor.page.fill('#cfg-nombre', 'Inmobiliaria del Sur');
     await elegirColor(editor.page, '#7C3AED');
+    const guardado = new Date().toISOString();
     await editor.page.click('#cfg-guardar');
     await editor.page.waitForSelector('#modal-config', { state: 'hidden' });
-    await editor.page.waitForFunction(() => document.getElementById('compartir-punto').classList.contains('ok'));
+    // Esperar la publicacion posterior al guardado: el puntito ya puede estar verde por una
+    // publicacion anterior, y el Visor abriria la copia vieja (con el color de antes).
+    const publicado = () => editor.page.evaluate(async desde => {
+      const r = await window.api.estadoCompartir();
+      return !!(r.ok && !r.datos.pendiente && r.datos.ultimaPublicacion && r.datos.ultimaPublicacion >= desde);
+    }, guardado);
+    for (const limite = Date.now() + 15000; !(await publicado());) {
+      assert.ok(Date.now() < limite, 'el editor no publico despues de guardar la configuracion');
+      await new Promise(r => setTimeout(r, 100));
+    }
     assert.ok(fs.existsSync(path.join(compartida, 'alquileres.sqlite')), 'la base se publico');
     const total = await editor.page.evaluate(() => app.estado.entradas.length);
 
