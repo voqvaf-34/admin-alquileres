@@ -6,7 +6,7 @@ const path   = require('path');
 const { BaseDatos } = require('../../src/infraestructura/base-datos');
 
 const tmp = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'alq-undo-')), 'x.sqlite');
-const base = { importeBase: 20000, contratoStr: '2 AÑOS', fechaInicio: '2024-01-01' };
+const base = { importeBase: 20000, contratoTexto: '2 AÑOS', fechaInicio: '2024-01-01' };
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 
 test('deshacer y rehacer restauran la base', async () => {
@@ -17,7 +17,7 @@ test('deshacer y rehacer restauran la base', async () => {
   s.puntoDeControl('Agregar alquiler');
   s.agregarContrato({ ...base, direccion: 'B 2' });
   assert.equal(s.listarContratos().length, 2);
-  assert.deepEqual(s.estadoDeshacer(), { canUndo: true, undoLabel: 'Agregar alquiler', canRedo: false, redoLabel: '' });
+  assert.deepEqual(s.estadoDeshacer(), { puedeDeshacer: true, etiquetaDeshacer: 'Agregar alquiler', puedeRehacer: false, etiquetaRehacer: '' });
 
   assert.equal(s.deshacerCambio(), 'Agregar alquiler');
   assert.deepEqual(s.listarContratos().map(c => c.direccion), ['A 1']);
@@ -29,7 +29,7 @@ test('deshacer y rehacer restauran la base', async () => {
   assert.equal(s.listarContratos().length, 2);
   s.close();
 
-  const otraVez = await BaseDatos.open(s.filePath);
+  const otraVez = await BaseDatos.open(s.rutaArchivo);
   assert.equal(otraVez.listarContratos().length, 2, 'el estado rehecho queda guardado en disco');
   otraVez.close();
 });
@@ -40,15 +40,15 @@ test('cambios seguidos se agrupan y un cambio nuevo borra el rehacer', async () 
   s.puntoDeControl('Modificar alquiler');
   s.modificarContrato(c.id, { importe: 21000 });
   assert.equal(s.puntoDeControl('Cambiar marca'), false, 'dentro de 1,5 s es el mismo paso');
-  s.reemplazarMarcas({ 'a|A 1|3|2026': { date: 'x' } });
+  s.reemplazarMarcas({ 'a|A 1|3|2026': { fecha: 'x' } });
   s.deshacerCambio();
   assert.equal(s.obtenerContrato(c.id).importe, 20000);
   assert.deepEqual(s.obtenerMarcas(), {});
-  assert.equal(s.estadoDeshacer().canRedo, true);
+  assert.equal(s.estadoDeshacer().puedeRehacer, true);
   await esperar(1600);
   s.puntoDeControl('Modificar alquiler');
   s.modificarContrato(c.id, { notas: 'x' });
-  assert.equal(s.estadoDeshacer().canRedo, false);
+  assert.equal(s.estadoDeshacer().puedeRehacer, false);
   s.close();
 });
 
@@ -74,14 +74,14 @@ test('normalizar direcciones conserva la original y mueve las marcas', async () 
   const s = await BaseDatos.open(tmp());
   const a = s.agregarContrato({ ...base, direccion: 'TORRE CEIBO 403' });
   const b = s.agregarContrato({ ...base, direccion: 'TORRE CEIBO U 403, Ceibo 1500' });
-  s.reemplazarMarcas({ 'v|TORRE CEIBO 403': { date: '01/01/2025' }, 'v|TORRE CEIBO U 403, Ceibo 1500': { date: '01/06/2026' } });
+  s.reemplazarMarcas({ 'v|TORRE CEIBO 403': { fecha: '01/01/2025' }, 'v|TORRE CEIBO U 403, Ceibo 1500': { fecha: '01/06/2026' } });
   s.ponerCuentaPropietario(s.guardarPropietario({ nombre: 'Juan' }), 'TORRE CEIBO 403', 'BROU 123');
   const dir = 'Torre Ceibo - Ceibo 1500 U403';
   s.aplicarDirecciones([a, b].map(c => ({ id: c.id, edificio: 'Torre Ceibo', calle: 'Ceibo 1500', unidad: '403', direccion: dir })));
   const lista = s.listarContratos();
   assert.deepEqual(lista.map(c => c.direccion), [dir, dir]);
   assert.deepEqual(lista.map(c => c.direccionOriginal), ['TORRE CEIBO 403', 'TORRE CEIBO U 403, Ceibo 1500']);
-  assert.deepEqual(s.obtenerMarcas(), { [`v|${dir}`]: { date: '01/06/2026' } }, 'queda la marca mas reciente');
+  assert.deepEqual(s.obtenerMarcas(), { [`v|${dir}`]: { fecha: '01/06/2026' } }, 'queda la marca mas reciente');
   s.close();
 });
 
@@ -90,10 +90,10 @@ test('renombrar un apto desde la edicion mueve marcas y cuentas de cobro', async
   const c = s.agregarContrato({ ...base, direccion: 'Viejo 1' });
   const oid = s.guardarPropietario({ nombre: 'Ana' });
   s.ponerCuentaPropietario(oid, 'Viejo 1', 'Itau 99');
-  s.reemplazarMarcas({ 'nr|Viejo 1': { date: '01/01/2026' } });
+  s.reemplazarMarcas({ 'nr|Viejo 1': { fecha: '01/01/2026' } });
   s.editarContrato(c.id, { ...base, direccion: 'Nuevo 2', edificio: '', calle: 'Nuevo 2', unidad: '' });
   assert.deepEqual(Object.keys(s.obtenerMarcas()), ['nr|Nuevo 2']);
-  assert.deepEqual(s.listarCuentasPropietarios(), [{ ownerId: oid, direccion: 'Nuevo 2', cuenta: 'Itau 99' }]);
+  assert.deepEqual(s.listarCuentasPropietarios(), [{ idPropietario: oid, direccion: 'Nuevo 2', cuenta: 'Itau 99' }]);
   s.close();
 });
 
@@ -123,6 +123,6 @@ test('datos de contrato del propietario y documentos', async () => {
   const id2 = s.guardarPropietario({ nombre: 'Ana bis' });
   s.unificarPropietarios(id2, id);
   assert.equal(s.listarPropietarios()[0].cedula, '1.234.567-8', 'unificar conserva los datos');
-  assert.equal(s.listarDocsPropietarios()[0].ownerId, id2, 'y los documentos');
+  assert.equal(s.listarDocsPropietarios()[0].idPropietario, id2, 'y los documentos');
   s.close();
 });

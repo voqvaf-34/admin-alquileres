@@ -14,7 +14,7 @@ export const COLUMNAS_ALQUILERES = [
   { campo: 'importeBase',   titulo: 'Alquiler inicial',       alias: ['alquiler inicial', 'importe inicial', 'importe base', 'precio inicial'] },
   { campo: 'moneda',        titulo: 'Moneda',                 alias: ['moneda'] },
   { campo: 'fechaInicio',   titulo: 'Fecha de inicio',        alias: ['fecha de inicio', 'fecha inicio', 'inicio', 'inicio contrato', 'desde'] },
-  { campo: 'contratoStr',   titulo: 'Duración del contrato',  alias: ['duracion del contrato', 'duracion contrato', 'duracion', 'plazo', 'contrato'] },
+  { campo: 'contratoTexto',   titulo: 'Duración del contrato',  alias: ['duracion del contrato', 'duracion contrato', 'duracion', 'plazo', 'contrato'] },
   { campo: 'ultimoAumento', titulo: 'Último aumento',         alias: ['ultimo aumento', 'fecha ultimo aumento', 'ult aumento'] },
   { campo: 'inquilino',     titulo: 'Inquilino',              alias: ['inquilino', 'inquilinos', 'arrendatario'] },
   { campo: 'telInq',        titulo: 'Teléfono inquilino',     alias: ['telefono inquilino', 'tel inquilino', 'celular inquilino', 'tel inq'] },
@@ -81,7 +81,7 @@ export function filaAContrato(fila, columnas, filaOrigen) {
   if (!direccion || !importe) return null;
   const inicial = interpretarImporteUY(get('importeBase'));
   return {
-    sourceRow: filaOrigen,
+    filaOrigen,
     direccion,
     propietario:   texto(get('propietario')),
     telProp:       texto(get('telProp')),
@@ -92,28 +92,28 @@ export function filaAContrato(fila, columnas, filaOrigen) {
     ultimoAumento: aFechaISO(leerFecha(get('ultimoAumento'))),
     remitente:     texto(get('remitente')),
     garantia:      texto(get('garantia')),
-    contratoStr:   texto(get('contratoStr')),
+    contratoTexto:   texto(get('contratoTexto')),
     fechaInicio:   aFechaISO(leerFecha(get('fechaInicio'))),
     inquilino:     texto(get('inquilino')),
     telInq:        texto(get('telInq')),
     mailInq:       texto(get('mailInq')),
     notas:         texto(get('notas')),
-    inactive:      INACTIVO.test(normalizar(texto(get('estado')))),
+    inactivo:      INACTIVO.test(normalizar(texto(get('estado')))),
   };
 }
 
 export function filaAAdministracion(fila, columnas, filaOrigen) {
   const get = campo => (campo in columnas ? texto(fila[columnas[campo]]) : '');
   const nombre = get('nombre');
-  return nombre ? { sourceRow: filaOrigen, nombre, edificios: get('edificios'), telefono: get('telefono'), mail: get('mail') } : null;
+  return nombre ? { filaOrigen, nombre, edificios: get('edificios'), telefono: get('telefono'), mail: get('mail') } : null;
 }
 
 // Filas de ejemplo para la planilla modelo (inventadas).
 export const EJEMPLO_PLANILLA = [
   { direccion: 'Torre Ceibo - Av. Italia 2875 U403', propietario: 'Ana Perez', telProp: '091 000 101', mailProp: 'ana.perez@example.com',
-    importe: 29400, importeBase: 28500, moneda: 'UYU', fechaInicio: '05/03/2025', contratoStr: '2 años', ultimoAumento: '',
+    importe: 29400, importeBase: 28500, moneda: 'UYU', fechaInicio: '05/03/2025', contratoTexto: '2 años', ultimoAumento: '',
     inquilino: 'Beto Gomez', telInq: '091 000 201', mailInq: 'beto.gomez@example.com', garantia: 'Porto', remitente: '', estado: 'Activo', notas: 'Paga por transferencia' },
   { direccion: 'Canelones 1234 U502', propietario: 'Carla Mendez / Diego Mendez', telProp: '091 000 103', mailProp: '',
-    importe: 850, importeBase: 800, moneda: 'USD', fechaInicio: '20/11/2024', contratoStr: '1 año', ultimoAumento: '11/2025',
+    importe: 850, importeBase: 800, moneda: 'USD', fechaInicio: '20/11/2024', contratoTexto: '1 año', ultimoAumento: '11/2025',
     inquilino: 'Camila Ruiz', telInq: '091 000 202', mailInq: '', garantia: 'ANDA', remitente: '', estado: 'Activo', notas: '' },
 ];

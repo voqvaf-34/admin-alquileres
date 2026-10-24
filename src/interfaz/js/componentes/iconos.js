@@ -76,7 +76,7 @@ export async function dibujarIcono(marca, lado = 256) {
   const fondo = icono.color || marca.color;
   const { c, g } = cuadrado(lado, fondo);
   g.save(); g.scale(lado, lado);
-  (DIBUJOS[icono.diseno] || DIBUJOS.edificio)(g, paleta(fondo).headerInk, fondo, marca.nombre);
+  (DIBUJOS[icono.diseno] || DIBUJOS.edificio)(g, paleta(fondo).tintaCabecera, fondo, marca.nombre);
   g.restore();
   return c.toDataURL('image/png');
 }

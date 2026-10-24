@@ -7,6 +7,7 @@ const reglas = {
   'no-unused-vars': ['error', { args: 'after-used', argsIgnorePattern: '^_', caughtErrors: 'none' }],
   'no-var': 'error',
   'prefer-const': ['error', { destructuring: 'all' }],
+  'object-shorthand': ['error', 'properties'],
   eqeqeq: ['error', 'always', { null: 'ignore' }],
   'no-empty': ['error', { allowEmptyCatch: true }],
   // Formato basico (el resto lo indica .editorconfig)
@@ -27,7 +28,7 @@ module.exports = [
   },
   {
     files: ['src/interfaz/js/**/*.js'],
-    languageOptions: { sourceType: 'module', globals: { ...globals.browser, Theme: 'readonly', A11y: 'readonly' } },
+    languageOptions: { sourceType: 'module', globals: { ...globals.browser, Tema: 'readonly', A11y: 'readonly' } },
   },
   {
     files: ['src/interfaz/tema.js'],
@@ -40,6 +41,6 @@ module.exports = [
   {
     // Las pruebas ejecutan funciones dentro de la ventana (page.evaluate): ahi existen estos nombres.
     files: ['test/**/*.js', 'scripts/**/*.js'],
-    languageOptions: { globals: { ...globals.browser, app: 'readonly', A11y: 'readonly', Theme: 'readonly', axe: 'readonly' } },
+    languageOptions: { globals: { ...globals.browser, app: 'readonly', A11y: 'readonly', Tema: 'readonly', axe: 'readonly' } },
   },
 ];

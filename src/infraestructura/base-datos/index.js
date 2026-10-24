@@ -3,7 +3,7 @@
 const fs   = require('fs');
 const path = require('path');
 const initSqlJs = require('sql.js');
-const { COLUMNAS_AGREGADAS, ESQUEMA } = require('./esquema');
+const { CAMPOS_MARCA_VIEJOS, CLAVES_VIEJAS, COLUMNAS_AGREGADAS, COLUMNAS_VIEJAS, ESQUEMA, TABLAS_VIEJAS } = require('./esquema');
 const { MetodosAdministraciones } = require('./administraciones');
 const { MetodosAjustes } = require('./ajustes');
 const { MetodosContratos } = require('./contratos');
@@ -19,28 +19,53 @@ class BaseDatos {
       wasmBinary: fs.readFileSync(require.resolve('sql.js/dist/sql-wasm.wasm')),
     });
     const existe = fs.existsSync(rutaArchivo);
-    if (opciones.readOnly && !existe) throw new Error('No se encontro la base compartida en ' + rutaArchivo);
+    if (opciones.soloLectura && !existe) throw new Error('No se encontro la base compartida en ' + rutaArchivo);
     const db = existe ? new SQL.Database(fs.readFileSync(rutaArchivo)) : new SQL.Database();
     const store = new BaseDatos(db, rutaArchivo, opciones);
     store.SQL = SQL;
+    const migrada = store.renombrarTablasViejas();
     db.run('PRAGMA foreign_keys = ON;');
     db.exec(ESQUEMA);
     store.agregarColumnasFaltantes();
-    if (!existe) store.persistir();
+    if (!existe || migrada) store.persistir();
     return store;
   }
 
   constructor(db, rutaArchivo, opciones) {
     this.db = db;
-    this.filePath = rutaArchivo;
-    this.backupDir = opciones.backupDir || path.join(path.dirname(rutaArchivo), 'backups');
-    this.maxBackups = opciones.maxBackups || 20;
-    this.undoStack = [];
-    this.redoStack = [];
+    this.rutaArchivo = rutaArchivo;
+    this.carpetaRespaldos = opciones.carpetaRespaldos || path.join(path.dirname(rutaArchivo), 'backups');
+    this.maxRespaldos = opciones.maxRespaldos || 20;
+    this.pilaDeshacer = [];
+    this.pilaRehacer = [];
     // Modo visor: la base se lee de la carpeta compartida y nunca se escribe.
-    this.readOnly = !!opciones.readOnly;
-    this.onPersist = null;
-    this.saveStatus = { ok: true, at: null, error: null };
+    this.soloLectura = !!opciones.soloLectura;
+    this.alPersistir = null;
+    this.estadoGuardado = { ok: true, at: null, error: null };
+  }
+
+  // Bases de hasta la 0.8.1 (tablas y columnas en ingles): se renombran una sola vez.
+  renombrarTablasViejas() {
+    const tablas = new Set(this.consultar("SELECT name FROM sqlite_master WHERE type='table'").map(r => r.name));
+    if (!tablas.has('contracts')) return false;
+    this.db.run('PRAGMA foreign_keys = OFF;');
+    this.db.run('BEGIN');
+    try {
+      for (const [vieja, nueva] of TABLAS_VIEJAS) if (tablas.has(vieja)) this.db.run(`ALTER TABLE ${vieja} RENAME TO ${nueva}`);
+      for (const [tabla, vieja, nueva] of COLUMNAS_VIEJAS) {
+        const cols = this.consultar(`PRAGMA table_info(${tabla})`).map(r => r.name);
+        if (cols.includes(vieja)) this.db.run(`ALTER TABLE ${tabla} RENAME COLUMN ${vieja} TO ${nueva}`);
+      }
+      for (const [vieja, nueva] of CLAVES_VIEJAS) this.db.run('UPDATE ajustes SET clave=? WHERE clave=?', [nueva, vieja]);
+      for (const { clave, datos } of this.consultar('SELECT clave, datos FROM marcas')) {
+        let marca;
+        try { marca = JSON.parse(datos); } catch (_) { continue; }
+        const nueva = Object.fromEntries(Object.entries(marca).map(([k, v]) => [CAMPOS_MARCA_VIEJOS[k] || k, v]));
+        this.db.run('UPDATE marcas SET datos=? WHERE clave=?', [JSON.stringify(nueva), clave]);
+      }
+      this.db.run('COMMIT');
+    } catch (e) { this.db.run('ROLLBACK'); throw e; }
+    return true;
   }
 
   agregarColumnasFaltantes() {
@@ -54,32 +79,32 @@ class BaseDatos {
 
   // ── infraestructura ──────────────────────────────────────────────────────
   persistir() {
-    if (this.readOnly) return;
+    if (this.soloLectura) return;
     const datos = Buffer.from(this.db.export());
     // sql.js reinicia la conexion en export() y se pierden los PRAGMA.
     this.db.run('PRAGMA foreign_keys = ON;');
-    const tmp  = this.filePath + '.tmp';
+    const tmp  = this.rutaArchivo + '.tmp';
     try {
-      fs.mkdirSync(path.dirname(this.filePath), { recursive: true });
+      fs.mkdirSync(path.dirname(this.rutaArchivo), { recursive: true });
       fs.writeFileSync(tmp, datos);
-      fs.renameSync(tmp, this.filePath);
-      this.saveStatus = { ok: true, at: new Date().toISOString(), error: null };
+      fs.renameSync(tmp, this.rutaArchivo);
+      this.estadoGuardado = { ok: true, at: new Date().toISOString(), error: null };
     } catch (e) {
-      this.saveStatus = { ok: false, at: this.saveStatus.at, error: e.message };
+      this.estadoGuardado = { ok: false, at: this.estadoGuardado.at, error: e.message };
       throw e;
     }
-    if (this.onPersist) this.onPersist();
+    if (this.alPersistir) this.alPersistir();
   }
 
   respaldar(etiqueta) {
-    if (this.readOnly || !fs.existsSync(this.filePath)) return null;
-    fs.mkdirSync(this.backupDir, { recursive: true });
+    if (this.soloLectura || !fs.existsSync(this.rutaArchivo)) return null;
+    fs.mkdirSync(this.carpetaRespaldos, { recursive: true });
     const marcaTiempo = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const dest  = path.join(this.backupDir, `alquileres-${marcaTiempo}${etiqueta ? '-' + etiqueta : ''}.sqlite`);
-    fs.copyFileSync(this.filePath, dest);
-    const archivos = fs.readdirSync(this.backupDir).filter(f => f.endsWith('.sqlite')).sort();
-    for (const f of archivos.slice(0, Math.max(0, archivos.length - this.maxBackups))) {
-      try { fs.unlinkSync(path.join(this.backupDir, f)); } catch (_) {}
+    const dest  = path.join(this.carpetaRespaldos, `alquileres-${marcaTiempo}${etiqueta ? '-' + etiqueta : ''}.sqlite`);
+    fs.copyFileSync(this.rutaArchivo, dest);
+    const archivos = fs.readdirSync(this.carpetaRespaldos).filter(f => f.endsWith('.sqlite')).sort();
+    for (const f of archivos.slice(0, Math.max(0, archivos.length - this.maxRespaldos))) {
+      try { fs.unlinkSync(path.join(this.carpetaRespaldos, f)); } catch (_) {}
     }
     return dest;
   }

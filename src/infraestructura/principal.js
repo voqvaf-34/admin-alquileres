@@ -13,7 +13,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on('second-instance', ventana.mostrarVentana);
-  app.on('before-quit', () => { ctx.isQuitting = true; });
+  app.on('before-quit', () => { ctx.saliendo = true; });
 
   app.whenReady().then(async () => {
     if (ES_VISOR) {
@@ -26,8 +26,8 @@ if (!app.requestSingleInstanceLock()) {
     }
     try {
       await estadoApp.abrirBase();
-      ctx.store.respaldar('startup');
-      if (ctx.store.estaVacia() && process.env.ADMIN_ALQ_IMPORT_FILE) estadoApp.importarDesde(process.env.ADMIN_ALQ_IMPORT_FILE);
+      ctx.base.respaldar('startup');
+      if (ctx.base.estaVacia() && process.env.ADMIN_ALQ_IMPORT_FILE) estadoApp.importarDesde(process.env.ADMIN_ALQ_IMPORT_FILE);
     } catch (e) {
       dialog.showErrorBox(app.getName(), 'No se pudo abrir la base de datos:\n' + e.message);
       app.quit();
@@ -38,5 +38,5 @@ if (!app.requestSingleInstanceLock()) {
     ventana.crearVentana({ hidden: process.argv.includes(ARG_INICIO_OCULTO) });
   });
 
-  app.on('will-quit', () => { if (ctx.store) ctx.store.close(); });
+  app.on('will-quit', () => { if (ctx.base) ctx.base.close(); });
 }

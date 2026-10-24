@@ -9,7 +9,7 @@ export const MARCA_PREDETERMINADA = {
   icono: { tipo: 'app', diseno: 'edificio', color: '', imagen: '' },
 };
 
-// Claves en la tabla settings.
+// Claves en la tabla ajustes.
 const CLAVES_MARCA = {
   nombre: 'marcaNombre', color: 'marcaColor', color2: 'marcaColor2', logo: 'marcaLogo',
   tema: 'marcaTema', fuente: 'marcaFuente',
@@ -136,10 +136,10 @@ function legibleSobre(rgb, fondo, hacia) {
 }
 
 // Colores que usa la pantalla a partir del color principal (y el secundario, opcional):
-// - header / headerInk: barra superior y su texto (tambien el de los botones con fondo de color):
+// - cabecera / tintaCabecera: barra superior y su texto (tambien el de los botones con fondo de color):
 //   blanco si llega a contraste 4.5 (WCAG AA); si no, el que mas contraste tenga (blanco u oscuro)
-// - accent / accentInk: botones y textos destacados en tema claro (accentInk mas oscuro para texto)
-// - accentDark / accentInkDark: lo mismo en tema oscuro (mas claros para que se lean sobre negro)
+// - acento / acentoTinta: botones y textos destacados en tema claro (acentoTinta mas oscuro para texto)
+// - acentoOscuro / acentoTintaOscuro: lo mismo en tema oscuro (mas claros para que se lean sobre negro)
 // - sec*: lo mismo para el color secundario (pestaña activa, avisos, titulos de seccion)
 // - tinte*: fondos del tema "Con mi color"
 export function paleta(color, color2 = '') {
@@ -149,12 +149,12 @@ export function paleta(color, color2 = '') {
   const tintaCabecera = tintaSobre(base), seccionActiva = tintaSobre(seccion);
   const acentoOscuro = rgbAHex(mezclar(rgb, 0.08)), seccionOscura = rgbAHex(mezclar(rgb2, 0.08));
   return {
-    header: base, headerInk: tintaCabecera, headerFg: tintaCabecera === '#FFFFFF' ? '255,255,255' : '26,26,26',
-    accent: base, accentRgb: rgb.join(','), accentInk: rgbAHex(legibleSobre(rgb, CLARO_MAS_OSCURO, -1)),
-    accentDark: acentoOscuro, accentDarkRgb: hexARgb(acentoOscuro).join(','), accentInkDark: rgbAHex(legibleSobre(rgb, OSCURO_MAS_CLARO, 1)),
-    sec: seccion, secRgb: rgb2.join(','), secOn: seccionActiva, secInk: rgbAHex(legibleSobre(rgb2, CLARO_MAS_OSCURO, -1)),
-    secDark: seccionOscura, secDarkRgb: hexARgb(seccionOscura).join(','), secInkDark: rgbAHex(legibleSobre(rgb2, OSCURO_MAS_CLARO, 1)),
-    tinteBg: rgbAHex(mezclar(rgb, 0.93)), tinteSurface: rgbAHex(mezclar(rgb, 0.985)),
-    tinteBgDark: rgbAHex(mezclar(rgb, -0.9)), tintePanelDark: rgbAHex(mezclar(rgb, -0.84)),
+    cabecera: base, tintaCabecera, cabeceraTexto: tintaCabecera === '#FFFFFF' ? '255,255,255' : '26,26,26',
+    acento: base, acentoRgb: rgb.join(','), acentoTinta: rgbAHex(legibleSobre(rgb, CLARO_MAS_OSCURO, -1)),
+    acentoOscuro, acentoOscuroRgb: hexARgb(acentoOscuro).join(','), acentoTintaOscuro: rgbAHex(legibleSobre(rgb, OSCURO_MAS_CLARO, 1)),
+    sec: seccion, secRgb: rgb2.join(','), secOn: seccionActiva, secTinta: rgbAHex(legibleSobre(rgb2, CLARO_MAS_OSCURO, -1)),
+    secOscuro: seccionOscura, secOscuroRgb: hexARgb(seccionOscura).join(','), secTintaOscuro: rgbAHex(legibleSobre(rgb2, OSCURO_MAS_CLARO, 1)),
+    tinteFondo: rgbAHex(mezclar(rgb, 0.93)), tinteSuperficie: rgbAHex(mezclar(rgb, 0.985)),
+    tinteFondoOscuro: rgbAHex(mezclar(rgb, -0.9)), tintePanelOscuro: rgbAHex(mezclar(rgb, -0.84)),
   };
 }

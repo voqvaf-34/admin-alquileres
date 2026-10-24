@@ -20,22 +20,22 @@ export function mesSiguiente(m, y) { return m === 12 ? { m: 1, y: y + 1 } : { m:
 
 // Filtros "Sin resolver" / "Resueltos": ninguno tildado = se ven los dos.
 export function filtroResueltos() {
-  const todos = !estado.opShowSinResolver && !estado.opShowResuelto;
+  const todos = !estado.opMostrarSinResolver && !estado.opMostrarResuelto;
   return {
-    pendientes: estado.opShowSinResolver || todos,
-    resueltos: estado.opShowResuelto || todos,
-    palabra: estado.opShowSinResolver ? 'pendientes' : estado.opShowResuelto ? 'resueltos' : '',
+    pendientes: estado.opMostrarSinResolver || todos,
+    resueltos: estado.opMostrarResuelto || todos,
+    palabra: estado.opMostrarSinResolver ? 'pendientes' : estado.opMostrarResuelto ? 'resueltos' : '',
   };
 }
 
 // Inquilino y propietario con sus telefonos y contactos (y el mail del inquilino si se pide).
 export function datosPersonas(e, { conMail = false } = {}) {
-  return `<div class="card-grid">
+  return `<div class="tarjeta-grilla">
         <div><span class="lbl">Inq: </span>${formatearNombres(e.inquilino)}</div>
         <div><span class="lbl">Prop: </span>${formatearNombres(e.propietario)}</div>
         <div><span class="lbl">Tel: </span>${enlaceTelefono(e.telInq)}</div>
         <div><span class="lbl">Tel: </span>${enlaceTelefono(e.telProp)}</div>
-        ${filaContacto(e, 'full')}
-        ${conMail && e.mailInq ? `<div class="full"><span class="lbl">Mail: </span>${formatearMails(e.mailInq)}</div>` : ''}
+        ${filaContacto(e, 'completo')}
+        ${conMail && e.mailInq ? `<div class="completo"><span class="lbl">Mail: </span>${formatearMails(e.mailInq)}</div>` : ''}
       </div>`;
 }

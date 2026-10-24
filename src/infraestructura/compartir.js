@@ -11,7 +11,7 @@ const rutaDocsCompartidos = dir => path.join(dir, DOCS_COMPARTIDOS);
 
 // Copia la base a la carpeta compartida: primero a un temporal y despues se renombra,
 // asi el visor nunca lee un archivo a medio copiar. Las fotos se copian si faltan.
-function publicar({ dbFile, carpetaDocs, sharedDir: carpetaCompartida, by: por }) {
+function publicar({ archivoBase: dbFile, carpetaDocs, carpetaCompartida, por }) {
   fs.mkdirSync(carpetaCompartida, { recursive: true });
   const tmp = path.join(carpetaCompartida, `${BASE_COMPARTIDA}.tmp-${process.pid}`);
   fs.copyFileSync(dbFile, tmp);

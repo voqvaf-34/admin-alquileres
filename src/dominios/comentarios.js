@@ -22,7 +22,7 @@ const NOTA_RENOVACION = [
 export function interpretarNotaRenovacion(n) {
   for (const re of NOTA_RENOVACION) {
     const m = String(n).trim().match(re);
-    if (m && dmy(m[1])) return { date: dmy(m[1]), years: +m[2] };
+    if (m && dmy(m[1])) return { fecha: dmy(m[1]), anios: +m[2] };
   }
   return null;
 }

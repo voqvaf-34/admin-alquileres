@@ -8,12 +8,12 @@ const CACHE = 'alq-marca';   // tema.js la aplica antes del primer pintado (evit
 // Variables CSS (--m-*) que usa estilos.css a partir de la paleta.
 function variablesCss(p, fuente) {
   return {
-    '--m-header': p.header, '--m-header-ink': p.headerInk, '--m-header-fg': p.headerFg,
-    '--m-accent': p.accent, '--m-accent-rgb': p.accentRgb, '--m-ink': p.accentInk,
-    '--m-accent-dk': p.accentDark, '--m-accent-dk-rgb': p.accentDarkRgb, '--m-ink-dk': p.accentInkDark,
-    '--m-sec': p.sec, '--m-sec-rgb': p.secRgb, '--m-sec-on': p.secOn, '--m-sec-ink': p.secInk,
-    '--m-sec-dk': p.secDark, '--m-sec-dk-rgb': p.secDarkRgb, '--m-sec-ink-dk': p.secInkDark,
-    '--m-tinte-bg': p.tinteBg, '--m-tinte-surface': p.tinteSurface, '--m-tinte-bg-dk': p.tinteBgDark, '--m-tinte-panel-dk': p.tintePanelDark,
+    '--m-cabecera': p.cabecera, '--m-cabecera-tinta': p.tintaCabecera, '--m-cabecera-letra': p.cabeceraTexto,
+    '--m-acento': p.acento, '--m-acento-rgb': p.acentoRgb, '--m-tinta': p.acentoTinta,
+    '--m-acento-osc': p.acentoOscuro, '--m-acento-osc-rgb': p.acentoOscuroRgb, '--m-tinta-osc': p.acentoTintaOscuro,
+    '--m-sec': p.sec, '--m-sec-rgb': p.secRgb, '--m-sec-sobre': p.secOn, '--m-sec-tinta': p.secTinta,
+    '--m-sec-osc': p.secOscuro, '--m-sec-osc-rgb': p.secOscuroRgb, '--m-sec-tinta-osc': p.secTintaOscuro,
+    '--m-tinte-fondo': p.tinteFondo, '--m-tinte-superficie': p.tinteSuperficie, '--m-tinte-fondo-osc': p.tinteFondoOscuro, '--m-tinte-panel-osc': p.tintePanelOscuro,
     '--fuente': FUENTES[fuente].css,
   };
 }
@@ -31,7 +31,7 @@ function pintarNombreYLogo({ nombre, logo }) {
     if (logo) el.src = logo; else el.removeAttribute('src');
     el.hidden = !logo;
   });
-  const hdr = document.getElementById('hdr-logo');
+  const hdr = document.getElementById('cab-logo');
   if (hdr) hdr.setAttribute('aria-label', nombre);
 }
 
@@ -41,12 +41,12 @@ export function aplicarMarca(ajustes) {
   const marca = leerMarca(ajustes);
   pintarApariencia(document.documentElement, marca);
   pintarNombreYLogo(marca);
-  document.title = `${marca.nombre} · Alquileres${document.body.classList.contains('viewer') ? ' · Visor' : ''}`;
+  document.title = `${marca.nombre} · Alquileres${document.body.classList.contains('visor') ? ' · Visor' : ''}`;
   // La barra de titulo de Windows (botones minimizar/cerrar) y el icono los maneja el proceso principal.
   const p = paleta(marca.color, marca.color2);
   if (marca.color !== ultimoColor) {
     ultimoColor = marca.color;
-    window.api.ponerColorBarraTitulo(p.header, p.headerInk).catch(() => {});
+    window.api.ponerColorBarraTitulo(p.cabecera, p.tintaCabecera).catch(() => {});
   }
   // Icono: se vuelve a dibujar solo si cambio algo que lo afecta.
   const clave = claveIcono(marca);

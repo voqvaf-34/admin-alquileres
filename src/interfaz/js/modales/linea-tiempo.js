@@ -9,14 +9,14 @@ import { formatearNombres } from '../nucleo/formato.js';
 export function mostrarLineaTiempo(e) {
   if (!e) return;
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-  const ev = D.lineaTiempo(e, estado.marks, estado.entries);
+  const ev = D.lineaTiempo(e, estado.marcas, estado.entradas);
   document.getElementById('tl-dir').innerHTML =
-    `<strong>${esc(e.direccion)}</strong> &middot; ${formatearNombres(e.inquilino)}${e.inactive ? ' <span class="inactive-badge">INACTIVO</span>' : ''}`;
-  document.getElementById('tl-list').innerHTML = ev.map(x => `
-    <div class="tl-item tl-${x.tipo}${x.date && x.date > hoy ? ' tl-futuro' : ''}">
-      <div class="tl-date">${x.date ? formatearFecha(x.date) : ''}</div>
-      <div class="tl-dot"></div>
-      <div class="tl-body"><div class="tl-title">${esc(x.titulo)}</div>${x.detalle ? `<div class="tl-det">${esc(x.detalle)}</div>` : ''}</div>
-    </div>`).join('') || '<div class="empty">Sin datos para armar la línea de tiempo.</div>';
-  document.getElementById('modal-timeline').classList.add('open');
+    `<strong>${esc(e.direccion)}</strong> &middot; ${formatearNombres(e.inquilino)}${e.inactivo ? ' <span class="inactivo-insignia">INACTIVO</span>' : ''}`;
+  document.getElementById('tl-lista').innerHTML = ev.map(x => `
+    <div class="tl-item tl-${x.tipo}${x.fecha && x.fecha > hoy ? ' tl-futuro' : ''}">
+      <div class="tl-fecha">${x.fecha ? formatearFecha(x.fecha) : ''}</div>
+      <div class="tl-punto"></div>
+      <div class="tl-body"><div class="tl-titulo">${esc(x.titulo)}</div>${x.detalle ? `<div class="tl-det">${esc(x.detalle)}</div>` : ''}</div>
+    </div>`).join('') || '<div class="vacio">Sin datos para armar la línea de tiempo.</div>';
+  document.getElementById('modal-linea-tiempo').classList.add('abierto');
 }

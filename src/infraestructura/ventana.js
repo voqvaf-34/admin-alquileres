@@ -13,14 +13,14 @@ let trayHintShown = false;
 
 // Color de la barra (el de la marca). Se recuerda en un archivo para usarlo al abrir la
 // ventana, antes de leer la base.
-const BARRA_PREDETERMINADA = { color: '#2563EB', ink: '#FFFFFF' };
+const BARRA_PREDETERMINADA = { color: '#2563EB', tinta: '#FFFFFF' };
 const esHex = c => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c);
 const archivoBarra = () => path.join(app.getPath('userData'), 'ventana.json');
 
 function leerBarra() {
   try {
     const b = JSON.parse(fs.readFileSync(archivoBarra(), 'utf8'));
-    if (esHex(b.color) && esHex(b.ink)) return b;
+    if (esHex(b.color) && esHex(b.tinta)) return b;
   } catch (_) {}
   return BARRA_PREDETERMINADA;
 }
@@ -31,12 +31,12 @@ const alturaBarra = () => Math.round(ALTO_BARRA_TITULO * zoom);
 
 function ponerColorBarraTitulo(color, tinta) {
   if (!esHex(color) || !esHex(tinta)) throw new Error('Color no valido.');
-  if (ctx.win && !ctx.win.isDestroyed()) {
-    ctx.win.setBackgroundColor(color);
-    if (process.platform === 'win32') ctx.win.setTitleBarOverlay({ color, symbolColor: tinta, height: alturaBarra() });
+  if (ctx.ventana && !ctx.ventana.isDestroyed()) {
+    ctx.ventana.setBackgroundColor(color);
+    if (process.platform === 'win32') ctx.ventana.setTitleBarOverlay({ color, symbolColor: tinta, height: alturaBarra() });
   }
   const anterior = leerBarra();
-  if (anterior.color !== color || anterior.ink !== tinta) fs.writeFileSync(archivoBarra(), JSON.stringify({ color, ink: tinta }));
+  if (anterior.color !== color || anterior.tinta !== tinta) fs.writeFileSync(archivoBarra(), JSON.stringify({ color, tinta }));
   return true;
 }
 
@@ -44,10 +44,10 @@ function ponerZoom(factor) {
   const f = Number(factor);
   if (!(f >= 0.8 && f <= 1.6)) throw new Error('Tamaño no valido.');
   zoom = f;
-  if (ctx.win && !ctx.win.isDestroyed()) {
-    ctx.win.webContents.setZoomFactor(f);
+  if (ctx.ventana && !ctx.ventana.isDestroyed()) {
+    ctx.ventana.webContents.setZoomFactor(f);
     const b = leerBarra();
-    if (process.platform === 'win32') ctx.win.setTitleBarOverlay({ color: b.color, symbolColor: b.ink, height: alturaBarra() });
+    if (process.platform === 'win32') ctx.ventana.setTitleBarOverlay({ color: b.color, symbolColor: b.tinta, height: alturaBarra() });
   }
   return true;
 }
@@ -74,20 +74,20 @@ function ponerIconoApp(png) {
   } else {
     try { fs.unlinkSync(archivoIcono()); } catch (_) {}
   }
-  if (ctx.win && !ctx.win.isDestroyed()) ctx.win.setIcon(img || nativeImage.createFromPath(ICONO));
+  if (ctx.ventana && !ctx.ventana.isDestroyed()) ctx.ventana.setIcon(img || nativeImage.createFromPath(ICONO));
   if (bandeja && !bandeja.isDestroyed()) bandeja.setImage(iconoBandeja(img));
   return true;
 }
 
 function mostrarVentana() {
-  if (!ctx.win) return;
-  if (ctx.win.isMinimized()) ctx.win.restore();
-  ctx.win.show();
-  ctx.win.focus();
+  if (!ctx.ventana) return;
+  if (ctx.ventana.isMinimized()) ctx.ventana.restore();
+  ctx.ventana.show();
+  ctx.ventana.focus();
 }
 
 function salirDeApp() {
-  ctx.isQuitting = true;
+  ctx.saliendo = true;
   app.quit();
 }
 
@@ -122,7 +122,7 @@ function crearBandeja() {
 
 function crearVentana({ hidden: oculto = false } = {}) {
   const barra = leerBarra();
-  ctx.win = new BrowserWindow({
+  ctx.ventana = new BrowserWindow({
     width: 1400, height: 900, minWidth: 900, minHeight: 600,
     // Pruebas automaticas: la ventana se abre fuera de la pantalla y sin aparecer en la barra de
     // tareas, para no tapar lo que este haciendo quien corre las pruebas.
@@ -135,7 +135,7 @@ function crearVentana({ hidden: oculto = false } = {}) {
     // La barra de titulo de Windows se integra a la barra de color de la app: quedan solo los
     // botones minimizar/maximizar/cerrar dibujados sobre el color de la marca.
     titleBarStyle: 'hidden',
-    titleBarOverlay: { color: barra.color, symbolColor: barra.ink, height: alturaBarra() },
+    titleBarOverlay: { color: barra.color, symbolColor: barra.tinta, height: alturaBarra() },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -148,25 +148,25 @@ function crearVentana({ hidden: oculto = false } = {}) {
   // (ADMIN_ALQ_NO_EXTERNAL) nunca se abren: solo se anotan.
   const abrirExterno = url => {
     if (!/^(https:|mailto:)/i.test(url)) return;
-    if (process.env.ADMIN_ALQ_NO_EXTERNAL) { (global.blockedExternal = global.blockedExternal || []).push(url); return; }
+    if (process.env.ADMIN_ALQ_NO_EXTERNAL) { (global.externoBloqueado = global.externoBloqueado || []).push(url); return; }
     shell.openExternal(url);
   };
-  ctx.win.webContents.setWindowOpenHandler(({ url }) => { abrirExterno(url); return { action: 'deny' }; });
-  ctx.win.webContents.on('will-navigate', (e, url) => {
+  ctx.ventana.webContents.setWindowOpenHandler(({ url }) => { abrirExterno(url); return { action: 'deny' }; });
+  ctx.ventana.webContents.on('will-navigate', (e, url) => {
     if (!url.startsWith('file://')) { e.preventDefault(); abrirExterno(url); }
   });
 
   // Se muestra cuando el tema ya esta aplicado (evita el destello inicial).
-  ctx.win.once('ready-to-show', () => {
+  ctx.ventana.once('ready-to-show', () => {
     if (oculto) return;
-    if (FUERA_DE_PANTALLA) ctx.win.showInactive(); else ctx.win.show();
+    if (FUERA_DE_PANTALLA) ctx.ventana.showInactive(); else ctx.ventana.show();
   });
 
   // Cerrar la ventana la oculta en la bandeja; solo "Cerrar" del menu de la bandeja sale.
-  ctx.win.on('close', e => {
-    if (ctx.isQuitting) return;
+  ctx.ventana.on('close', e => {
+    if (ctx.saliendo) return;
     e.preventDefault();
-    ctx.win.hide();
+    ctx.ventana.hide();
     if (!trayHintShown && bandeja) {
       trayHintShown = true;
       bandeja.displayBalloon({
@@ -176,7 +176,7 @@ function crearVentana({ hidden: oculto = false } = {}) {
     }
   });
 
-  ctx.win.loadFile(path.join(__dirname, '..', 'interfaz', 'index.html'));
+  ctx.ventana.loadFile(path.join(__dirname, '..', 'interfaz', 'index.html'));
 }
 
 Object.assign(module.exports, { ponerZoom, ponerIconoApp, ponerColorBarraTitulo, mostrarVentana, crearBandeja, crearVentana });

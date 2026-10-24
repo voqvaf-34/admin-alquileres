@@ -24,7 +24,7 @@ async function lanzar(carpetaDatos, entornoExtra = {}, { ejecutable = null, tama
   await page.setViewportSize(tamano).catch(() => {});
   // El modo de color sigue al de Windows: las pruebas lo fijan en claro para no depender de la PC.
   await page.emulateMedia({ colorScheme: 'light' });
-  return { app, page, errors: errores };
+  return { app, page, errores };
 }
 
 const carpetaTemporal = (prefijo = 'alq-e2e-') => fs.mkdtempSync(path.join(os.tmpdir(), prefijo));
@@ -36,9 +36,9 @@ function captura(page, nombre) {
 
 // Primer arranque: "Empezar con una base vacia".
 async function empezarVacia(page) {
-  await page.waitForSelector('#upload-screen', { state: 'visible' });
-  await page.click('#btn-start-empty');
-  await page.waitForSelector('#app-screen', { state: 'visible' });
+  await page.waitForSelector('#carga-pantalla', { state: 'visible' });
+  await page.click('#btn-inicio-vacio');
+  await page.waitForSelector('#app-pantalla', { state: 'visible' });
 }
 
 // Abre Configuracion y espera a que la ventana enfoque el primer campo (lo hace a los 80 ms):
@@ -46,14 +46,14 @@ async function empezarVacia(page) {
 async function abrirConfiguracion(page) {
   await page.click('#btn-menu');
   await page.click('#btn-config');
-  await page.waitForSelector('#modal-config.open');
+  await page.waitForSelector('#modal-config.abierto');
   await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'cfg-nombre');
 }
 
 // Elige un color sugerido en la pestaña Apariencia (campo 'color' o 'color2').
 async function elegirColor(page, color, campo = 'color') {
-  await page.click('[data-cfg-tab="apariencia"]');
-  await page.click(`[data-color-picker="${campo}"] .cfg-swatch[data-color="${color}"]`);
+  await page.click('[data-cfg-pestana="apariencia"]');
+  await page.click(`[data-color-selector="${campo}"] .cfg-muestra[data-color="${color}"]`);
 }
 
 module.exports = { ROOT, SHOTS, lanzar, carpetaTemporal, captura, empezarVacia, abrirConfiguracion, elegirColor };

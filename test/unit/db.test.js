@@ -9,7 +9,7 @@ function carpetaTemporal() { return fs.mkdtempSync(path.join(os.tmpdir(), 'alq-d
 
 const muestra = {
   direccion: 'CERRO LARGO 1234 AP 301', propietario: 'Ana', telProp: '099111222', mailProp: 'a@x.com',
-  importeBase: 25000, contratoStr: '2 AÑOS', fechaInicio: '2024-05-10',
+  importeBase: 25000, contratoTexto: '2 AÑOS', fechaInicio: '2024-05-10',
   inquilino: 'Beto', telInq: '098', mailInq: 'b@x.com', notas: 'nota',
 };
 
@@ -20,7 +20,7 @@ test('crea la base, agrega y persiste en disco', async () => {
   const c = s1.agregarContrato(muestra);
   assert.equal(c.importe, 25000);
   assert.equal(c.importeBase, 25000);
-  assert.equal(c.inactive, false);
+  assert.equal(c.inactivo, false);
   s1.close();
 
   const s2 = await BaseDatos.open(archivo);
@@ -52,17 +52,17 @@ test('editar, patch de aumento/comentario e inactivar', async () => {
   assert.equal(p.direccion, muestra.direccion, 'campos no permitidos se ignoran');
 
   assert.equal(s.modificarContrato(c.id, { notas: '' }).notas, '');
-  assert.equal(s.marcarInactivo(c.id).inactive, true);
+  assert.equal(s.marcarInactivo(c.id).inactivo, true);
   assert.throws(() => s.marcarInactivo(9999), /inexistente/);
   s.close();
 });
 
 test('marks: reemplazo completo y lectura', async () => {
   const s = await BaseDatos.open(path.join(carpetaTemporal(), 'd.sqlite'));
-  s.reemplazarMarcas({ 'v|X': { date: '01/01/2026', nuevaInicio: '01/02/2026', renewYears: 2 }, 'nr|Y': { date: 'z', desc: 'se va' } });
+  s.reemplazarMarcas({ 'v|X': { fecha: '01/01/2026', nuevaInicio: '01/02/2026', aniosRenovacion: 2 }, 'nr|Y': { fecha: 'z', descripcion: 'se va' } });
   assert.deepEqual(Object.keys(s.obtenerMarcas()).sort(), ['nr|Y', 'v|X']);
-  s.reemplazarMarcas({ 'a|X|3|2026': { date: 'q', xlSaved: true } });
-  assert.deepEqual(s.obtenerMarcas(), { 'a|X|3|2026': { date: 'q', xlSaved: true } });
+  s.reemplazarMarcas({ 'a|X|3|2026': { fecha: 'q', guardadoEnExcel: true } });
+  assert.deepEqual(s.obtenerMarcas(), { 'a|X|3|2026': { fecha: 'q', guardadoEnExcel: true } });
   s.close();
 });
 
@@ -79,15 +79,15 @@ test('administraciones: alta, edicion, baja', async () => {
 
 test('importarDatos reemplaza todo y respaldar rota archivos', async () => {
   const dir = carpetaTemporal();
-  const s = await BaseDatos.open(path.join(dir, 'f.sqlite'), { maxBackups: 3 });
+  const s = await BaseDatos.open(path.join(dir, 'f.sqlite'), { maxRespaldos: 3 });
   s.agregarContrato(muestra);
-  const res = s.importarDatos({ contracts: [{ ...muestra, importe: 30000 }, { ...muestra, direccion: 'OTRA', inactive: true }], admins: [{ nombre: 'A' }] });
-  assert.deepEqual(res, { contracts: 2, admins: 1 });
+  const res = s.importarDatos({ contratos: [{ ...muestra, importe: 30000 }, { ...muestra, direccion: 'OTRA', inactivo: true }], administraciones: [{ nombre: 'A' }] });
+  assert.deepEqual(res, { contratos: 2, administraciones: 1 });
   const lista = s.listarContratos();
   assert.equal(lista.length, 2);
   assert.equal(lista[0].id, 1, 'los ids se reinician');
   assert.equal(lista[0].importe, 30000, 'conserva el importe actual importado');
-  assert.equal(lista[1].inactive, true);
+  assert.equal(lista[1].inactivo, true);
   for (let i = 0; i < 5; i++) s.respaldar('t' + i);
   assert.equal(fs.readdirSync(path.join(dir, 'backups')).length, 3);
   s.close();
@@ -128,23 +128,23 @@ test('agregar planilla: suma sin tocar lo cargado, saltea repetidos y vincula pr
   const anterior = s.agregarContrato(muestra);
   s.vincularPropietariosDesdeTexto(anterior.id, 'Ana', '', '', claveNombre);
   s.guardarAdmin({ nombre: 'Admin Sur', edificios: 'Torre Ceibo' });
-  const fila = (o) => ({ ...muestra, importe: muestra.importeBase, moneda: 'UYU', inactive: false, ...o });
+  const fila = (o) => ({ ...muestra, importe: muestra.importeBase, moneda: 'UYU', inactivo: false, ...o });
   const r = s.agregarImportados({
-    contracts: [
+    contratos: [
       fila({}),                                                               // repetido
       fila({ direccion: 'Maldonado 1580 U2', inquilino: 'Camila', propietario: 'Ana / Bruno', moneda: 'USD', importeBase: 900, importe: 950 }),
-      fila({ direccion: 'Guayabo 1850 U3', inquilino: 'Dario', propietario: 'Bruno', inactive: true }),
+      fila({ direccion: 'Guayabo 1850 U3', inquilino: 'Dario', propietario: 'Bruno', inactivo: true }),
     ],
-    admins: [{ nombre: 'ADMIN SUR' }, { nombre: 'Consorcio Guayabo', edificios: 'Guayabo' }],
+    administraciones: [{ nombre: 'ADMIN SUR' }, { nombre: 'Consorcio Guayabo', edificios: 'Guayabo' }],
   }, claveNombre);
-  assert.deepEqual(r, { agregados: 2, repetidos: 1, admins: 1 });
+  assert.deepEqual(r, { agregados: 2, repetidos: 1, administraciones: 1 });
   const lista = s.listarContratos();
   assert.equal(lista.length, 3);
   const mald = lista.find(c => c.direccion === 'Maldonado 1580 U2');
-  assert.deepEqual([mald.moneda, mald.importe, mald.importeBase, mald.inactive], ['USD', 950, 900, false]);
-  assert.equal(lista.find(c => c.direccion === 'Guayabo 1850 U3').inactive, true);
+  assert.deepEqual([mald.moneda, mald.importe, mald.importeBase, mald.inactivo], ['USD', 950, 900, false]);
+  assert.equal(lista.find(c => c.direccion === 'Guayabo 1850 U3').inactivo, true);
   const propietarios = s.listarPropietarios().map(o => o.nombre).sort();
   assert.deepEqual(propietarios, ['Ana', 'Bruno'], 'Ana se reutiliza, Bruno se crea una sola vez');
-  assert.equal(s.listarPropietariosDeContratos().filter(l => l.contractId === mald.id).length, 2);
+  assert.equal(s.listarPropietariosDeContratos().filter(l => l.idContrato === mald.id).length, 2);
   assert.deepEqual(s.listarAdmins().map(a => a.nombre), ['Admin Sur', 'Consorcio Guayabo']);
 });

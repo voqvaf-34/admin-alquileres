@@ -4,14 +4,14 @@ import { MES_ES } from './fechas.js';
 // El INE publica el IPC del mes anterior alrededor del dia 5.
 export function ultimoIPCPublicado(ahora) {
   const d = ahora.getDate(), m = ahora.getMonth()+1, y = ahora.getFullYear();
-  if (d >= 5) return m === 1 ? {month:12, year:y-1} : {month:m-1, year:y};
-  if (m === 1) return {month:11, year:y-1};
-  if (m === 2) return {month:12, year:y-1};
-  return {month:m-2, year:y};
+  if (d >= 5) return m === 1 ? {mes:12, anio:y-1} : {mes:m-1, anio:y};
+  if (m === 1) return {mes:11, anio:y-1};
+  if (m === 2) return {mes:12, anio:y-1};
+  return {mes:m-2, anio:y};
 }
 
-export function mesAnterior({month: mes, year: anio}) {
-  return mes === 1 ? {month:12, year:anio-1} : {month:mes-1, year: anio};
+export function mesAnterior({ mes, anio }) {
+  return mes === 1 ? {mes:12, anio:anio-1} : {mes:mes-1, anio};
 }
 
 export function urlPaginaIPC(mes, anio) {

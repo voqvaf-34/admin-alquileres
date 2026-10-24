@@ -1,8 +1,8 @@
 {
   "_descripcion": "Reglas para unificar propietarios importados: contactos conocidos, alias, notas y correcciones. Vacio por defecto.",
-  "contacts": [],
-  "overrides": {},
-  "aliases": {},
-  "ownerNotes": {},
-  "phoneFixes": []
+  "contactos": [],
+  "correccionesManuales": {},
+  "alias": {},
+  "notasPropietarios": {},
+  "correccionesTelefono": []
 }
