@@ -2,7 +2,12 @@
 
 Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión tiene su tag `vX.Y.Z` en git.
 
-## [Sin publicar]
+## [0.9.0] - 2026-10-24
+
+### Agregado
+- `historia/v0-html/`: la app HTML original con la que empezó el proyecto (sin datos de la inmobiliaria), y la
+  sección "Cómo empezó" en el README.
+- Flujo de trabajo con ramas y pull requests: `main` protegida, solo se cambia por PR con las pruebas en verde.
 
 ### Cambiado (código, sin cambios visibles)
 - Todo el modelo de datos en español: tablas y columnas de la base (`contratos`, `propietarios`, `ajustes`...),
@@ -11,6 +16,9 @@ Todas las versiones siguen [SemVer](https://semver.org/lang/es/). Cada versión 
 - Una base de la 0.8.1 o anterior se migra sola al abrirla (tablas, columnas, claves de configuración y el
   contenido de las marcas). El Visor la lee sin escribirla.
 - Regla de lint `object-shorthand`.
+
+### Corregido
+- Prueba del Visor que a veces fallaba en GitHub: ahora espera la publicación hecha después de guardar.
 
 ## [0.8.1] - 2026-10-23
 
