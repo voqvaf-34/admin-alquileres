@@ -13,7 +13,7 @@ test('mensajes: usan el nombre de la inmobiliaria de la configuracion', () => {
 });
 
 test('mensajes: plantilla propia con variables', () => {
-  const ajustes = { msgRenovacion: 'Hola {inquilino}, tu contrato de {direccion} vence el {vencimiento}. {inmobiliaria}' };
+  const ajustes = { mensajeRenovacionTexto: 'Hola {inquilino}, tu contrato de {direccion} vence el {vencimiento}. {inmobiliaria}' };
   assert.equal(D.mensajeRenovacion(new Date(2026, 10, 1), { settings: ajustes, contrato }),
     'Hola Beto Gomez, tu contrato de Torre Ceibo - Av. Italia 875 U403 vence el 01/11/2026. Mi Inmobiliaria');
 });
@@ -27,8 +27,8 @@ test('mensajes: variables desconocidas o vacias quedan a la vista', () => {
 test('mensajes: guardar el texto original o vacio equivale a usar el original', () => {
   const original = D.PLANTILLAS.renovacion.texto;
   assert.deepEqual(D.mensajesASettings({ renovacion: original, aumentoInquilino: '  ', aumentoPropietario: 'Otro texto' }),
-    { msgRenovacion: '', msgAumentoInq: '', msgAumentoProp: 'Otro texto' });
+    { mensajeRenovacionTexto: '', mensajeAumentoInq: '', mensajeAumentoProp: 'Otro texto' });
   assert.deepEqual(D.mensajesASettings({}), {});
   assert.throws(() => D.mensajesASettings({ renovacion: 'x'.repeat(D.PLANTILLA_MAX + 1) }), /2000/);
-  assert.equal(D.textoPlantilla({ msgRenovacion: '' }, 'renovacion'), original);
+  assert.equal(D.textoPlantilla({ mensajeRenovacionTexto: '' }, 'renovacion'), original);
 });

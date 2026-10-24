@@ -78,7 +78,7 @@ test('configuracion: plantillas de mensajes', { timeout: 60000 }, async () => {
     await captura(page, '12-mensajes');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });
-    assert.equal(await page.evaluate(() => app.estado.appSettings.msgRenovacion), 'Hola {inquilino}, vence el {vencimiento}. {nada}');
+    assert.equal(await page.evaluate(() => app.estado.appSettings.mensajeRenovacionTexto), 'Hola {inquilino}, vence el {vencimiento}. {nada}');
 
     // Al reabrir se ve el texto guardado; restaurar el original lo guarda vacio (= original).
     await abrirConfiguracion(page);
@@ -88,7 +88,7 @@ test('configuracion: plantillas de mensajes', { timeout: 60000 }, async () => {
     await page.click('[data-msg="renovacion"] .cfg-restaurar');
     await page.click('#cfg-guardar');
     await page.waitForSelector('#modal-config', { state: 'hidden' });
-    assert.equal(await page.evaluate(() => app.estado.appSettings.msgRenovacion), '');
+    assert.equal(await page.evaluate(() => app.estado.appSettings.mensajeRenovacionTexto), '');
     assert.deepEqual(errores, []);
   } finally { await app.close(); }
 });

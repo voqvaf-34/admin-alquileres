@@ -15,7 +15,7 @@ test('publicar copia la base y las fotos sin dejar temporales', async () => {
   s.agregarContrato({ ...base, direccion: 'A 1' });
   fs.mkdirSync(path.join(local, 'documentos'));
   fs.writeFileSync(path.join(local, 'documentos', 'prop1-cedula.jpg'), 'x');
-  const info = share.publicar({ dbFile: s.filePath, carpetaDocs: path.join(local, 'documentos'), sharedDir: compartida, by: 'test' });
+  const info = share.publicar({ dbFile: s.filePath, carpetaDocs: path.join(local, 'documentos'), carpetaCompartida: compartida, by: 'test' });
   assert.ok(info.publicado);
   assert.deepEqual(fs.readdirSync(compartida).sort(), ['alquileres.sqlite', 'documentos', 'publicado.json']);
   assert.ok(fs.existsSync(path.join(compartida, 'documentos', 'prop1-cedula.jpg')));
@@ -27,7 +27,7 @@ test('el visor abre la base en solo lectura y nunca la modifica', async () => {
   const local = carpetaTemporal(), compartida = carpetaTemporal();
   const s = await BaseDatos.open(path.join(local, 'alquileres.sqlite'));
   s.agregarContrato({ ...base, direccion: 'A 1' });
-  share.publicar({ dbFile: s.filePath, sharedDir: compartida });
+  share.publicar({ dbFile: s.filePath, carpetaCompartida: compartida });
   const archivo = share.rutaBaseCompartida(compartida);
   const antesDe = fs.readFileSync(archivo);
   const v = await BaseDatos.open(archivo, { readOnly: true });

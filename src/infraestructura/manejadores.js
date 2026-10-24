@@ -108,12 +108,12 @@ function registrarManejadores() {
     return res.filePath;
   });
   manejar('start:empty', () => {
-    ctx.store.guardarAjuste('initialized', '1');
-    ctx.store.guardarAjuste('ownersVersion', VERSION_PROPIETARIOS);
-    ctx.store.guardarAjuste('addressVersion', VERSION_DIRECCIONES);
-    ctx.store.guardarAjuste('cleanupVersion', VERSION_LIMPIEZA);
-    ctx.store.guardarAjuste('garantiaVersion', VERSION_GARANTIAS);
-    ctx.store.guardarAjuste('monedaVersion', VERSION_MONEDA);
+    ctx.store.guardarAjuste('inicializada', '1');
+    ctx.store.guardarAjuste('versionPropietarios', VERSION_PROPIETARIOS);
+    ctx.store.guardarAjuste('versionDirecciones', VERSION_DIRECCIONES);
+    ctx.store.guardarAjuste('versionLimpieza', VERSION_LIMPIEZA);
+    ctx.store.guardarAjuste('versionGarantias', VERSION_GARANTIAS);
+    ctx.store.guardarAjuste('versionMoneda', VERSION_MONEDA);
     return estadoApp.state();
   });
 
@@ -176,11 +176,11 @@ function registrarManejadores() {
       defaultPath: CARPETA_COMPARTIDA_PREDETERMINADA && fs.existsSync(path.dirname(CARPETA_COMPARTIDA_PREDETERMINADA)) ? path.dirname(CARPETA_COMPARTIDA_PREDETERMINADA) : undefined,
     });
     if (res.canceled || !res.filePaths[0]) return publicacion.estadoCompartir();
-    ctx.store.guardarAjuste('sharedDir', res.filePaths[0]);
+    ctx.store.guardarAjuste('carpetaCompartida', res.filePaths[0]);
     publicacion.publicarAhora();
     return publicacion.estadoCompartir();
   });
-  manejar('share:disable', () => { ctx.store.guardarAjuste('sharedDir', '-'); publicacion.publicarAhora(); return publicacion.estadoCompartir(); });
+  manejar('share:disable', () => { ctx.store.guardarAjuste('carpetaCompartida', '-'); publicacion.publicarAhora(); return publicacion.estadoCompartir(); });
 }
 
 // El Visor solo lee: no se registra ningun canal que modifique datos.

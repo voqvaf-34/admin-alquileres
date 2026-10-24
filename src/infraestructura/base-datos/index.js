@@ -3,7 +3,7 @@
 const fs   = require('fs');
 const path = require('path');
 const initSqlJs = require('sql.js');
-const { COLUMNAS_AGREGADAS, COLUMNAS_VIEJAS, ESQUEMA, TABLAS_VIEJAS } = require('./esquema');
+const { CLAVES_VIEJAS, COLUMNAS_AGREGADAS, COLUMNAS_VIEJAS, ESQUEMA, TABLAS_VIEJAS } = require('./esquema');
 const { MetodosAdministraciones } = require('./administraciones');
 const { MetodosAjustes } = require('./ajustes');
 const { MetodosContratos } = require('./contratos');
@@ -56,6 +56,7 @@ class BaseDatos {
         const cols = this.consultar(`PRAGMA table_info(${tabla})`).map(r => r.name);
         if (cols.includes(vieja)) this.db.run(`ALTER TABLE ${tabla} RENAME COLUMN ${vieja} TO ${nueva}`);
       }
+      for (const [vieja, nueva] of CLAVES_VIEJAS) this.db.run('UPDATE ajustes SET clave=? WHERE clave=?', [nueva, vieja]);
       this.db.run('COMMIT');
     } catch (e) { this.db.run('ROLLBACK'); throw e; }
     return true;

@@ -17,7 +17,8 @@ async function cargarVisor() {
   if (!ctx.viewer.dir) {
     let cfg = {};
     try { cfg = JSON.parse(fs.readFileSync(archivoConfigVisor(), 'utf8')); } catch (_) {}
-    ctx.viewer.dir = process.env.ADMIN_ALQ_SHARED_DIR || cfg.sharedDir || CARPETA_COMPARTIDA_PREDETERMINADA;
+    // cfg.sharedDir: archivo de configuracion del Visor de hasta la 0.8.1.
+    ctx.viewer.dir = process.env.ADMIN_ALQ_SHARED_DIR || cfg.carpetaCompartida || cfg.sharedDir || CARPETA_COMPARTIDA_PREDETERMINADA;
   }
   if (!ctx.viewer.dir) { ctx.viewer.error = 'Todavía no se eligió la carpeta compartida.'; return; }
   try {
@@ -51,7 +52,7 @@ async function elegirCarpetaVisor() {
   const dir = res.filePaths[0];
   if (!fs.existsSync(share.rutaBaseCompartida(dir))) throw new Error('En esa carpeta no está la base compartida (alquileres.sqlite).');
   ctx.viewer.dir = dir;
-  fs.writeFileSync(archivoConfigVisor(), JSON.stringify({ sharedDir: dir }));
+  fs.writeFileSync(archivoConfigVisor(), JSON.stringify({ carpetaCompartida: dir }));
   await cargarVisor();
   return estadoApp.state();
 }

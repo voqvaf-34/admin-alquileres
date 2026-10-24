@@ -26,7 +26,7 @@ function state() {
     marks:     ctx.store.obtenerMarcas(),
     settings:  ctx.store.obtenerAjustes(),
     estadoDeshacer:      ctx.store.estadoDeshacer(),
-    needsImport: !ES_VISOR && ctx.store.estaVacia() && ctx.store.obtenerAjustes().initialized !== '1',
+    needsImport: !ES_VISOR && ctx.store.estaVacia() && ctx.store.obtenerAjustes().inicializada !== '1',
     // Asistente de primer uso (marca y apariencia). ADMIN_ALQ_SIN_ASISTENTE lo saltea (pruebas).
     asistente: !ES_VISOR && ctx.store.estaVacia() && !ctx.store.obtenerAjustes().asistenteVisto && !process.env.ADMIN_ALQ_SIN_ASISTENTE,
     rutaBase:    rutaBase(),
@@ -39,9 +39,9 @@ function importarDesde(rutaArchivo) {
   ctx.store.respaldar('pre-import');
   const cantidades = ctx.store.importarDatos(datos);
   asegurarDatos(true, { heuristicas: datos.formato === 'clasico' });
-  ctx.store.guardarAjuste('initialized', '1');
-  ctx.store.guardarAjuste('importedFrom', rutaArchivo);
-  ctx.store.guardarAjuste('importedAt', new Date().toISOString());
+  ctx.store.guardarAjuste('inicializada', '1');
+  ctx.store.guardarAjuste('importadoDe', rutaArchivo);
+  ctx.store.guardarAjuste('importadoEl', new Date().toISOString());
   return cantidades;
 }
 
@@ -52,7 +52,7 @@ function agregarDesde(rutaArchivo) {
   const clasico = datos.formato === 'clasico';
   ctx.store.respaldar('pre-agregar');
   const res = ctx.store.agregarImportados({ contracts: datos.contracts.map(c => D.prepararImportado(c, { reglasDirecciones: REGLAS_DIRECCIONES, clasico })), admins: datos.admins }, D.claveNombre);
-  ctx.store.guardarAjuste('initialized', '1');
+  ctx.store.guardarAjuste('inicializada', '1');
   return res;
 }
 
@@ -64,9 +64,9 @@ function cargarDemo() {
   const cantidades = ctx.store.importarDatos({ contracts: contratos, admins });
   asegurarDatos(true, { heuristicas: false });
   ctx.store.reemplazarMarcas(marks);
-  ctx.store.guardarAjuste('initialized', '1');
-  ctx.store.guardarAjuste('importedFrom', 'datos de ejemplo');
-  ctx.store.guardarAjuste('importedAt', new Date().toISOString());
+  ctx.store.guardarAjuste('inicializada', '1');
+  ctx.store.guardarAjuste('importadoDe', 'datos de ejemplo');
+  ctx.store.guardarAjuste('importadoEl', new Date().toISOString());
   return { counts: cantidades, state: state() };
 }
 

@@ -106,4 +106,13 @@ const COLUMNAS_VIEJAS = [
   ['documentos_propietarios', 'created_at', 'creado'], ['cuentas_propietarios', 'owner_id', 'propietario_id'],
 ];
 
-module.exports = { ESQUEMA, COLUMNAS_AGREGADAS, TABLAS_VIEJAS, COLUMNAS_VIEJAS };
+// Claves de la tabla ajustes que tambien estaban en ingles.
+const CLAVES_VIEJAS = [
+  ['initialized', 'inicializada'], ['importedFrom', 'importadoDe'], ['importedAt', 'importadoEl'],
+  ['ownersVersion', 'versionPropietarios'], ['ownersReview', 'revisionPropietarios'],
+  ['addressVersion', 'versionDirecciones'], ['cleanupVersion', 'versionLimpieza'], ['cleanupBorrados', 'limpiezaBorrados'],
+  ['garantiaVersion', 'versionGarantias'], ['monedaVersion', 'versionMoneda'], ['sharedDir', 'carpetaCompartida'],
+  ['msgRenovacion', 'mensajeRenovacionTexto'], ['msgAumentoInq', 'mensajeAumentoInq'], ['msgAumentoProp', 'mensajeAumentoProp'],
+];
+
+module.exports = { ESQUEMA, COLUMNAS_AGREGADAS, TABLAS_VIEJAS, COLUMNAS_VIEJAS, CLAVES_VIEJAS };

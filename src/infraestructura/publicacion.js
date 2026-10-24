@@ -13,8 +13,8 @@ let temporizadorPublicar = null, temporizadorReintento = null;
 function carpetaCompartida() {
   if (process.env.ADMIN_ALQ_SHARED_DIR) return process.env.ADMIN_ALQ_SHARED_DIR;
   const s = ctx.store.obtenerAjustes();
-  if (s.sharedDir === '-') return null;                     // desactivado a mano
-  return s.sharedDir || CARPETA_COMPARTIDA_PREDETERMINADA;
+  if (s.carpetaCompartida === '-') return null;   // desactivado a mano
+  return s.carpetaCompartida || CARPETA_COMPARTIDA_PREDETERMINADA;
 }
 
 function estadoCompartir() {
@@ -30,7 +30,7 @@ function publicarAhora() {
   const dir = carpetaCompartida();
   if (!dir) { estadoCompartido.pending = false; avisarCompartir(); return; }
   try {
-    const info = share.publicar({ dbFile: rutaBase(), carpetaDocs: carpetaDocs(), sharedDir: dir, by: process.env.USERNAME });
+    const info = share.publicar({ dbFile: rutaBase(), carpetaDocs: carpetaDocs(), carpetaCompartida: dir, by: process.env.USERNAME });
     Object.assign(estadoCompartido, { lastPublished: info.publicado, error: null, pending: false });
     clearInterval(temporizadorReintento); temporizadorReintento = null;
   } catch (e) {

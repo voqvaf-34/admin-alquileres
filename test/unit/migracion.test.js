@@ -17,7 +17,7 @@ async function baseVieja(archivo) {
           VALUES ('Calle 1', 'Ana', 20000, 21000, '2 AÑOS', '2025-01-10', 0, 3), ('Calle 2', 'Beto', 30000, 30000, '3 AÑOS', '2024-03-01', 1, 4)`);
   db.run("INSERT INTO admins (nombre, edificios, telefono, mail, source_row) VALUES ('Adm', 'Torre', '2900', 'a@x', 7)");
   db.run(`INSERT INTO marks (key, data) VALUES ('v|Calle 1', '{"date":"01/10/2026"}')`);
-  db.run("INSERT INTO settings (key, value) VALUES ('marcaNombre', 'Sur')");
+  db.run("INSERT INTO settings (key, value) VALUES ('marcaNombre', 'Sur'), ('sharedDir', 'C:/compartida'), ('initialized', '1'), ('msgRenovacion', 'Hola')");
   db.run("INSERT INTO contacts (nombre, rol) VALUES ('Gestor', 'Admin')");
   db.run("INSERT INTO owners (nombre, telefono, contact_id) VALUES ('Ana', '099', 1), ('Beto', '098', NULL)");
   db.run('INSERT INTO contract_owners (contract_id, owner_id, orden) VALUES (1, 1, 0), (2, 2, 0)');
@@ -44,7 +44,7 @@ test('una base de la 0.8.1 (en ingles) se migra al abrirla y no pierde nada', as
   assert.equal(c2.inactive, true);
   assert.equal(s.listarAdmins()[0].nombre, 'Adm');
   assert.deepEqual(s.obtenerMarcas(), { 'v|Calle 1': { date: '01/10/2026' } });
-  assert.equal(s.obtenerAjustes().marcaNombre, 'Sur');
+  assert.deepEqual(s.obtenerAjustes(), { marcaNombre: 'Sur', carpetaCompartida: 'C:/compartida', inicializada: '1', mensajeRenovacionTexto: 'Hola' });
   assert.equal(s.listarPropietarios().find(o => o.nombre === 'Ana').contactId, 1);
   assert.equal(s.listarPropietariosDeContratos().length, 2);
   assert.equal(s.listarDocsPropietarios()[0].nombreOriginal, 'foto.jpg');
